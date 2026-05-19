@@ -114,3 +114,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Corretto errore su `/api/export.csv`.
 - Aggiunta migrazione automatica robusta per database SQLite già creati con versioni precedenti.
 - Export CSV usa `sep=;` e `csv.writer` con delimitatore `;` per tutte le righe.
+
+
+## Versione v12
+- Corretto errore Render:
+  `NameError: name 'io' is not defined`
+- Aggiunti import mancanti:
+  - import io
+  - import csv
+- Export CSV compatibile con Render/Gunicorn.
