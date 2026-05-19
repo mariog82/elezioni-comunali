@@ -108,3 +108,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Il campo sezione/seggio è bloccato per i rappresentanti di lista.
 - Dopo ogni invio, il rappresentante ricarica automaticamente dal server i dati aggiornati del proprio seggio.
 - Se il seggio è chiuso, il rappresentante vede il messaggio di ringraziamento e non può accedere alla modifica.
+
+
+## Versione v11
+- Corretto errore su `/api/export.csv`.
+- Aggiunta migrazione automatica robusta per database SQLite già creati con versioni precedenti.
+- Export CSV usa `sep=;` e `csv.writer` con delimitatore `;` per tutte le righe.

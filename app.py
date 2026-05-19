@@ -540,11 +540,19 @@ def init_db():
         votes INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY(report_id) REFERENCES reports(id)
     )""")
+
     report_cols = [row["name"] for row in cur.execute("PRAGMA table_info(reports)").fetchall()]
-    if "closed" not in report_cols:
-        cur.execute("ALTER TABLE reports ADD COLUMN closed INTEGER NOT NULL DEFAULT 0")
-    if "closed_at" not in report_cols:
-        cur.execute("ALTER TABLE reports ADD COLUMN closed_at TEXT")
+    migrations = {
+        "voters": "ALTER TABLE reports ADD COLUMN voters INTEGER NOT NULL DEFAULT 0",
+        "blank_ballots": "ALTER TABLE reports ADD COLUMN blank_ballots INTEGER NOT NULL DEFAULT 0",
+        "null_ballots": "ALTER TABLE reports ADD COLUMN null_ballots INTEGER NOT NULL DEFAULT 0",
+        "contested_ballots": "ALTER TABLE reports ADD COLUMN contested_ballots INTEGER NOT NULL DEFAULT 0",
+        "closed": "ALTER TABLE reports ADD COLUMN closed INTEGER NOT NULL DEFAULT 0",
+        "closed_at": "ALTER TABLE reports ADD COLUMN closed_at TEXT"
+    }
+    for col, sql in migrations.items():
+        if col not in report_cols:
+            cur.execute(sql)
 
     cur.execute("""CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
@@ -1064,18 +1072,46 @@ def section_details():
 @admin_required
 def export_csv():
     conn = db()
+
+    # Migrazione di sicurezza nel caso il database SQLite esistente sia stato creato con una versione precedente.
+    cur = conn.cursor()
+    report_cols = [row["name"] for row in cur.execute("PRAGMA table_info(reports)").fetchall()]
+    migrations = {
+        "voters": "ALTER TABLE reports ADD COLUMN voters INTEGER NOT NULL DEFAULT 0",
+        "blank_ballots": "ALTER TABLE reports ADD COLUMN blank_ballots INTEGER NOT NULL DEFAULT 0",
+        "null_ballots": "ALTER TABLE reports ADD COLUMN null_ballots INTEGER NOT NULL DEFAULT 0",
+        "contested_ballots": "ALTER TABLE reports ADD COLUMN contested_ballots INTEGER NOT NULL DEFAULT 0",
+        "closed": "ALTER TABLE reports ADD COLUMN closed INTEGER NOT NULL DEFAULT 0",
+        "closed_at": "ALTER TABLE reports ADD COLUMN closed_at TEXT"
+    }
+    for col, sql in migrations.items():
+        if col not in report_cols:
+            cur.execute(sql)
+    conn.commit()
+
     rows = conn.execute("""
-        SELECT r.section, u.name AS representative, r.voters, r.blank_ballots, r.null_ballots,
-               r.contested_ballots, r.updated_at, v.vote_type, v.list_name, v.name, v.votes
+        SELECT
+            r.section AS section,
+            u.name AS representative,
+            COALESCE(r.voters, 0) AS voters,
+            COALESCE(r.blank_ballots, 0) AS blank_ballots,
+            COALESCE(r.null_ballots, 0) AS null_ballots,
+            COALESCE(r.contested_ballots, 0) AS contested_ballots,
+            COALESCE(r.updated_at, '') AS updated_at,
+            v.vote_type AS vote_type,
+            COALESCE(v.list_name, '') AS list_name,
+            v.name AS name,
+            COALESCE(v.votes, 0) AS votes
         FROM reports r
-        JOIN users u ON u.id=r.user_id
-        JOIN votes v ON v.report_id=r.id
+        JOIN users u ON u.id = r.user_id
+        JOIN votes v ON v.report_id = r.id
         ORDER BY r.section, v.vote_type, v.list_name, v.name
     """).fetchall()
     conn.close()
 
     output = io.StringIO()
     output.write("sep=;\n")
+
     writer = csv.writer(
         output,
         delimiter=";",
@@ -1108,7 +1144,7 @@ def export_csv():
             row["contested_ballots"],
             row["updated_at"],
             row["vote_type"],
-            row["list_name"] or "",
+            row["list_name"],
             row["name"],
             row["votes"],
         ])
