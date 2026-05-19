@@ -68,3 +68,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - voti di lista per seggio;
   - voti candidati sindaco per seggio;
   - preferenze dei candidati consiglieri per seggio, per ciascuna lista.
+
+
+## Versione v7
+- Tabelle candidato-preferenze in tab separate per lista.
+- Ogni tab preferenze mostra tutti i candidati della lista, anche con 0 voti.
+- Grafici di dettaglio separati in tab:
+  - liste per seggio;
+  - sindaci per seggio;
+  - consiglieri per seggio.
