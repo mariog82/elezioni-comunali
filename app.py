@@ -16,9 +16,9 @@ app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
 ELECTION_DATA = {
   "mayors": [
-    "David Bongiovanni",
-    "Nicola Barbera",
-    "Melangela Scolaro"
+    "Bongiovanni David",
+    "Barbera Nicola",
+    "Scolaro Melangela"
   ],
   "lists": {
     "Città Aperta - Controcorrente": {
