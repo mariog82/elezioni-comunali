@@ -86,3 +86,25 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Popup di conferma e messaggio di ringraziamento.
 - L'amministratore può riaprire un seggio chiuso.
 - Nei grafici di dettaglio: liste per seggio e consiglieri per seggio sono in sotto-tab.
+
+
+## Versione v9
+- Invio dati libero per il rappresentante: la quadratura non blocca l'invio ordinario.
+- Nuovo pulsante "Chiudi seggio" con popup di conferma.
+- Alla chiusura viene controllata la quadratura finale: votanti = voti validi + bianche + nulle.
+- Le schede contestate sono solo indicative.
+- Dopo la chiusura il rappresentante visualizza un messaggio di ringraziamento e non può più modificare il seggio.
+- Solo l'amministratore può riaprire il seggio.
+- L'amministratore può modificare i dati anche dei seggi chiusi.
+- Grafici di dettaglio raccolti in tab:
+  - liste per seggio, con sotto-tab per ogni lista;
+  - sindaci per seggio;
+  - consiglieri per seggio, con sotto-tab per lista.
+
+
+## Versione v10
+- L'invio dati ordinario del rappresentante non è bloccato dalla quadratura.
+- La quadratura blocca solo il pulsante "Chiudi seggio".
+- Il campo sezione/seggio è bloccato per i rappresentanti di lista.
+- Dopo ogni invio, il rappresentante ricarica automaticamente dal server i dati aggiornati del proprio seggio.
+- Se il seggio è chiuso, il rappresentante vede il messaggio di ringraziamento e non può accedere alla modifica.

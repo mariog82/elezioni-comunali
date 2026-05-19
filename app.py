@@ -737,6 +737,64 @@ def config():
     conn.close()
     return jsonify({"ok": True, "data": ELECTION_DATA, "settings": settings})
 
+
+@app.get("/api/my-report")
+@login_required
+def my_report():
+    user = current_user()
+    section = request.args.get("section", user["section"] or "").strip()
+
+    if not section:
+        return jsonify({"ok": True, "exists": False})
+
+    if user["role"] != "admin" and user["section"] and section != user["section"]:
+        return jsonify({"ok": False, "error": "Rappresentante non autorizzato per questa sezione"}), 403
+
+    conn = db()
+    report = conn.execute(
+        "SELECT * FROM reports WHERE section=? ORDER BY updated_at DESC LIMIT 1",
+        (section,)
+    ).fetchone()
+
+    if not report:
+        conn.close()
+        return jsonify({"ok": True, "exists": False, "section": section})
+
+    votes = conn.execute(
+        "SELECT vote_type, list_name, name, votes FROM votes WHERE report_id=?",
+        (report["id"],)
+    ).fetchall()
+    conn.close()
+
+    mayors = {}
+    list_votes = {}
+    preferences = {}
+
+    for row in votes:
+        if row["vote_type"] == "sindaco":
+            mayors[row["name"]] = row["votes"]
+        elif row["vote_type"] == "lista":
+            list_votes[row["list_name"]] = row["votes"]
+        elif row["vote_type"] == "preferenza":
+            preferences.setdefault(row["list_name"], {})
+            preferences[row["list_name"]][row["name"]] = row["votes"]
+
+    return jsonify({
+        "ok": True,
+        "exists": True,
+        "section": report["section"],
+        "voters": report["voters"],
+        "blank_ballots": report["blank_ballots"],
+        "null_ballots": report["null_ballots"],
+        "contested_ballots": report["contested_ballots"],
+        "closed": bool(report["closed"]),
+        "closed_at": report["closed_at"],
+        "mayors": mayors,
+        "list_votes": list_votes,
+        "preferences": preferences,
+        "updated_at": report["updated_at"]
+    })
+
 @app.post("/api/report")
 @login_required
 def save_report():
