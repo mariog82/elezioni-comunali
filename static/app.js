@@ -29,6 +29,16 @@ async function login(){
   }catch(e){alert(e.message)}
 }
 
+function lockRepresentativeSection(){
+  const sectionInput=document.getElementById("section");
+  if(user && user.role!=="admin" && user.section){
+    sectionInput.value=user.section;
+    sectionInput.readOnly=true;
+    sectionInput.classList.add("readonly");
+    sectionInput.title="La sezione è assegnata dall'amministratore e non può essere modificata.";
+  }
+}
+
 async function checkClosedStatus(){
   if(user.role==="admin")return;
   const section=document.getElementById("section").value.trim() || user.section || "";
@@ -48,6 +58,7 @@ async function showApp(){
   document.getElementById("userName").textContent=user.name;
   document.getElementById("userInfo").textContent=`Ruolo: ${user.role} - Sezione autorizzata: ${user.section||"tutte"}`;
   if(user.section)document.getElementById("section").value=user.section;
+  lockRepresentativeSection();
   await checkClosedStatus();
   if(user.role==="admin")document.getElementById("adminBtn").classList.remove("hidden");
 
@@ -61,6 +72,7 @@ async function showApp(){
   });
   currentList=Object.keys(DATA.lists)[0];
   renderAll();
+  await loadReportFromServer();
   updateValidationBox();
 }
 
@@ -192,6 +204,63 @@ async function copyMessage(){
 
 function clearMessage(){document.getElementById("messageBox").value=""}
 
+
+function refreshAllCounters(){
+  DATA.mayors.forEach(name=>{
+    const el=document.getElementById(`mayor_${enc(name)}`);
+    if(el) el.textContent=mayorVotes[name]||0;
+  });
+
+  Object.keys(DATA.lists).forEach(listName=>{
+    const listEl=document.getElementById(`list_${enc(listName)}`);
+    if(listEl) listEl.textContent=listVotes[listName]||0;
+
+    DATA.lists[listName].candidates.forEach(candidate=>{
+      const prefEl=document.getElementById(`pref_${enc(listName)}_${enc(candidate)}`);
+      if(prefEl) prefEl.textContent=(prefs[listName]&&prefs[listName][candidate])||0;
+    });
+  });
+}
+
+async function loadReportFromServer(){
+  if(!DATA || !user)return;
+  const section=document.getElementById("section").value.trim() || user.section || "";
+  if(!section)return;
+
+  try{
+    const report=await api(`/api/my-report?section=${encodeURIComponent(section)}`);
+    if(!report.exists){
+      updateValidationBox();
+      return;
+    }
+
+    document.getElementById("voters").value=report.voters||0;
+    document.getElementById("blankBallots").value=report.blank_ballots||0;
+    document.getElementById("nullBallots").value=report.null_ballots||0;
+    document.getElementById("contestedBallots").value=report.contested_ballots||0;
+
+    DATA.mayors.forEach(name=>mayorVotes[name]=report.mayors[name]||0);
+
+    Object.entries(DATA.lists).forEach(([listName,obj])=>{
+      listVotes[listName]=report.list_votes[listName]||0;
+      obj.candidates.forEach(candidate=>{
+        prefs[listName][candidate]=((report.preferences[listName]||{})[candidate])||0;
+      });
+    });
+
+    refreshAllCounters();
+    updateValidationBox();
+
+    if(report.closed && user.role!=="admin"){
+      document.getElementById("appBox").classList.add("hidden");
+      document.getElementById("closedBox").classList.remove("hidden");
+    }
+  }catch(e){
+    console.warn("Impossibile caricare i dati aggiornati dal server", e);
+  }
+}
+
+
 async function sendReport(){
   updateValidationBox();
   const voters=nval("voters");
@@ -207,17 +276,14 @@ async function sendReport(){
       preferences:prefs
     })});
     alert("Dati inviati al server centrale");
+    await loadReportFromServer();
   }catch(e){alert(e.message)}
 }
 
 async function closeSeat(){
   updateValidationBox();
   const voters=nval("voters");
-  const expected=expectedVoters();
-  if(voters!==expected){
-    alert(`Non puoi chiudere il seggio: votanti=${voters}, totale valido + bianche + nulle=${expected}. Le contestate sono solo indicative.`);
-    return;
-  }
+  
   if(!confirm("Confermi la chiusura definitiva del seggio? Dopo la chiusura non potrai più modificare o reinviare i dati."))return;
   try{
     const res=await api("/api/close-seat",{method:"POST",body:JSON.stringify({

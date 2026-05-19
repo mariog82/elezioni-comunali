@@ -2,3 +2,5 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
 .dangerBox{border-left:5px solid #b3261e;background:#fff1f1}.elected{font-weight:bold;color:#087d37}.muted{color:#777}
 
 .chartTab.hidden{display:none}.tabs .tab.active{background:#8b1e1e;color:white}
+
+.readonly{background:#eee;color:#555;cursor:not-allowed}
