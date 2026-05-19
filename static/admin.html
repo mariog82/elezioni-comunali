@@ -29,22 +29,33 @@
 <section class="card ok"><h2>Quadratura generale sezioni</h2><div id="ballotSummary"></div></section>
 
 <section class="grid">
-<div class="card"><h2>Sindaci</h2><canvas id="mayorChart"></canvas></div>
-<div class="card"><h2>Liste</h2><canvas id="listChart"></canvas></div>
+<div class="card"><h2>Sindaci - Totale</h2><canvas id="mayorChart"></canvas></div>
+<div class="card"><h2>Liste - Totale</h2><canvas id="listChart"></canvas></div>
 </section>
 
 <section class="card ok"><h2>Premio di maggioranza ed eletti simulati</h2><div id="electedBox"></div></section>
 
 <section class="card"><h2>Sezioni ricevute</h2><div class="tablewrap"><table><thead><tr><th>Sezione</th><th>Rappresentante</th><th>Votanti</th><th>Validi lista</th><th>Bianche</th><th>Nulle</th><th>Contestate</th><th>Quadratura</th><th>Aggiornato</th></tr></thead><tbody id="sections"></tbody></table></div></section>
 
-
 <section class="card">
 <h2>Grafici di dettaglio per seggio</h2>
-<p class="small">Questi grafici mostrano i voti per singolo seggio/sezione: voti di lista, voti dei candidati sindaco e preferenze dei candidati consiglieri per ciascuna lista.</p>
-<div id="detailCharts"></div>
+<p class="small">I grafici sono separati in tab: voti di lista per seggio, voti dei candidati sindaco per seggio, preferenze dei consiglieri per seggio.</p>
+<div class="tabs">
+<button class="tab active" id="tabChartsLists" onclick="showChartTab('lists')">Liste per seggio</button>
+<button class="tab" id="tabChartsMayors" onclick="showChartTab('mayors')">Sindaci per seggio</button>
+<button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Consiglieri per seggio</button>
+</div>
+<div id="chartTabLists" class="chartTab"></div>
+<div id="chartTabMayors" class="chartTab hidden"></div>
+<div id="chartTabPrefs" class="chartTab hidden"></div>
 </section>
 
-<section class="card"><h2>Preferenze per lista</h2><div id="prefTables"></div></section>
+<section class="card">
+<h2>Tabelle candidato-preferenze</h2>
+<p class="small">Ogni tab mostra tutti i candidati della lista, anche con zero preferenze.</p>
+<div id="prefTableTabs" class="tabs"></div>
+<div id="prefTables"></div>
+</section>
 
 <section class="card"><h2>Rappresentanti / utenti autorizzati</h2><div class="grid"><input id="newName" placeholder="Nome"><input id="newPhone" placeholder="Telefono/codice"><input id="newPin" placeholder="PIN"><input id="newSection" placeholder="Sezione"><select id="newRole"><option value="rappresentante">rappresentante</option><option value="admin">admin</option></select></div><button onclick="createUser()">Aggiungi rappresentante/utente</button><div id="users"></div></section>
 

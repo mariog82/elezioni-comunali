@@ -1,5 +1,6 @@
 let mayorChart=null,listChart=null,lastData=null;
 let detailCharts=[];
+let currentPrefTableList=null;
 
 async function api(url, options={}){
   const res=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json"},...options});
@@ -27,7 +28,7 @@ async function loadDashboard(){
       tb.appendChild(tr);
     });
 
-    renderPrefs(d);
+    renderPrefTableTabs(d);
     renderElected(d);
     await renderDetailCharts();
     await loadUsers();
@@ -95,19 +96,32 @@ function draw(id,labels,values,kind){
   if(kind==="mayor")mayorChart=chart;else listChart=chart;
 }
 
-function renderPrefs(d){
+function renderPrefTableTabs(d){
+  const tabs=document.getElementById("prefTableTabs");
   const box=document.getElementById("prefTables");
-  box.innerHTML="";
-  Object.keys(d.data.lists).forEach(l=>{
-    const rows=d.preferences.filter(x=>x.list_name===l).sort((a,b)=>(b.total||0)-(a.total||0)).slice(0,10);
-    let html=`<h3>${l}</h3><div class="tablewrap"><table><tr><th>Candidato</th><th>Preferenze</th></tr>`;
-    rows.forEach(r=>html+=`<tr><td>${r.name}</td><td>${r.total||0}</td></tr>`);
-    html+="</table></div>";
-    const div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=html;
-    box.appendChild(div);
+  tabs.innerHTML="";
+  if(!currentPrefTableList) currentPrefTableList=Object.keys(d.data.lists)[0];
+
+  Object.keys(d.data.lists).forEach(listName=>{
+    const btn=document.createElement("button");
+    btn.className="tab"+(listName===currentPrefTableList?" active":"");
+    btn.textContent=listName;
+    btn.onclick=()=>{currentPrefTableList=listName; renderPrefTableTabs(lastData);};
+    tabs.appendChild(btn);
   });
+
+  const listName=currentPrefTableList;
+  const allCandidates=d.data.lists[listName].candidates;
+  const totals={};
+  d.preferences.filter(x=>x.list_name===listName).forEach(x=>totals[x.name]=x.total||0);
+
+  const ranked=allCandidates.map((name,idx)=>({name,total:totals[name]||0,order:idx+1}))
+    .sort((a,b)=>b.total-a.total || a.order-b.order);
+
+  let html=`<div class="card"><h3>${listName}</h3><div class="tablewrap"><table><tr><th>Pos.</th><th>Candidato</th><th>Preferenze</th></tr>`;
+  ranked.forEach((r,i)=>html+=`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.total}</td></tr>`);
+  html+="</table></div></div>";
+  box.innerHTML=html;
 }
 
 function renderElected(d){
@@ -141,6 +155,15 @@ function destroyDetailCharts(){
   detailCharts=[];
 }
 
+function showChartTab(tab){
+  ["lists","mayors","prefs"].forEach(t=>{
+    document.getElementById("chartTab"+cap(t)).classList.toggle("hidden", t!==tab);
+    document.getElementById("tabCharts"+cap(t)).classList.toggle("active", t===tab);
+  });
+}
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
 function makeCanvasCard(title, canvasId){
   const div=document.createElement("div");
   div.className="card";
@@ -162,52 +185,42 @@ function chartOn(canvasId, labels, values, label){
 }
 
 async function renderDetailCharts(){
-  const box=document.getElementById("detailCharts");
-  if(!box)return;
   destroyDetailCharts();
-  box.innerHTML="";
+  const listsBox=document.getElementById("chartTabLists");
+  const mayorsBox=document.getElementById("chartTabMayors");
+  const prefsBox=document.getElementById("chartTabPrefs");
+  listsBox.innerHTML="";
+  mayorsBox.innerHTML="";
+  prefsBox.innerHTML="";
 
   const d=await api("/api/section-details");
   const sections=Object.keys(d.sections).sort((a,b)=>(parseInt(a)||0)-(parseInt(b)||0) || a.localeCompare(b));
   if(sections.length===0){
-    box.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
+    listsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
+    mayorsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
+    prefsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
     return;
   }
 
-  // 1. Voti di lista per seggio: un grafico per ciascuna lista.
-  const h1=document.createElement("h3");
-  h1.textContent="Voti di lista per seggio";
-  box.appendChild(h1);
-
   Object.keys(d.data.lists).forEach((listName, idx)=>{
     const canvasId=`chart_list_section_${idx}`;
-    box.appendChild(makeCanvasCard(listName, canvasId));
+    listsBox.appendChild(makeCanvasCard(listName, canvasId));
     const values=sections.map(sec=>d.sections[sec].lists[listName]||0);
     chartOn(canvasId, sections, values, "Voti lista");
   });
 
-  // 2. Voti candidato sindaco per seggio.
-  const h2=document.createElement("h3");
-  h2.textContent="Voti candidati sindaco per seggio";
-  box.appendChild(h2);
-
   d.data.mayors.forEach((mayor, idx)=>{
     const canvasId=`chart_mayor_section_${idx}`;
-    box.appendChild(makeCanvasCard(mayor, canvasId));
+    mayorsBox.appendChild(makeCanvasCard(mayor, canvasId));
     const values=sections.map(sec=>d.sections[sec].mayors[mayor]||0);
     chartOn(canvasId, sections, values, "Voti sindaco");
   });
 
-  // 3. Preferenze candidati consiglieri per seggio, per ciascuna lista.
-  const h3=document.createElement("h3");
-  h3.textContent="Preferenze candidati consiglieri per seggio, per lista";
-  box.appendChild(h3);
-
   Object.entries(d.data.lists).forEach(([listName, obj], listIdx)=>{
     const wrapper=document.createElement("div");
     wrapper.className="card";
-    wrapper.innerHTML=`<h3>${listName}</h3><p class="small">Un grafico per ciascun candidato consigliere della lista.</p>`;
-    box.appendChild(wrapper);
+    wrapper.innerHTML=`<h3>${listName}</h3><p class="small">Grafici dei candidati consiglieri della lista per singolo seggio.</p>`;
+    prefsBox.appendChild(wrapper);
 
     obj.candidates.forEach((candidate, candIdx)=>{
       const canvasId=`chart_pref_${listIdx}_${candIdx}`;
