@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Comunali BPG</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header><h1>Pannello amministratore</h1><div>Report centrale, utenti, reset, eletti e quadratura seggi</div></header>
+<main>
+<section class="card topbar">
+<button class="secondary" onclick="location.href='/'">Torna all'app</button>
+<div><button onclick="loadDashboard()">Aggiorna</button><button class="secondary" onclick="location.href='/api/export.csv'">Esporta CSV</button></div>
+</section>
+
+<section class="card warn">
+<h2>Parametri elettorali</h2>
+<div class="grid">
+<div><label>Numero elettori</label><input id="totalElectors" type="number" min="0"></div>
+<div><label>Numero votanti complessivi</label><input id="totalVoters" type="number" min="0"></div>
+<div><label>Consiglieri da eleggere</label><input id="councilSeats" type="number" min="1" value="24"></div>
+<div><label>Sindaco eletto / coalizione vincente</label><select id="winnerMayor"></select></div>
+<div><label>Modalità</label><select id="mode"><option value="first">Primo turno</option><option value="runoff">Ballottaggio</option></select></div>
+</div>
+<button onclick="saveSettings()">Salva parametri</button>
+</section>
+
+<section class="card ok"><h2>Quadratura generale sezioni</h2><div id="ballotSummary"></div></section>
+
+<section class="grid">
+<div class="card"><h2>Sindaci - Totale</h2><canvas id="mayorChart"></canvas></div>
+<div class="card"><h2>Liste - Totale</h2><canvas id="listChart"></canvas></div>
+</section>
+
+<section class="card ok"><h2>Premio di maggioranza ed eletti simulati</h2><div id="electedBox"></div></section>
+
+<section class="card"><h2>Sezioni ricevute</h2><div class="tablewrap"><table><thead><tr><th>Sezione</th><th>Rappresentante</th><th>Votanti</th><th>Validi lista</th><th>Bianche</th><th>Nulle</th><th>Contestate</th><th>Quadratura</th><th>Aggiornato</th></tr></thead><tbody id="sections"></tbody></table></div></section>
+
+<section class="card">
+<h2>Grafici di dettaglio per seggio</h2>
+<p class="small">I grafici sono separati in tab: voti di lista per seggio, voti dei candidati sindaco per seggio, preferenze dei consiglieri per seggio.</p>
+<div class="tabs">
+<button class="tab active" id="tabChartsLists" onclick="showChartTab('lists')">Liste per seggio</button>
+<button class="tab" id="tabChartsMayors" onclick="showChartTab('mayors')">Sindaci per seggio</button>
+<button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Consiglieri per seggio</button>
+</div>
+<div id="chartTabLists" class="chartTab"></div>
+<div id="chartTabMayors" class="chartTab hidden"></div>
+<div id="chartTabPrefs" class="chartTab hidden"></div>
+</section>
+
+<section class="card">
+<h2>Tabelle candidato-preferenze</h2>
+<p class="small">Ogni tab mostra tutti i candidati della lista, anche con zero preferenze.</p>
+<div id="prefTableTabs" class="tabs"></div>
+<div id="prefTables"></div>
+</section>
+
+<section class="card"><h2>Rappresentanti / utenti autorizzati</h2><div class="grid"><input id="newName" placeholder="Nome"><input id="newPhone" placeholder="Telefono/codice"><input id="newPin" placeholder="PIN"><input id="newSection" placeholder="Sezione"><select id="newRole"><option value="rappresentante">rappresentante</option><option value="admin">admin</option></select></div><button onclick="createUser()">Aggiungi rappresentante/utente</button><div id="users"></div></section>
+
+<section class="card dangerBox"><h2>Azzeramento voti</h2><p>Questa operazione cancella tutti i voti e tutte le rilevazioni inviate dai rappresentanti. Gli utenti restano registrati.</p><button class="danger" onclick="resetVotes()">Azzera tutti i voti</button></section>
+</main>
+<script src="/admin.js"></script>
+</body>
+</html>
