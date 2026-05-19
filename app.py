@@ -658,7 +658,7 @@ def save_report():
     user = current_user()
     data = request.get_json(force=True)
     section = str(data.get("section", "")).strip()
-        mayors = data.get("mayors", {})
+    mayors = data.get("mayors", {})
     list_votes = data.get("list_votes", {})
     preferences = data.get("preferences", {})
     if not section:
