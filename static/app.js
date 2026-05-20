@@ -302,4 +302,14 @@ async function closeSeat(){
   }catch(e){alert(e.message)}
 }
 
+async function logoutClosed(){
+  try{
+    await api("/api/logout",{method:"POST",body:"{}"});
+  }catch(e){}
+  document.cookie.split(";").forEach(function(c){
+    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+  });
+  location.href="/";
+}
+
 start();

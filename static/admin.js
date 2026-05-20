@@ -77,19 +77,35 @@ function renderBallotSummary(d){
 }
 
 function destroyChart(ch){ if(ch) ch.destroy(); }
+
+function colorPalette(count){
+  const base=[
+    "#8b1e1e","#1976d2","#388e3c","#f57c00","#7b1fa2","#c2185b",
+    "#00796b","#fbc02d","#5d4037","#455a64","#d32f2f","#303f9f",
+    "#689f38","#ffa000","#512da8","#0097a7","#795548","#607d8b",
+    "#e64a19","#0288d1","#afb42b","#f06292","#4e342e","#00695c"
+  ];
+  const colors=[];
+  for(let i=0;i<count;i++) colors.push(base[i % base.length]);
+  return colors;
+}
 function drawMainCharts(d){
   destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
   const mayorLabels=d.mayors.map(x=>x.name), mayorValues=d.mayors.map(x=>x.total||0);
   mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
-    type:"pie", data:{labels:mayorLabels,datasets:[{data:mayorValues}]}, options:{responsive:true}
+    type:"pie",
+    data:{labels:mayorLabels,datasets:[{data:mayorValues,backgroundColor:colorPalette(mayorLabels.length),borderWidth:1}]},
+    options:{responsive:true}
   });
 
   const listLabels=d.lists.map(x=>x.name), listValues=d.lists.map(x=>x.total||0);
   listPieChart=new Chart(document.getElementById("listPieChart"),{
-    type:"pie", data:{labels:listLabels,datasets:[{data:listValues}]}, options:{responsive:true}
+    type:"pie",
+    data:{labels:listLabels,datasets:[{data:listValues,backgroundColor:colorPalette(listLabels.length),borderWidth:1}]},
+    options:{responsive:true}
   });
   listBarChart=new Chart(document.getElementById("listBarChart"),{
-    type:"bar", data:{labels:listLabels,datasets:[{data:listValues,label:"Voti lista"}]},
+    type:"bar", data:{labels:listLabels,datasets:[{data:listValues,label:"Voti lista",backgroundColor:colorPalette(listLabels.length)}]},
     options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}}}
   });
 }
