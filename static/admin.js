@@ -116,11 +116,28 @@ function renderSections(d){
   d.sections.forEach(s=>{
     const calculated=(s.total_lists||0)+(s.blank_ballots||0)+(s.null_ballots||0);
     const ok=calculated===(s.voters||0);
+    const statusHtml = s.closed
+      ? `<span class="badge">CHIUSO</span><br>
+         <button class="secondary" onclick="reopenSection('${s.section}')">
+           Riapri seggio al rappresentante
+         </button>`
+      : `<span class="muted">aperto</span>`;
+
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${s.section}</td><td>${s.representative}</td><td>${s.voters||0}</td><td>${s.total_lists||0}</td><td>${s.blank_ballots||0}</td><td>${s.null_ballots||0}</td><td>${s.contested_ballots||0}</td><td>${ok?"OK":"NO ("+calculated+")"}<br>${s.closed?`<span class="badge">CHIUSO</span><br><button class="secondary" onclick="reopenSection('${s.section}')">Riattiva seggio</button>`:"<span class='muted'>aperto</span>"}</td><td>${s.updated_at}</td>`;
+    tr.innerHTML=`
+      <td>${s.section}</td>
+      <td>${s.representative}</td>
+      <td>${s.voters||0}</td>
+      <td>${s.total_lists||0}</td>
+      <td>${s.blank_ballots||0}</td>
+      <td>${s.null_ballots||0}</td>
+      <td>${s.contested_ballots||0}</td>
+      <td>${ok?"OK":"NO ("+calculated+")"}<br>${statusHtml}</td>
+      <td>${s.updated_at}</td>`;
     tb.appendChild(tr);
   });
 }
+
 
 function availableDetailLists(d){ return DETAIL_LISTS.filter(l=>d.data.lists[l]); }
 
