@@ -1,6 +1,8 @@
-let mayorChart=null,listChart=null,lastData=null;
+
+let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
 let currentPrefTableList=null;
+const DETAIL_LISTS=["Partito Democratico","Movimento 2050","Città Aperta - Controcorrente"];
 
 async function api(url, options={}){
   const res=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json"},...options});
@@ -15,19 +17,8 @@ async function loadDashboard(){
     lastData=d;
     prepareSettings(d);
     renderBallotSummary(d);
-    draw("mayorChart",d.mayors.map(x=>x.name),d.mayors.map(x=>x.total||0),"mayor");
-    draw("listChart",d.lists.map(x=>x.name),d.lists.map(x=>x.total||0),"list");
-
-    const tb=document.getElementById("sections");
-    tb.innerHTML="";
-    d.sections.forEach(s=>{
-      const calculated=(s.total_lists||0)+(s.blank_ballots||0)+(s.null_ballots||0);
-      const ok=calculated===(s.voters||0);
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${s.section}</td><td>${s.representative}</td><td>${s.voters||0}</td><td>${s.total_lists||0}</td><td>${s.blank_ballots||0}</td><td>${s.null_ballots||0}</td><td>${s.contested_ballots||0}</td><td>${ok?"OK":"NO ("+calculated+")"}<br>${s.closed?`<span class="badge">CHIUSO</span><br><button class="secondary" onclick="reopenSection('${s.section}')">Riapri</button>`:"<span class='muted'>aperto</span>"}</td><td>${s.updated_at}</td>`;
-      tb.appendChild(tr);
-    });
-
+    drawMainCharts(d);
+    renderSections(d);
     renderPrefTableTabs(d);
     renderElected(d);
     await renderDetailCharts();
@@ -65,12 +56,7 @@ async function saveSettings(){
       mode:document.getElementById("mode").value
     })});
     alert("Parametri salvati");
-    await async function reopenSection(section){
-  if(!confirm(`Riaprire il seggio ${section}? Il rappresentante potrà nuovamente accedere e modificare.`))return;
-  try{await api("/api/reopen-section",{method:"POST",body:JSON.stringify({section})});alert("Seggio riaperto");await loadDashboard()}catch(e){alert(e.message)}
-}
-
-loadDashboard();
+    await loadDashboard();
   }catch(e){alert(e.message)}
 }
 
@@ -80,34 +66,56 @@ function renderBallotSummary(d){
   const calculated=validLists+(b.blank_ballots||0)+(b.null_ballots||0);
   const voters=b.voters||0;
   const settingVoters=d.election.settings.total_voters||0;
-  const turnout = d.election.settings.total_electors ? (settingVoters/d.election.settings.total_electors*100).toFixed(2) : "0.00";
+  const turnout=d.election.settings.total_electors ? (settingVoters/d.election.settings.total_electors*100).toFixed(2) : "0.00";
   document.getElementById("ballotSummary").innerHTML=`
-    <p><b>Elettori impostati:</b> ${d.election.settings.total_electors} &nbsp; <b>Votanti complessivi impostati:</b> ${settingVoters} &nbsp; <b>Affluenza:</b> ${turnout}%</p>
-    <p><b>Votanti rilevati dalle sezioni:</b> ${voters}<br>
-    <b>Voti validi lista:</b> ${validLists}<br>
-    <b>Schede bianche:</b> ${b.blank_ballots||0} &nbsp; <b>Nulle:</b> ${b.null_ballots||0} &nbsp; <b>Contestate indicative:</b> ${b.contested_ballots||0}<br>
-    <b>Totale controllo, senza contestate:</b> ${calculated}<br>
-    <b>Quadratura sezioni:</b> ${calculated===voters ? "OK" : "NON QUADRA"}</p>`;
+  <p><b>Elettori:</b> ${d.election.settings.total_electors} &nbsp; <b>Votanti impostati:</b> ${settingVoters} &nbsp; <b>Affluenza:</b> ${turnout}%</p>
+  <p><b>Votanti rilevati:</b> ${voters}<br>
+  <b>Voti validi lista:</b> ${validLists}<br>
+  <b>Bianche:</b> ${b.blank_ballots||0} &nbsp; <b>Nulle:</b> ${b.null_ballots||0} &nbsp; <b>Contestate indicative:</b> ${b.contested_ballots||0}<br>
+  <b>Totale controllo senza contestate:</b> ${calculated}<br>
+  <b>Quadratura:</b> ${calculated===voters ? "OK" : "NON QUADRA"}</p>`;
 }
 
-function draw(id,labels,values,kind){
-  if(kind==="mayor"&&mayorChart)mayorChart.destroy();
-  if(kind==="list"&&listChart)listChart.destroy();
-  const chart=new Chart(document.getElementById(id),{
-    type:"bar",
-    data:{labels,datasets:[{data:values,label:"Voti"}]},
-    options:{responsive:true,plugins:{legend:{display:false}}}
+function destroyChart(ch){ if(ch) ch.destroy(); }
+function drawMainCharts(d){
+  destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
+  const mayorLabels=d.mayors.map(x=>x.name), mayorValues=d.mayors.map(x=>x.total||0);
+  mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
+    type:"pie", data:{labels:mayorLabels,datasets:[{data:mayorValues}]}, options:{responsive:true}
   });
-  if(kind==="mayor")mayorChart=chart;else listChart=chart;
+
+  const listLabels=d.lists.map(x=>x.name), listValues=d.lists.map(x=>x.total||0);
+  listPieChart=new Chart(document.getElementById("listPieChart"),{
+    type:"pie", data:{labels:listLabels,datasets:[{data:listValues}]}, options:{responsive:true}
+  });
+  listBarChart=new Chart(document.getElementById("listBarChart"),{
+    type:"bar", data:{labels:listLabels,datasets:[{data:listValues,label:"Voti lista"}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}}}
+  });
 }
+
+function renderSections(d){
+  const tb=document.getElementById("sections");
+  tb.innerHTML="";
+  d.sections.forEach(s=>{
+    const calculated=(s.total_lists||0)+(s.blank_ballots||0)+(s.null_ballots||0);
+    const ok=calculated===(s.voters||0);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${s.section}</td><td>${s.representative}</td><td>${s.voters||0}</td><td>${s.total_lists||0}</td><td>${s.blank_ballots||0}</td><td>${s.null_ballots||0}</td><td>${s.contested_ballots||0}</td><td>${ok?"OK":"NO ("+calculated+")"}<br>${s.closed?`<span class="badge">CHIUSO</span><br><button class="secondary" onclick="reopenSection('${s.section}')">Riapri</button>`:"<span class='muted'>aperto</span>"}</td><td>${s.updated_at}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function availableDetailLists(d){ return DETAIL_LISTS.filter(l=>d.data.lists[l]); }
 
 function renderPrefTableTabs(d){
   const tabs=document.getElementById("prefTableTabs");
   const box=document.getElementById("prefTables");
   tabs.innerHTML="";
-  if(!currentPrefTableList) currentPrefTableList=Object.keys(d.data.lists)[0];
+  const available=availableDetailLists(d);
+  if(!currentPrefTableList || !available.includes(currentPrefTableList)) currentPrefTableList=available[0];
 
-  Object.keys(d.data.lists).forEach(listName=>{
+  available.forEach(listName=>{
     const btn=document.createElement("button");
     btn.className="tab"+(listName===currentPrefTableList?" active":"");
     btn.textContent=listName;
@@ -116,11 +124,9 @@ function renderPrefTableTabs(d){
   });
 
   const listName=currentPrefTableList;
-  const allCandidates=d.data.lists[listName].candidates;
   const totals={};
   d.preferences.filter(x=>x.list_name===listName).forEach(x=>totals[x.name]=x.total||0);
-
-  const ranked=allCandidates.map((name,idx)=>({name,total:totals[name]||0,order:idx+1}))
+  const ranked=d.data.lists[listName].candidates.map((name,idx)=>({name,total:totals[name]||0,order:idx+1}))
     .sort((a,b)=>b.total-a.total || a.order-b.order);
 
   let html=`<div class="card"><h3>${listName}</h3><div class="tablewrap"><table><tr><th>Pos.</th><th>Candidato</th><th>Preferenze</th></tr>`;
@@ -130,98 +136,88 @@ function renderPrefTableTabs(d){
 }
 
 function renderElected(d){
-  const e=d.election;
-  const s=e.settings;
-  let html=`<p><b>Sindaco/coalizione vincente impostata:</b> ${s.winner_mayor}<br>
+  const e=d.election, s=e.settings;
+  let html=`<p><b>Sindaco/coalizione vincente:</b> ${s.winner_mayor}<br>
   <b>Premio di maggioranza:</b> ${e.premium_applied?"APPLICATO":"NON applicato"} ${e.premium_applied?`(${e.premium_seats} seggi)`:""}<br>
-  <span class="small">Coalizione vincente: ${e.winner_pct.toFixed(2)}% delle liste ammesse. Maggior altra coalizione: ${e.other_max_pct.toFixed(2)}%.</span></p>`;
+  <span class="small">Coalizione vincente: ${e.winner_pct.toFixed(2)}%. Maggior altra coalizione: ${e.other_max_pct.toFixed(2)}%.</span></p>`;
 
   html+=`<h3>Seggi per coalizione</h3><div class="tablewrap"><table><tr><th>Coalizione</th><th>Voti liste ammesse</th><th>Seggi</th></tr>`;
   Object.entries(e.coalition_seats).sort((a,b)=>b[1]-a[1]).forEach(([c,seats])=>html+=`<tr><td>${c}</td><td>${e.coalition_votes[c]||0}</td><td><b>${seats}</b></td></tr>`);
-  html+=`</table></div>`;
+  html+=`</table></div><h3>Seggi per lista ed eletti simulati</h3><div class="tablewrap"><table><tr><th>Lista</th><th>Coalizione</th><th>Voti</th><th>Seggi</th><th>Eletti</th></tr>`;
 
-  html+=`<h3>Seggi per lista e consiglieri eletti</h3><div class="tablewrap"><table><tr><th>Lista</th><th>Coalizione</th><th>Voti lista</th><th>Seggi</th><th>Eletti simulati</th></tr>`;
   Object.entries(d.data.lists).forEach(([l,obj])=>{
     const seats=e.list_seats[l]||0;
     const elected=(e.elected[l]||[]).map(x=>`<div class="elected">${x.name} (${x.votes})</div>`).join("");
     const under=(e.list_votes[l]||0)>0 && !e.admitted_lists[l] ? ` <span class="badge">sotto soglia 5%</span>`:"";
-    html+=`<tr><td>${l}${under}</td><td>${obj.coalition}</td><td>${e.list_votes[l]||0}</td><td><b>${seats}</b></td><td>${elected||"<span class='muted'>Nessun seggio</span>"}</td></tr>`;
+    html+=`<tr><td>${l}${under}</td><td>${obj.coalition}</td><td>${e.list_votes[l]||0}</td><td><b>${seats}</b></td><td>${elected||"<span class='muted'>Nessun candidato consigliere gestito</span>"}</td></tr>`;
   });
   html+=`</table></div>`;
-
-  if(e.losing_mayors.length){
-    html+=`<p class="small"><b>Nota:</b> sindaci non eletti ordinati per voti: ${e.losing_mayors.map(x=>`${x.name} (${x.votes})`).join(", ")}. La proclamazione ufficiale resta di competenza degli uffici elettorali.</p>`;
-  }
   document.getElementById("electedBox").innerHTML=html;
 }
 
-function destroyDetailCharts(){
-  detailCharts.forEach(ch=>ch.destroy());
-  detailCharts=[];
-}
-
+function destroyDetailCharts(){ detailCharts.forEach(c=>c.destroy()); detailCharts=[]; }
 function showChartTab(tab){
-  ["lists","mayors","prefs"].forEach(t=>{
-    document.getElementById("chartTab"+cap(t)).classList.toggle("hidden", t!==tab);
-    document.getElementById("tabCharts"+cap(t)).classList.toggle("active", t===tab);
+  ["lists","prefs"].forEach(t=>{
+    const panel=document.getElementById("chartTab"+cap(t));
+    const button=document.getElementById("tabCharts"+cap(t));
+    if(panel) panel.classList.toggle("hidden", t!==tab);
+    if(button) button.classList.toggle("active", t===tab);
   });
 }
-
 function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
-
-function makeCanvasCard(title, canvasId){
-  const div=document.createElement("div");
-  div.className="card";
-  div.innerHTML=`<h3>${title}</h3><canvas id="${canvasId}"></canvas>`;
-  return div;
-}
-
-function chartOn(canvasId, labels, values, label){
-  const chart=new Chart(document.getElementById(canvasId),{
-    type:"bar",
-    data:{labels,datasets:[{label,data:values}]},
-    options:{
-      responsive:true,
-      plugins:{legend:{display:false}},
-      scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}}
-    }
+function makeCanvasCard(title,id){ const d=document.createElement("div"); d.className="card"; d.innerHTML=`<h3>${title}</h3><canvas id="${id}"></canvas>`; return d; }
+function chartOn(id,labels,values,label){
+  const ch=new Chart(document.getElementById(id),{
+    type:"bar", data:{labels,datasets:[{label,data:values}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}}}
   });
-  detailCharts.push(chart);
+  detailCharts.push(ch);
 }
 
 async function renderDetailCharts(){
   destroyDetailCharts();
   const listsBox=document.getElementById("chartTabLists");
-  const mayorsBox=document.getElementById("chartTabMayors");
   const prefsBox=document.getElementById("chartTabPrefs");
-  listsBox.innerHTML=""; mayorsBox.innerHTML=""; prefsBox.innerHTML="";
+  listsBox.innerHTML=""; prefsBox.innerHTML="";
   const d=await api("/api/section-details");
   const sections=Object.keys(d.sections).sort((a,b)=>(parseInt(a)||0)-(parseInt(b)||0) || a.localeCompare(b));
-  if(sections.length===0){
-    listsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
-    mayorsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
-    prefsBox.innerHTML="<p class='small'>Nessun dato di sezione disponibile.</p>";
-    return;
+  if(sections.length===0){ listsBox.innerHTML="<p class='small'>Nessun dato.</p>"; prefsBox.innerHTML="<p class='small'>Nessun dato.</p>"; return; }
+
+  const available=availableDetailLists(d);
+
+  const listTabBar=document.createElement("div"), listContent=document.createElement("div");
+  listTabBar.className="tabs"; listsBox.append(listTabBar,listContent);
+  function showList(listName,idx){
+    [...listTabBar.children].forEach(b=>b.classList.remove("active"));
+    if(listTabBar.children[idx]) listTabBar.children[idx].classList.add("active");
+    listContent.innerHTML="";
+    const id=`chart_list_${idx}`;
+    listContent.appendChild(makeCanvasCard(listName,id));
+    chartOn(id,sections,sections.map(sec=>d.sections[sec].lists[listName]||0),"Voti lista");
   }
-  const listTabBar=document.createElement("div"); listTabBar.className="tabs";
-  const listContent=document.createElement("div"); listsBox.append(listTabBar,listContent);
-  function showListChart(listName,idx){
-    [...listTabBar.children].forEach(b=>b.classList.remove("active")); listTabBar.children[idx].classList.add("active");
-    listContent.innerHTML=""; const canvasId=`chart_list_section_${idx}`; listContent.appendChild(makeCanvasCard(listName,canvasId));
-    chartOn(canvasId, sections, sections.map(sec=>d.sections[sec].lists[listName]||0), "Voti lista");
+  available.forEach((listName,idx)=>{
+    const b=document.createElement("button"); b.className="tab"+(idx===0?" active":""); b.textContent=listName; b.onclick=()=>showList(listName,idx); listTabBar.appendChild(b);
+  });
+  if(available[0]) showList(available[0],0);
+
+  const prefTabBar=document.createElement("div"), prefContent=document.createElement("div");
+  prefTabBar.className="tabs"; prefsBox.append(prefTabBar,prefContent);
+  function showPrefs(listName,idx){
+    [...prefTabBar.children].forEach(b=>b.classList.remove("active"));
+    if(prefTabBar.children[idx]) prefTabBar.children[idx].classList.add("active");
+    prefContent.innerHTML="";
+    const wrap=document.createElement("div"); wrap.className="card"; wrap.innerHTML=`<h3>${listName}</h3>`;
+    prefContent.appendChild(wrap);
+    d.data.lists[listName].candidates.forEach((candidate,cidx)=>{
+      const id=`chart_pref_${idx}_${cidx}`;
+      wrap.appendChild(makeCanvasCard(candidate,id));
+      chartOn(id,sections,sections.map(sec=>((d.sections[sec].preferences[listName]||{})[candidate])||0),"Preferenze");
+    });
   }
-  Object.keys(d.data.lists).forEach((listName,idx)=>{const b=document.createElement("button");b.className="tab"+(idx===0?" active":"");b.textContent=listName;b.onclick=()=>showListChart(listName,idx);listTabBar.appendChild(b)});
-  const firstList=Object.keys(d.data.lists)[0]; if(firstList)showListChart(firstList,0);
-  d.data.mayors.forEach((mayor,idx)=>{const canvasId=`chart_mayor_section_${idx}`;mayorsBox.appendChild(makeCanvasCard(mayor,canvasId));chartOn(canvasId,sections,sections.map(sec=>d.sections[sec].mayors[mayor]||0),"Voti sindaco")});
-  const prefTabBar=document.createElement("div"); prefTabBar.className="tabs";
-  const prefContent=document.createElement("div"); prefsBox.append(prefTabBar,prefContent);
-  function showPrefList(listName,idx){
-    [...prefTabBar.children].forEach(b=>b.classList.remove("active")); prefTabBar.children[idx].classList.add("active");
-    prefContent.innerHTML=""; const wrapper=document.createElement("div"); wrapper.className="card"; wrapper.innerHTML=`<h3>${listName}</h3><p class="small">Grafici dei candidati consiglieri della lista per singolo seggio.</p>`; prefContent.appendChild(wrapper);
-    d.data.lists[listName].candidates.forEach((candidate,candIdx)=>{const canvasId=`chart_pref_${idx}_${candIdx}`; const card=makeCanvasCard(candidate,canvasId); wrapper.appendChild(card); chartOn(canvasId,sections,sections.map(sec=>((d.sections[sec].preferences[listName]||{})[candidate])||0),"Preferenze")});
-  }
-  Object.keys(d.data.lists).forEach((listName,idx)=>{const b=document.createElement("button");b.className="tab"+(idx===0?" active":"");b.textContent=listName;b.onclick=()=>showPrefList(listName,idx);prefTabBar.appendChild(b)});
-  if(firstList)showPrefList(firstList,0);
+  available.forEach((listName,idx)=>{
+    const b=document.createElement("button"); b.className="tab"+(idx===0?" active":""); b.textContent=listName; b.onclick=()=>showPrefs(listName,idx); prefTabBar.appendChild(b);
+  });
+  if(available[0]) showPrefs(available[0],0);
 }
 
 async function loadUsers(){
@@ -236,41 +232,11 @@ async function loadUsers(){
     box.appendChild(div);
   });
 }
-
-async function createUser(){
-  try{
-    await api("/api/users",{method:"POST",body:JSON.stringify({
-      name:document.getElementById("newName").value.trim(),
-      phone:document.getElementById("newPhone").value.trim(),
-      pin:document.getElementById("newPin").value.trim(),
-      section:document.getElementById("newSection").value.trim(),
-      role:document.getElementById("newRole").value
-    })});
-    alert("Utente creato");
-    await loadUsers();
-  }catch(e){alert(e.message)}
-}
-
-async function deleteUser(id){
-  if(!confirm("Rimuovere definitivamente questo rappresentante/utente?"))return;
-  try{await api(`/api/users/${id}`,{method:"DELETE"});await loadUsers()}catch(e){alert(e.message)}
-}
-
-async function toggleUser(id){
-  if(!confirm("Cambiare stato attivo/disattivo dell'utente?"))return;
-  try{await api(`/api/users/${id}/toggle`,{method:"PATCH",body:"{}"});await loadUsers()}catch(e){alert(e.message)}
-}
-
-async function resetVotes(){
-  const c=prompt("Per confermare l'azzeramento di tutti i voti scrivi: AZZERA");
-  if(c!=="AZZERA")return alert("Operazione annullata");
-  try{await api("/api/reset-votes",{method:"POST",body:JSON.stringify({confirm:"AZZERA"})});alert("Voti azzerati");await loadDashboard()}catch(e){alert(e.message)}
-}
-
-async function reopenSection(section){
-  if(!confirm(`Riaprire il seggio ${section}? Il rappresentante potrà nuovamente accedere e modificare.`))return;
-  try{await api("/api/reopen-section",{method:"POST",body:JSON.stringify({section})});alert("Seggio riaperto");await loadDashboard()}catch(e){alert(e.message)}
-}
+async function createUser(){try{await api("/api/users",{method:"POST",body:JSON.stringify({name:document.getElementById("newName").value.trim(),phone:document.getElementById("newPhone").value.trim(),pin:document.getElementById("newPin").value.trim(),section:document.getElementById("newSection").value.trim(),role:document.getElementById("newRole").value})});alert("Utente creato");await loadUsers()}catch(e){alert(e.message)}}
+async function deleteUser(id){if(!confirm("Rimuovere definitivamente questo utente?"))return;try{await api(`/api/users/${id}`,{method:"DELETE"});await loadUsers()}catch(e){alert(e.message)}}
+async function toggleUser(id){if(!confirm("Cambiare stato utente?"))return;try{await api(`/api/users/${id}/toggle`,{method:"PATCH",body:"{}"});await loadUsers()}catch(e){alert(e.message)}}
+async function reopenSection(section){if(!confirm(`Riaprire il seggio ${section}?`))return;try{await api("/api/reopen-section",{method:"POST",body:JSON.stringify({section})});alert("Seggio riaperto");await loadDashboard()}catch(e){alert(e.message)}}
+async function resetVotes(){const c=prompt("Per confermare scrivi: AZZERA");if(c!=="AZZERA")return alert("Operazione annullata");try{await api("/api/reset-votes",{method:"POST",body:JSON.stringify({confirm:"AZZERA"})});alert("Voti azzerati");await loadDashboard()}catch(e){alert(e.message)}}
 
 loadDashboard();
 setInterval(loadDashboard,30000);

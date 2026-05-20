@@ -29,8 +29,9 @@
 <section class="card ok"><h2>Quadratura generale sezioni</h2><div id="ballotSummary"></div></section>
 
 <section class="grid">
-<div class="card"><h2>Sindaci - Totale</h2><canvas id="mayorChart"></canvas></div>
-<div class="card"><h2>Liste - Totale</h2><canvas id="listChart"></canvas></div>
+<div class="card"><h2>Candidati sindaco - torta</h2><canvas id="mayorPieChart"></canvas></div>
+<div class="card"><h2>Liste - torta</h2><canvas id="listPieChart"></canvas></div>
+<div class="card"><h2>Liste - istogramma</h2><canvas id="listBarChart"></canvas></div>
 </section>
 
 <section class="card ok"><h2>Premio di maggioranza ed eletti simulati</h2><div id="electedBox"></div></section>
@@ -39,19 +40,16 @@
 
 <section class="card">
 <h2>Grafici di dettaglio per seggio</h2>
-<p class="small">I grafici sono separati in tab: voti di lista per seggio, voti dei candidati sindaco per seggio, preferenze dei consiglieri per seggio.</p>
+<p class="small">Dettaglio per Partito Democratico, Movimento 2050 e Città Aperta - Controcorrente.</p>
 <div class="tabs">
 <button class="tab active" id="tabChartsLists" onclick="showChartTab('lists')">Liste per seggio</button>
-<button class="tab" id="tabChartsMayors" onclick="showChartTab('mayors')">Sindaci per seggio</button>
-<button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Consiglieri per seggio</button>
+<button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Candidati per seggio</button>
 </div>
 <div id="chartTabLists" class="chartTab"></div>
-<div id="chartTabMayors" class="chartTab hidden"></div>
 <div id="chartTabPrefs" class="chartTab hidden"></div>
 </section>
 
-<section class="card">
-<h2>Tabelle candidato-preferenze</h2>
+<section class="card"><h2>Tabelle candidato-preferenze</h2>
 <p class="small">Ogni tab mostra tutti i candidati della lista, anche con zero preferenze.</p>
 <div id="prefTableTabs" class="tabs"></div>
 <div id="prefTables"></div>
