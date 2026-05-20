@@ -123,3 +123,18 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - import io
   - import csv
 - Export CSV compatibile con Render/Gunicorn.
+
+
+## Versione v13
+- Candidati consiglieri presenti solo per:
+  - Partito Democratico
+  - Movimento 2050
+  - Città Aperta - Controcorrente
+- Tutte le liste restano disponibili per i voti di lista.
+- Dashboard admin:
+  - torta candidati sindaco;
+  - torta voti di lista;
+  - istogramma voti di lista.
+- Dettaglio per le tre liste:
+  - voti di lista per seggio in istogramma;
+  - voti candidati consiglieri per seggio in tab/istogrammi.
