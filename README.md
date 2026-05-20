@@ -156,3 +156,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - L'amministratore può riattivare un seggio chiuso mantenendo tutti i dati aggiornati già presenti.
 - La riattivazione azzera lo stato di chiusura (`closed=0`), cancella `closed_at` e aggiorna `updated_at`.
 - Il rappresentante del seggio riattivato può accedere nuovamente e ritrova i dati già inviati al server.
+
+
+## Versione v17
+- Nel pannello amministratore il pulsante `Riapri seggio al rappresentante` viene visualizzato solo se il seggio risulta chiuso.
+- Il pulsante riapre il seggio della sezione indicata mantenendo i dati già aggiornati.
+- Se il seggio è aperto, viene mostrato solo lo stato `aperto`, senza pulsante di riapertura.
