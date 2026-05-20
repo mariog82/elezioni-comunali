@@ -138,3 +138,15 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Dettaglio per le tre liste:
   - voti di lista per seggio in istogramma;
   - voti candidati consiglieri per seggio in tab/istogrammi.
+
+
+## Versione v14
+- Grafico a torta delle liste con colori distinti per ciascuna lista.
+- Grafico a torta dei sindaci con colori distinti.
+- Istogramma delle liste spostato sotto i due grafici a torta.
+
+
+## Versione v15
+- Se il rappresentante accede a un seggio già chiuso, oltre al messaggio compare il pulsante:
+  `Esci e cancella sessione`.
+- Il pulsante richiama `/api/logout`, elimina il cookie lato browser e riporta alla pagina iniziale.
