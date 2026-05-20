@@ -150,3 +150,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Se il rappresentante accede a un seggio già chiuso, oltre al messaggio compare il pulsante:
   `Esci e cancella sessione`.
 - Il pulsante richiama `/api/logout`, elimina il cookie lato browser e riporta alla pagina iniziale.
+
+
+## Versione v16
+- L'amministratore può riattivare un seggio chiuso mantenendo tutti i dati aggiornati già presenti.
+- La riattivazione azzera lo stato di chiusura (`closed=0`), cancella `closed_at` e aggiorna `updated_at`.
+- Il rappresentante del seggio riattivato può accedere nuovamente e ritrova i dati già inviati al server.

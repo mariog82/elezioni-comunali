@@ -16,8 +16,8 @@ app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
 ELECTION_DATA = {
   "mayors": [
-    "Nicola Barbera",
     "David Bongiovanni",
+    "Nicola Barbera",
     "Melangela Scolaro"
   ],
   "lists": {
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Movimento 5Stelle": {
+    "Movimento 2050": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -225,7 +225,7 @@ def init_db():
         "total_electors": "0",
         "total_voters": "0",
         "council_seats": "24",
-        "winner_mayor": "Nicola Barbera",
+        "winner_mayor": "David Bongiovanni",
         "mode": "first"
     }
     for key, value in defaults.items():
@@ -579,10 +579,39 @@ def close_seat():
 def reopen_section():
     data = request.get_json(force=True)
     section = str(data.get("section", "")).strip()
+
     if not section:
         return jsonify({"ok": False, "error": "Sezione obbligatoria"}), 400
-    conn = db(); conn.execute("UPDATE reports SET closed=0, closed_at=NULL WHERE section=?", (section,)); conn.commit(); conn.close()
-    return jsonify({"ok": True, "message": "Seggio riaperto"})
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    conn = db()
+    cur = conn.cursor()
+
+    row = cur.execute(
+        "SELECT id FROM reports WHERE section=? ORDER BY updated_at DESC LIMIT 1",
+        (section,)
+    ).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Nessuna rilevazione trovata per questo seggio"}), 404
+
+    # Riattiva il seggio mantenendo tutti i dati già aggiornati presenti nel database.
+    cur.execute(
+        "UPDATE reports SET closed=0, closed_at=NULL, updated_at=? WHERE section=?",
+        (now, section)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "message": "Seggio riattivato con i dati aggiornati già presenti. Il rappresentante può nuovamente accedere e modificare."
+    })
+
+
 
 @app.get("/api/dashboard")
 @admin_required
