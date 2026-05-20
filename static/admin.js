@@ -2,7 +2,7 @@
 let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
 let currentPrefTableList=null;
-const DETAIL_LISTS=["Partito Democratico","Movimento 5Stelle","Città Aperta - Controcorrente"];
+const DETAIL_LISTS=["Partito Democratico","Movimento 2050","Città Aperta - Controcorrente"];
 
 async function api(url, options={}){
   const res=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json"},...options});
@@ -117,7 +117,7 @@ function renderSections(d){
     const calculated=(s.total_lists||0)+(s.blank_ballots||0)+(s.null_ballots||0);
     const ok=calculated===(s.voters||0);
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${s.section}</td><td>${s.representative}</td><td>${s.voters||0}</td><td>${s.total_lists||0}</td><td>${s.blank_ballots||0}</td><td>${s.null_ballots||0}</td><td>${s.contested_ballots||0}</td><td>${ok?"OK":"NO ("+calculated+")"}<br>${s.closed?`<span class="badge">CHIUSO</span><br><button class="secondary" onclick="reopenSection('${s.section}')">Riapri</button>`:"<span class='muted'>aperto</span>"}</td><td>${s.updated_at}</td>`;
+    tr.innerHTML=`<td>${s.section}</td><td>${s.representative}</td><td>${s.voters||0}</td><td>${s.total_lists||0}</td><td>${s.blank_ballots||0}</td><td>${s.null_ballots||0}</td><td>${s.contested_ballots||0}</td><td>${ok?"OK":"NO ("+calculated+")"}<br>${s.closed?`<span class="badge">CHIUSO</span><br><button class="secondary" onclick="reopenSection('${s.section}')">Riattiva seggio</button>`:"<span class='muted'>aperto</span>"}</td><td>${s.updated_at}</td>`;
     tb.appendChild(tr);
   });
 }
