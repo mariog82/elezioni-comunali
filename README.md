@@ -162,3 +162,13 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Nel pannello amministratore il pulsante `Riapri seggio al rappresentante` viene visualizzato solo se il seggio risulta chiuso.
 - Il pulsante riapre il seggio della sezione indicata mantenendo i dati già aggiornati.
 - Se il seggio è aperto, viene mostrato solo lo stato `aperto`, senza pulsante di riapertura.
+
+
+## Versione v18
+- Solo l'amministratore visualizza campi input numerici per inserire direttamente i voti.
+- I campi input sono disponibili per:
+  - candidati sindaco;
+  - voti di lista;
+  - preferenze dei candidati consiglieri presenti.
+- I rappresentanti vedono solo i pulsanti + e -.
+- L'amministratore può usare sia input diretto sia pulsanti + e -.
