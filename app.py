@@ -79,7 +79,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Movimento 2050": {
+    "Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -256,7 +256,7 @@ def init_db():
         "total_electors": "0",
         "total_voters": "0",
         "council_seats": "24",
-        "winner_mayor": "David Bongiovanni",
+        "winner_mayor": "Nicola Barbera",
         "mode": "first"
     }
     for key, value in defaults.items():
