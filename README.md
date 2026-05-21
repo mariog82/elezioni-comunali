@@ -172,3 +172,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - preferenze dei candidati consiglieri presenti.
 - I rappresentanti vedono solo i pulsanti + e -.
 - L'amministratore può usare sia input diretto sia pulsanti + e -.
+
+
+## Versione v19
+- Nei grafici a torta dei candidati sindaco è mostrata la percentuale sui votanti totali.
+- Nel grafico a torta delle liste sono mostrati voti, percentuale sui votanti totali e seggi della lista.
+- Nell'istogramma delle liste sono mostrati voti, percentuale sui votanti totali e numero di seggi.
+- Se i votanti totali impostati dall'admin sono 0, viene usato il totale votanti rilevato dalle sezioni.
