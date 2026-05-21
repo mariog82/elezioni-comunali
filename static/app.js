@@ -11,6 +11,39 @@ function enc(s){return btoa(unescape(encodeURIComponent(s))).replace(/=/g,'').re
 function nval(id){return Math.max(0, parseInt(document.getElementById(id)?.value || "0", 10) || 0)}
 function sumObj(o){return Object.values(o).reduce((a,b)=>a+(parseInt(b||0,10)||0),0)}
 
+
+function isAdmin(){
+  return user && user.role === "admin";
+}
+
+function escJs(s){
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function setListDirect(listName, value){
+  if(!isAdmin()) return;
+  listVotes[listName] = Math.max(0, parseInt(value || "0", 10) || 0);
+  const out = document.getElementById(`list_${enc(listName)}`);
+  if(out) out.textContent = listVotes[listName];
+  updateValidationBox();
+}
+
+function setVoteDirect(name, type, list, value){
+  if(!isAdmin()) return;
+  const v = Math.max(0, parseInt(value || "0", 10) || 0);
+  if(type === "mayor"){
+    mayorVotes[name] = v;
+    const out = document.getElementById(`mayor_${enc(name)}`);
+    if(out) out.textContent = v;
+  }else{
+    prefs[list][name] = v;
+    const out = document.getElementById(`pref_${enc(list)}_${enc(name)}`);
+    if(out) out.textContent = v;
+  }
+  updateValidationBox();
+}
+
+
 async function start(){
   const token=new URLSearchParams(location.search).get("token");
   if(token){
@@ -100,31 +133,75 @@ function renderList(){
   const o=DATA.lists[currentList];
   const panel=document.getElementById("listPanel");
   panel.innerHTML=`<h3>${currentList} <span class="badge">${o.coalition}</span></h3>`;
+
   const lr=document.createElement("div");
-  lr.className="row";
-  lr.innerHTML=`<div class="name">Voti di lista</div><div class="votes" id="list_${enc(currentList)}">${listVotes[currentList]||0}</div>`;
+  lr.className=isAdmin() ? "row adminrow" : "row";
+
+  const nome=document.createElement("div");
+  nome.className="name";
+  nome.textContent="Voti di lista";
+
+  const valore=document.createElement("div");
+  valore.className="votes";
+  valore.id=`list_${enc(currentList)}`;
+  valore.textContent=listVotes[currentList]||0;
+
+  lr.append(nome,valore);
+
+  if(isAdmin()){
+    const inp=document.createElement("input");
+    inp.className="adminVoteInput";
+    inp.type="number";
+    inp.min="0";
+    inp.value=listVotes[currentList]||0;
+    inp.oninput=()=>setListDirect(currentList, inp.value);
+    inp.onchange=()=>setListDirect(currentList, inp.value);
+    lr.appendChild(inp);
+  }
+
   const p=document.createElement("button"); p.className="plus"; p.textContent="+"; p.onclick=()=>changeList(1);
   const m=document.createElement("button"); m.className="minus"; m.textContent="-"; m.onclick=()=>changeList(-1);
   lr.append(p,m);
   panel.appendChild(lr);
+
   o.candidates.forEach(c=>panel.appendChild(row(c,"pref",currentList)));
 }
-
 function row(name,type,list){
-  const r=document.createElement("div"); r.className="row";
-  const n=document.createElement("div"); n.className="name"; n.textContent=name;
-  const v=document.createElement("div"); v.className="votes";
+  const r=document.createElement("div");
+  r.className=isAdmin() ? "row adminrow" : "row";
+
+  const n=document.createElement("div");
+  n.className="name";
+  n.textContent=name;
+
+  const v=document.createElement("div");
+  v.className="votes";
   v.id=type==="mayor"?`mayor_${enc(name)}`:`pref_${enc(list)}_${enc(name)}`;
   v.textContent=type==="mayor"?(mayorVotes[name]||0):(prefs[list][name]||0);
+
+  r.append(n,v);
+
+  if(isAdmin()){
+    const inp=document.createElement("input");
+    inp.className="adminVoteInput";
+    inp.type="number";
+    inp.min="0";
+    inp.value=type==="mayor"?(mayorVotes[name]||0):(prefs[list][name]||0);
+    inp.oninput=()=>setVoteDirect(name,type,list,inp.value);
+    inp.onchange=()=>setVoteDirect(name,type,list,inp.value);
+    r.appendChild(inp);
+  }
+
   const p=document.createElement("button"); p.className="plus"; p.textContent="+"; p.onclick=()=>changeVote(name,type,list,1);
   const m=document.createElement("button"); m.className="minus"; m.textContent="-"; m.onclick=()=>changeVote(name,type,list,-1);
-  r.append(n,v,p,m);
+  r.append(p,m);
   return r;
 }
-
 function changeList(delta){
   listVotes[currentList]=Math.max(0,(listVotes[currentList]||0)+delta);
   document.getElementById(`list_${enc(currentList)}`).textContent=listVotes[currentList];
+  const inp=document.getElementById(`list_${enc(currentList)}`)?.parentElement?.querySelector(".adminVoteInput");
+  if(inp) inp.value=listVotes[currentList];
   updateValidationBox();
 }
 
@@ -132,9 +209,13 @@ function changeVote(name,type,list,delta){
   if(type==="mayor"){
     mayorVotes[name]=Math.max(0,(mayorVotes[name]||0)+delta);
     document.getElementById(`mayor_${enc(name)}`).textContent=mayorVotes[name];
+    const inp=document.getElementById(`mayor_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
+    if(inp) inp.value=mayorVotes[name];
   }else{
     prefs[list][name]=Math.max(0,(prefs[list][name]||0)+delta);
     document.getElementById(`pref_${enc(list)}_${enc(name)}`).textContent=prefs[list][name];
+    const inp=document.getElementById(`pref_${enc(list)}_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
+    if(inp) inp.value=prefs[list][name];
   }
   updateValidationBox();
 }
@@ -208,16 +289,28 @@ function clearMessage(){document.getElementById("messageBox").value=""}
 function refreshAllCounters(){
   DATA.mayors.forEach(name=>{
     const el=document.getElementById(`mayor_${enc(name)}`);
-    if(el) el.textContent=mayorVotes[name]||0;
+    if(el){
+      el.textContent=mayorVotes[name]||0;
+      const inp=el.parentElement?.querySelector(".adminVoteInput");
+      if(inp) inp.value=mayorVotes[name]||0;
+    }
   });
 
   Object.keys(DATA.lists).forEach(listName=>{
     const listEl=document.getElementById(`list_${enc(listName)}`);
-    if(listEl) listEl.textContent=listVotes[listName]||0;
+    if(listEl){
+      listEl.textContent=listVotes[listName]||0;
+      const inp=listEl.parentElement?.querySelector(".adminVoteInput");
+      if(inp) inp.value=listVotes[listName]||0;
+    }
 
     DATA.lists[listName].candidates.forEach(candidate=>{
       const prefEl=document.getElementById(`pref_${enc(listName)}_${enc(candidate)}`);
-      if(prefEl) prefEl.textContent=(prefs[listName]&&prefs[listName][candidate])||0;
+      if(prefEl){
+        prefEl.textContent=(prefs[listName]&&prefs[listName][candidate])||0;
+        const inp=prefEl.parentElement?.querySelector(".adminVoteInput");
+        if(inp) inp.value=(prefs[listName]&&prefs[listName][candidate])||0;
+      }
     });
   });
 }
