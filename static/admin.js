@@ -89,27 +89,141 @@ function colorPalette(count){
   for(let i=0;i<count;i++) colors.push(base[i % base.length]);
   return colors;
 }
-function drawMainCharts(d){
-  destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
-  const mayorLabels=d.mayors.map(x=>x.name), mayorValues=d.mayors.map(x=>x.total||0);
-  mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
-    type:"pie",
-    data:{labels:mayorLabels,datasets:[{data:mayorValues,backgroundColor:colorPalette(mayorLabels.length),borderWidth:1}]},
-    options:{responsive:true}
-  });
-
-  const listLabels=d.lists.map(x=>x.name), listValues=d.lists.map(x=>x.total||0);
-  listPieChart=new Chart(document.getElementById("listPieChart"),{
-    type:"pie",
-    data:{labels:listLabels,datasets:[{data:listValues,backgroundColor:colorPalette(listLabels.length),borderWidth:1}]},
-    options:{responsive:true}
-  });
-  listBarChart=new Chart(document.getElementById("listBarChart"),{
-    type:"bar", data:{labels:listLabels,datasets:[{data:listValues,label:"Voti lista",backgroundColor:colorPalette(listLabels.length)}]},
-    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}}}
-  });
+function totalVotersForCharts(d){
+  const fromSettings = d.election && d.election.settings ? parseInt(d.election.settings.total_voters || 0, 10) : 0;
+  const fromSections = d.ballot_totals ? parseInt(d.ballot_totals.voters || 0, 10) : 0;
+  return fromSettings > 0 ? fromSettings : fromSections;
 }
 
+function pctOnVoters(value, total){
+  if(!total || total <= 0) return "0.00%";
+  return ((value / total) * 100).toFixed(2) + "%";
+}
+
+function listSeatsFor(d, listName){
+  return d.election && d.election.list_seats ? (d.election.list_seats[listName] || 0) : 0;
+}
+
+function drawMainCharts(d){
+  destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
+
+  const totalVoters = totalVotersForCharts(d);
+
+  const mayorLabelsRaw = d.mayors.map(x=>x.name);
+  const mayorValues = d.mayors.map(x=>x.total||0);
+  const mayorLabels = d.mayors.map(x=>`${x.name} - ${x.total||0} voti (${pctOnVoters(x.total||0,totalVoters)})`);
+
+  mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
+    type:"pie",
+    data:{
+      labels:mayorLabels,
+      datasets:[{
+        data:mayorValues,
+        backgroundColor:typeof colorPalette==="function" ? colorPalette(mayorLabels.length) : undefined,
+        borderWidth:1
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              const value=ctx.parsed||0;
+              const rawName=mayorLabelsRaw[ctx.dataIndex]||ctx.label;
+              return `${rawName}: ${value} voti - ${pctOnVoters(value,totalVoters)} sui votanti`;
+            }
+          }
+        },
+        legend:{position:"bottom"}
+      }
+    }
+  });
+
+  const listLabelsRaw = d.lists.map(x=>x.name);
+  const listValues = d.lists.map(x=>x.total||0);
+  const listLabels = d.lists.map(x=>{
+    const seats=listSeatsFor(d,x.name);
+    return `${x.name} - ${x.total||0} voti (${pctOnVoters(x.total||0,totalVoters)}) - ${seats} seggi`;
+  });
+
+  listPieChart=new Chart(document.getElementById("listPieChart"),{
+    type:"pie",
+    data:{
+      labels:listLabels,
+      datasets:[{
+        data:listValues,
+        backgroundColor:typeof colorPalette==="function" ? colorPalette(listLabels.length) : undefined,
+        borderWidth:1
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              const value=ctx.parsed||0;
+              const rawName=listLabelsRaw[ctx.dataIndex]||ctx.label;
+              const seats=listSeatsFor(d,rawName);
+              return `${rawName}: ${value} voti - ${pctOnVoters(value,totalVoters)} sui votanti - ${seats} seggi`;
+            }
+          }
+        },
+        legend:{position:"bottom"}
+      }
+    }
+  });
+
+  listBarChart=new Chart(document.getElementById("listBarChart"),{
+    type:"bar",
+    data:{
+      labels:listLabelsRaw,
+      datasets:[{
+        data:listValues,
+        label:"Voti lista",
+        backgroundColor:typeof colorPalette==="function" ? colorPalette(listLabelsRaw.length) : undefined
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:function(ctx){
+              const value=ctx.parsed.y||0;
+              const rawName=listLabelsRaw[ctx.dataIndex]||ctx.label;
+              const seats=listSeatsFor(d,rawName);
+              return `${value} voti - ${pctOnVoters(value,totalVoters)} sui votanti - ${seats} seggi`;
+            },
+            afterLabel:function(ctx){
+              const rawName=listLabelsRaw[ctx.dataIndex]||ctx.label;
+              return `Seggi lista: ${listSeatsFor(d,rawName)}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          ticks:{
+            autoSkip:false,
+            maxRotation:70,
+            minRotation:30,
+            callback:function(value,index){
+              const name=this.getLabelForValue(value);
+              const item=d.lists.find(x=>x.name===name);
+              const votes=item ? (item.total||0) : 0;
+              const seats=listSeatsFor(d,name);
+              return [name, `${pctOnVoters(votes,totalVoters)} - ${seats} seggi`];
+            }
+          }
+        },
+        y:{beginAtZero:true}
+      }
+    }
+  });
+}
 function renderSections(d){
   const tb=document.getElementById("sections");
   tb.innerHTML="";
