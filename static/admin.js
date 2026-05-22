@@ -453,3 +453,37 @@ async function resetVotes(){const c=prompt("Per confermare scrivi: AZZERA");if(c
 
 loadDashboard();
 setInterval(loadDashboard,30000);
+
+
+async function importUsersCsv(){
+  const input = document.getElementById("csvUsersFile");
+
+  if(!input || !input.files || !input.files.length){
+    alert("Seleziona un file CSV.");
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("file", input.files[0]);
+
+  try{
+    const res = await fetch("/api/users/import-csv", {
+      method: "POST",
+      body: fd,
+      credentials: "include"
+    });
+
+    const data = await res.json();
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "Errore import CSV");
+    }
+
+    alert(data.message || "CSV importato.");
+    input.value = "";
+    await loadUsers();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
