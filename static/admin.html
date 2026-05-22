@@ -59,6 +59,19 @@
 <div id="prefTables"></div>
 </section>
 
+
+<section class="card importCsvBox">
+  <h2>Importa rappresentanti / utenti da CSV</h2>
+  <p class="small">
+    Carica un file CSV separato da punto e virgola con questo formato:<br>
+    <b>nome;telefono/codice;sezione;ruolo;pin</b>
+  </p>
+  <input type="file" id="csvUsersFile" accept=".csv,text/csv">
+  <div class="actions">
+    <button onclick="importUsersCsv()">Importa CSV rappresentanti/utenti</button>
+  </div>
+</section>
+
 <section class="card"><h2>Rappresentanti / utenti autorizzati</h2><div class="grid"><input id="newName" placeholder="Nome"><input id="newPhone" placeholder="Telefono/codice"><input id="newPin" placeholder="PIN"><input id="newSection" placeholder="Sezione"><select id="newRole"><option value="rappresentante">rappresentante</option><option value="admin">admin</option></select></div><button onclick="createUser()">Aggiungi rappresentante/utente</button><div id="users"></div></section>
 
 <section class="card dangerBox"><h2>Azzeramento voti</h2><p>Questa operazione cancella tutti i voti e tutte le rilevazioni inviate dai rappresentanti. Gli utenti restano registrati.</p><button class="danger" onclick="resetVotes()">Azzera tutti i voti</button></section>
