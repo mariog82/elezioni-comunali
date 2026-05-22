@@ -697,6 +697,44 @@ def create_user():
     conn.close()
     return jsonify({"ok": True})
 
+
+@app.patch("/api/users/<int:user_id>")
+@admin_required
+def update_user(user_id):
+    data = request.get_json(force=True)
+
+    name = str(data.get("name", "")).strip()
+    phone = str(data.get("phone", "")).strip()
+    section = str(data.get("section", "")).strip() or None
+    role = str(data.get("role", "rappresentante")).strip()
+    pin = str(data.get("pin", "")).strip()
+
+    if not name or not phone:
+        return jsonify({"ok": False, "error": "Nome e telefono/codice sono obbligatori"}), 400
+
+    if role not in ["admin", "rappresentante"]:
+        return jsonify({"ok": False, "error": "Ruolo non valido"}), 400
+
+    conn = db()
+    try:
+        if pin:
+            conn.execute(
+                "UPDATE users SET name=?, phone=?, section=?, role=?, pin_hash=? WHERE id=?",
+                (name, phone, section, role, generate_password_hash(pin), user_id)
+            )
+        else:
+            conn.execute(
+                "UPDATE users SET name=?, phone=?, section=?, role=? WHERE id=?",
+                (name, phone, section, role, user_id)
+            )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"ok": False, "error": "Telefono/codice già esistente"}), 409
+
+    conn.close()
+    return jsonify({"ok": True, "message": "Utente aggiornato correttamente"})
+
 @app.delete("/api/users/<int:user_id>")
 @admin_required
 def delete_user(user_id):

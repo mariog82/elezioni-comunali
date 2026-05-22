@@ -200,3 +200,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Il calcolo dei seggi utilizza il valore inserito dall'amministratore nel campo `Consiglieri da eleggere`; default 24.
 - Nella raccolta dati del seggio, `Schede contestate` è sostituito da `Numero di elettori`.
 - Il numero di elettori del seggio è informativo e non entra nella quadratura votanti = validi + bianche + nulle.
+
+
+## Versione v24
+- Editing dei rappresentanti/utenti autorizzati dal pannello amministratore.
+- È possibile modificare nome, telefono/codice, sezione, ruolo e PIN.
+- Il PIN è opzionale: lasciandolo vuoto resta invariato.
