@@ -71,8 +71,8 @@ function renderBallotSummary(d){
   <p><b>Elettori:</b> ${d.election.settings.total_electors} &nbsp; <b>Votanti impostati:</b> ${settingVoters} &nbsp; <b>Affluenza:</b> ${turnout}%</p>
   <p><b>Votanti rilevati:</b> ${voters}<br>
   <b>Voti validi lista:</b> ${validLists}<br>
-  <b>Bianche:</b> ${b.blank_ballots||0} &nbsp; <b>Nulle:</b> ${b.null_ballots||0} &nbsp; <b>Contestate indicative:</b> ${b.contested_ballots||0}<br>
-  <b>Totale controllo senza contestate:</b> ${calculated}<br>
+  <b>Bianche:</b> ${b.blank_ballots||0} &nbsp; <b>Nulle:</b> ${b.null_ballots||0} &nbsp; <b>Elettori sezioni:</b> ${b.section_electors||b.contested_ballots||0}<br>
+  <b>Totale controllo senza elettori:</b> ${calculated}<br>
   <b>Quadratura:</b> ${calculated===voters ? "OK" : "NON QUADRA"}</p>`;
 }
 
@@ -245,7 +245,7 @@ function renderSections(d){
       <td>${s.total_lists||0}</td>
       <td>${s.blank_ballots||0}</td>
       <td>${s.null_ballots||0}</td>
-      <td>${s.contested_ballots||0}</td>
+      <td>${s.section_electors||s.contested_ballots||0}</td>
       <td>${ok?"OK":"NO ("+calculated+")"}<br>${statusHtml}</td>
       <td>${s.updated_at}</td>`;
     tb.appendChild(tr);

@@ -234,16 +234,16 @@ function updateValidationBox(){
   const valid=validVotesForControl();
   const blank=nval("blankBallots");
   const nul=nval("nullBallots");
-  const contested=nval("contestedBallots");
+  const contested=nval("sectionElectors");
   const expected=valid+blank+nul;
   const diff=voters-expected;
   box.className="card small "+(diff===0?"ok":"warn");
   box.innerHTML=`<b>Controllo votanti:</b><br>
   Voti validi rilevati = ${valid}<br>
-  Schede bianche = ${blank}, nulle = ${nul}, contestate = ${contested}<br>
-  Totale calcolato, senza contestate = ${expected}<br>
+  Schede bianche = ${blank}, nulle = ${nul}, elettori = ${contested}<br>
+  Totale calcolato, senza elettori = ${expected}<br>
   Votanti inseriti = ${voters}<br>
-  ${diff===0 ? "<b>Quadratura corretta.</b>" : "<b>Errore di quadratura:</b> differenza " + diff + ". I votanti devono essere uguali a voti validi + bianche + nulle. Le contestate sono solo indicative."}`;
+  ${diff===0 ? "<b>Quadratura corretta.</b>" : "<b>Errore di quadratura:</b> differenza " + diff + ". I votanti devono essere uguali a voti validi + bianche + nulle. Il numero di elettori è informativo."}`;
 }
 
 function generateMessage(){
@@ -251,12 +251,12 @@ function generateMessage(){
   const voters=nval("voters");
   const blank=nval("blankBallots");
   const nul=nval("nullBallots");
-  const contested=nval("contestedBallots");
+  const contested=nval("sectionElectors");
   const valid=validVotesForControl();
   const expected=expectedVoters();
 
   let txt=`RIEPILOGO VOTI - Comunali Barcellona P.G.\nSezione: ${section}\nAggiornamento: ${new Date().toLocaleString("it-IT")}\n`;
-  txt+=`\nQUADRATURA SEGGIO\nVotanti: ${voters}\nVoti validi: ${valid}\nSchede bianche: ${blank}\nSchede nulle: ${nul}\nSchede contestate: ${contested}\nTotale controllo, senza contestate: ${expected}\nEsito: ${voters===expected?"OK":"NON QUADRA"}\n`;
+  txt+=`\nQUADRATURA SEGGIO\nVotanti: ${voters}\nVoti validi: ${valid}\nSchede bianche: ${blank}\nSchede nulle: ${nul}\nNumero di elettori: ${contested}\nTotale controllo, senza elettori: ${expected}\nEsito: ${voters===expected?"OK":"NON QUADRA"}\n`;
 
   txt+=`\nCANDIDATI SINDACO\n`;
   Object.entries(mayorVotes).sort((a,b)=>b[1]-a[1]).forEach(([n,v],i)=>txt+=`${i+1}. ${n}: ${v}\n`);
@@ -327,7 +327,7 @@ async function loadReportFromServer(){
     document.getElementById("voters").value=report.voters||0;
     document.getElementById("blankBallots").value=report.blank_ballots||0;
     document.getElementById("nullBallots").value=report.null_ballots||0;
-    document.getElementById("contestedBallots").value=report.contested_ballots||0;
+    document.getElementById("sectionElectors").value=report.section_electors||report.contested_ballots||0;
 
     DATA.mayors.forEach(name=>mayorVotes[name]=report.mayors[name]||0);
 
@@ -360,7 +360,7 @@ async function sendReport(){
       voters,
       blank_ballots:nval("blankBallots"),
       null_ballots:nval("nullBallots"),
-      contested_ballots:nval("contestedBallots"),
+      section_electors:nval("sectionElectors"),
       mayors:mayorVotes,
       list_votes:listVotes,
       preferences:prefs
@@ -381,7 +381,7 @@ async function closeSeat(){
       voters:nval("voters"),
       blank_ballots:nval("blankBallots"),
       null_ballots:nval("nullBallots"),
-      contested_ballots:nval("contestedBallots"),
+      section_electors:nval("sectionElectors"),
       mayors:mayorVotes,
       list_votes:listVotes,
       preferences:prefs
