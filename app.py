@@ -16,8 +16,8 @@ app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
 ELECTION_DATA = {
   "mayors": [
-    "David Bongiovanni",
     "Nicola Barbera",
+    "David Bongiovanni",
     "Melangela Scolaro"
   ],
   "lists": {
@@ -225,7 +225,7 @@ def init_db():
         "total_electors": "0",
         "total_voters": "0",
         "council_seats": "24",
-        "winner_mayor": "David Bongiovanni",
+        "winner_mayor": "Nicola Barbera",
         "mode": "first"
     }
     for key, value in defaults.items():
@@ -289,7 +289,7 @@ def get_settings(conn):
         "total_electors": int(settings.get("total_electors", "0") or 0),
         "total_voters": int(settings.get("total_voters", "0") or 0),
         "council_seats": int(settings.get("council_seats", "24") or 24),
-        "winner_mayor": settings.get("winner_mayor", "David Bongiovanni"),
+        "winner_mayor": settings.get("winner_mayor", "Nicola Barbera"),
         "mode": settings.get("mode", "first"),
     }
 
@@ -457,6 +457,7 @@ def my_report():
         "voters": report["voters"],
         "blank_ballots": report["blank_ballots"],
         "null_ballots": report["null_ballots"],
+        "section_electors": report["contested_ballots"],
         "contested_ballots": report["contested_ballots"],
         "closed": bool(report["closed"]),
         "closed_at": report["closed_at"],
@@ -475,7 +476,7 @@ def save_report():
     voters = int(data.get("voters", 0) or 0)
     blank_ballots = int(data.get("blank_ballots", 0) or 0)
     null_ballots = int(data.get("null_ballots", 0) or 0)
-    contested_ballots = int(data.get("contested_ballots", 0) or 0)
+    section_electors = int(data.get("section_electors", data.get("contested_ballots", 0)) or 0)
     mayor_votes = data.get("mayors", {})
     list_votes = data.get("list_votes", {})
     preferences = data.get("preferences", {})
@@ -498,10 +499,10 @@ def save_report():
         return jsonify({"ok": False, "error": "Il seggio risulta già chiuso. Non puoi più modificare o inviare dati."}), 403
     if existing:
         report_id = existing["id"]
-        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, contested_ballots, now, report_id))
+        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, report_id))
         cur.execute("DELETE FROM votes WHERE report_id=?", (report_id,))
     else:
-        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, contested_ballots, now, now))
+        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, now, now))
         report_id = cur.lastrowid
     for name in ELECTION_DATA["mayors"]:
         cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "sindaco", None, name, int(mayor_votes.get(name, 0) or 0)))
@@ -538,7 +539,7 @@ def close_seat():
     voters = int(data.get("voters", 0) or 0)
     blank_ballots = int(data.get("blank_ballots", 0) or 0)
     null_ballots = int(data.get("null_ballots", 0) or 0)
-    contested_ballots = int(data.get("contested_ballots", 0) or 0)
+    section_electors = int(data.get("section_electors", data.get("contested_ballots", 0)) or 0)
     mayor_votes = data.get("mayors", {})
     list_votes = data.get("list_votes", {})
     preferences = data.get("preferences", {})
@@ -559,10 +560,10 @@ def close_seat():
         conn.close(); return jsonify({"ok": False, "error": "Il seggio è già chiuso."}), 403
     if existing:
         report_id = existing["id"]
-        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, closed=1, closed_at=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, contested_ballots, now, now, report_id))
+        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, closed=1, closed_at=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, now, report_id))
         cur.execute("DELETE FROM votes WHERE report_id=?", (report_id,))
     else:
-        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, contested_ballots, 1, now, now, now))
+        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, 1, now, now, now))
         report_id = cur.lastrowid
     for name in ELECTION_DATA["mayors"]:
         cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "sindaco", None, name, int(mayor_votes.get(name, 0) or 0)))
@@ -632,7 +633,7 @@ def dashboard():
         GROUP BY r.id
         ORDER BY CAST(r.section AS INTEGER), r.section
     """).fetchall()
-    ballot_totals = conn.execute("SELECT COALESCE(SUM(voters),0) AS voters, COALESCE(SUM(blank_ballots),0) AS blank_ballots, COALESCE(SUM(null_ballots),0) AS null_ballots, COALESCE(SUM(contested_ballots),0) AS contested_ballots FROM reports").fetchone()
+    ballot_totals = conn.execute("SELECT COALESCE(SUM(voters),0) AS voters, COALESCE(SUM(blank_ballots),0) AS blank_ballots, COALESCE(SUM(null_ballots),0) AS null_ballots, COALESCE(SUM(contested_ballots),0) AS section_electors FROM reports").fetchone()
     election = compute_elected(conn)
     conn.close()
     return jsonify({"ok": True, "mayors": [dict(row) for row in mayors], "lists": [dict(row) for row in lists], "preferences": [dict(row) for row in preferences], "sections": [dict(row) for row in sections], "ballot_totals": dict(ballot_totals), "data": ELECTION_DATA, "election": election})
@@ -818,7 +819,7 @@ def export_csv():
         "Votanti",
         "Bianche",
         "Nulle",
-        "Contestate",
+        "Elettori",
         "Aggiornato",
         "Tipo",
         "Lista",

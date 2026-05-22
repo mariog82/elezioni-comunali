@@ -192,3 +192,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   `Identifier 'inp' has already been declared`.
 - Verificata sintassi di `app.js` con Node.
 - Login ripristinato.
+
+
+## Versione v23
+- `Sindaco eletto / coalizione vincente` impostato di default su Nicola Barbera.
+- Nicola Barbera è mostrato come primo candidato sindaco.
+- Il calcolo dei seggi utilizza il valore inserito dall'amministratore nel campo `Consiglieri da eleggere`; default 24.
+- Nella raccolta dati del seggio, `Schede contestate` è sostituito da `Numero di elettori`.
+- Il numero di elettori del seggio è informativo e non entra nella quadratura votanti = validi + bianche + nulle.
