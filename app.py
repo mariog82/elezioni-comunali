@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Lista 01 - Città Aperta - Controcorrente": {
+    "Lista 001 - Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Lista 012 - Movimento 5Stelle": {
+    "Lista 0012 - Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Lista 010 - Partito Democratico": {
+    "Lista 0010 - Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,11 +102,11 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "Lista 8 - De Luca Sindaco di Sicilia": {
+    "Lista 08 - De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 5 - Avremo Cura di Te": {
+    "Lista 05 - Avremo Cura di Te": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
@@ -134,15 +134,15 @@ ELECTION_DATA = {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 9 - Fuori dal Coro": {
+    "Lista 09 - Fuori dal Coro": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 3 - Ascoltiamo Barcellona": {
+    "Lista 03 - Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 7 - Noi Ci Siamo": {
+    "Lista 07 - Noi Ci Siamo": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
@@ -150,11 +150,11 @@ ELECTION_DATA = {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 6 - Azzurri per Barcellona P.G.": {
+    "Lista 06 - Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 2 - Vamos! Con Barbera Sindaco": {
+    "Lista 02 - Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
