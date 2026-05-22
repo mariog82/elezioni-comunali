@@ -161,6 +161,11 @@ ELECTION_DATA = {
   }
 }
 
+def fast_pin_hash(pin):
+    # Import CSV: hashing volutamente leggero per evitare timeout su Render.
+    # check_password_hash resta compatibile con questo formato Werkzeug.
+    return generate_password_hash(str(pin), method="pbkdf2:sha256:1", salt_length=4)
+
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -702,6 +707,7 @@ def create_user():
 
 
 
+
 @app.post("/api/users/import-csv")
 @admin_required
 def import_users_csv():
@@ -712,8 +718,8 @@ def import_users_csv():
 
     try:
         raw = uploaded_file.read()
-        if len(raw) > 1024 * 1024:
-            return jsonify({"ok": False, "error": "File troppo grande. Limite massimo: 1 MB"}), 400
+        if len(raw) > 256 * 1024:
+            return jsonify({"ok": False, "error": "File troppo grande. Limite massimo: 256 KB"}), 400
         content = raw.decode("utf-8-sig", errors="ignore")
     except Exception:
         return jsonify({"ok": False, "error": "Impossibile leggere il file CSV"}), 400
@@ -731,24 +737,33 @@ def import_users_csv():
     if not rows:
         return jsonify({"ok": False, "error": "CSV vuoto"}), 400
 
-    # Salta intestazione eventuale.
     first = ";".join(rows[0]).lower().replace(" ", "")
     if first.startswith("nome;") or "telefono" in first or "codice" in first:
         rows = rows[1:]
 
-    if len(rows) > 500:
-        return jsonify({"ok": False, "error": "Troppe righe. Import massimo consentito: 500 utenti per volta"}), 400
+    # Batch piccolo per evitare timeout Gunicorn su Render free.
+    if len(rows) > 100:
+        return jsonify({
+            "ok": False,
+            "error": "Troppe righe. Import massimo consentito: 100 utenti per volta. Dividi il CSV in più file."
+        }), 400
 
+    now = datetime.now().isoformat(timespec="seconds")
     imported = 0
     updated = 0
     skipped = 0
     errors = []
-    pin_hash_cache = {}
 
     conn = db()
     cur = conn.cursor()
 
     try:
+        existing_rows = cur.execute("SELECT phone FROM users").fetchall()
+        existing_phones = {r["phone"] for r in existing_rows}
+
+        # Cache hashing: se più utenti hanno stesso PIN, l'hash si calcola una sola volta.
+        pin_hash_cache = {}
+
         for idx, row in enumerate(rows, start=1):
             if len(row) < 3:
                 skipped += 1
@@ -769,18 +784,12 @@ def import_users_csv():
                 errors.append(f"Riga {idx}: nome o telefono/codice mancante")
                 continue
 
-            # Evita il costoso hash ripetuto quando molte righe usano lo stesso PIN.
             if pin not in pin_hash_cache:
-                pin_hash_cache[pin] = generate_password_hash(
-                    pin,
-                    method="pbkdf2:sha256",
-                    salt_length=8
-                )
+                pin_hash_cache[pin] = fast_pin_hash(pin)
+
             pin_hash = pin_hash_cache[pin]
 
-            existing = cur.execute("SELECT id FROM users WHERE phone=?", (phone,)).fetchone()
-
-            if existing:
+            if phone in existing_phones:
                 cur.execute(
                     "UPDATE users SET name=?, section=?, role=?, pin_hash=?, active=1 WHERE phone=?",
                     (name, section, role, pin_hash, phone)
@@ -789,8 +798,9 @@ def import_users_csv():
             else:
                 cur.execute(
                     "INSERT INTO users(name, phone, section, role, pin_hash, qr_token, active, created_at) VALUES(?,?,?,?,?,?,1,?)",
-                    (name, phone, section, role, pin_hash, secrets.token_urlsafe(24), datetime.now().isoformat(timespec="seconds"))
+                    (name, phone, section, role, pin_hash, secrets.token_urlsafe(12), now)
                 )
+                existing_phones.add(phone)
                 imported += 1
 
         conn.commit()
@@ -798,7 +808,7 @@ def import_users_csv():
     except Exception as exc:
         conn.rollback()
         conn.close()
-        return jsonify({"ok": False, "error": f"Errore durante import CSV: {str(exc)}"}), 500
+        return jsonify({"ok": False, "error": f"Errore import CSV: {str(exc)}"}), 500
 
     conn.close()
 

@@ -245,3 +245,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - cache degli hash dei PIN;
   - hashing PIN più leggero con `pbkdf2:sha256`.
 - L'import resta transazionale: in caso di errore grave viene fatto rollback.
+
+
+## Versione v31
+- Corretto timeout Gunicorn/Render durante import CSV.
+- Import massimo ridotto a 100 righe per volta.
+- Limite file ridotto a 256 KB.
+- Hash PIN ultra-leggero per import CSV: `pbkdf2:sha256:1`.
+- Cache degli hash PIN ripetuti.
+- Procfile aggiornato con `gunicorn --timeout 120 app:app`.
