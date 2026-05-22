@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Città Aperta - Controcorrente": {
+    "Lista 01 - Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Movimento 5Stelle": {
+    "Lista 012 - Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Partito Democratico": {
+    "Lista 010 - Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,59 +102,59 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "De Luca Sindaco di Sicilia": {
+    "Lista 8 - De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Avremo Cura di Te": {
+    "Lista 5 - Avremo Cura di Te": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Scolaro Sindaco": {
+    "Lista 16 - Scolaro Sindaco": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Una Marcia in Più": {
+    "Lista 4 - Una Marcia in Più": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Barcellona Pozzo di Gotto in Comune": {
+    "Lista 13 - Barcellona Pozzo di Gotto in Comune": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Fratelli d’Italia": {
+    "Lista 15 - Fratelli d’Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Nicola Barbera Sindaco": {
+    "Lista 14 - Nicola Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "La Civica Barcellona P.G.": {
+    "Lista 17 - Lista Civica": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Fuori dal Coro": {
+    "Lista 9 - Fuori dal Coro": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Ascoltiamo Barcellona": {
+    "Lista 3 - Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Noi Ci Siamo": {
+    "Lista 7 - Noi Ci Siamo": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Forza Italia": {
+    "Lista 11 - Forza Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Azzurri per Barcellona P.G.": {
+    "Lista 6 - Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Vamos! Con Barbera Sindaco": {
+    "Lista 2 - Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
