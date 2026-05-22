@@ -473,7 +473,15 @@ async function importUsersCsv(){
       credentials: "include"
     });
 
-    const data = await res.json();
+    let data;
+    const text = await res.text();
+
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      console.error(text);
+      throw new Error("Il server ha restituito una pagina HTML invece del JSON atteso. Verifica che Render abbia riavviato correttamente l'app.");
+    }
 
     if(!res.ok || !data.ok){
       throw new Error(data.error || "Errore import CSV");
@@ -487,3 +495,8 @@ async function importUsersCsv(){
     alert(e.message);
   }
 }
+
+
+window.addEventListener('unhandledrejection', function(e){
+  console.error(e.reason || e);
+});
