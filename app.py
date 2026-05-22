@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Lista 1 - Città Aperta - Controcorrente": {
+    "Lista 01 - Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Lista 12 - Movimento 5Stelle": {
+    "Lista 012 - Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Lista 10 - Partito Democratico": {
+    "Lista 010 - Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
