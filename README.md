@@ -127,9 +127,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 
 ## Versione v13
 - Candidati consiglieri presenti solo per:
-  - Lista 10 Partito Democratico
-  - Lista 12 Lista 12 Movimento cinque stelle
-  - Lista 1 Città Aperta-Controcorrente
+  - Partito Democratico
+  - Movimento 5Stelle
+  - Città Aperta - Controcorrente
 - Tutte le liste restano disponibili per i voti di lista.
 - Dashboard admin:
   - torta candidati sindaco;
@@ -184,7 +184,7 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v20
 - Anche i rappresentanti possono inserire direttamente i voti tramite campo numerico.
 - Restano disponibili i pulsanti + e -.
-- La lista `Movimento 2050` è stata rinominata in `Lista 12 Lista 12 Movimento cinque stelle`.
+- La lista `Movimento 2050` è stata rinominata in `Movimento 5Stelle`.
 
 
 ## Versione v21
@@ -254,7 +254,3 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Hash PIN ultra-leggero per import CSV: `pbkdf2:sha256:1`.
 - Cache degli hash PIN ripetuti.
 - Procfile aggiornato con `gunicorn --timeout 120 app:app`.
-
-
-## Versione v32
-- Aggiornati i nomi ufficiali delle 17 liste elettorali.

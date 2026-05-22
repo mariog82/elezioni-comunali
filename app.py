@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Lista 1 Città Aperta-Controcorrente": {
+    "Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Lista 12 Lista 12 Movimento cinque stelle": {
+    "Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Lista 10 Partito Democratico": {
+    "Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,7 +102,7 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "Lista 8 De Luca Sindaco di Sicilia": {
+    "De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
@@ -110,7 +110,7 @@ ELECTION_DATA = {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 16 Scolaro Sindaco": {
+    "Scolaro Sindaco": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
@@ -118,7 +118,7 @@ ELECTION_DATA = {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 13 Barcellona Pozzo di Gotto in Comune": {
+    "Barcellona Pozzo di Gotto in Comune": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
@@ -126,7 +126,7 @@ ELECTION_DATA = {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 14 Nicola Barbera Sindaco": {
+    "Nicola Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
@@ -138,7 +138,7 @@ ELECTION_DATA = {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 3 Ascoltiamo Barcellona": {
+    "Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
@@ -146,15 +146,15 @@ ELECTION_DATA = {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 11 Forza Italia": {
+    "Forza Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 6 Azzurri per Barcellona P.G.": {
+    "Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 2 Vamos! Con Barbera Sindaco": {
+    "Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
