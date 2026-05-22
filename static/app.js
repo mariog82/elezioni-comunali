@@ -189,31 +189,34 @@ function row(name,type,list){
 }
 function changeList(delta){
   listVotes[currentList]=Math.max(0,(listVotes[currentList]||0)+delta);
-  document.getElementById(`list_${enc(currentList)}`).textContent=listVotes[currentList];
-  const inp=document.getElementById(`list_${enc(currentList)}`)?.parentElement?.querySelector(".adminVoteInput");
-  if(inp) inp.value=listVotes[currentList];
-  updateValidationBox();
-}
-
-function changeVote(name,type,list,delta){
-  if(type==="mayor"){
-    mayorVotes[name]=Math.max(0,(mayorVotes[name]||0)+delta);
-    document.getElementById(`mayor_${enc(name)}`).textContent=mayorVotes[name];
-    const inp=document.getElementById(`mayor_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=mayorVotes[name];
-    const inp=document.getElementById(`mayor_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=mayorVotes[name];
-  }else{
-    prefs[list][name]=Math.max(0,(prefs[list][name]||0)+delta);
-    document.getElementById(`pref_${enc(list)}_${enc(name)}`).textContent=prefs[list][name];
-    const inp=document.getElementById(`pref_${enc(list)}_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=prefs[list][name];
-    const inp=document.getElementById(`pref_${enc(list)}_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=prefs[list][name];
+  const out=document.getElementById(`list_${enc(currentList)}`);
+  if(out){
+    out.textContent=listVotes[currentList];
+    const inputEl=out.parentElement?.querySelector(".adminVoteInput");
+    if(inputEl) inputEl.value=listVotes[currentList];
   }
   updateValidationBox();
 }
-
+function changeVote(name,type,list,delta){
+  if(type==="mayor"){
+    mayorVotes[name]=Math.max(0,(mayorVotes[name]||0)+delta);
+    const out=document.getElementById(`mayor_${enc(name)}`);
+    if(out){
+      out.textContent=mayorVotes[name];
+      const inputEl=out.parentElement?.querySelector(".adminVoteInput");
+      if(inputEl) inputEl.value=mayorVotes[name];
+    }
+  }else{
+    prefs[list][name]=Math.max(0,(prefs[list][name]||0)+delta);
+    const out=document.getElementById(`pref_${enc(list)}_${enc(name)}`);
+    if(out){
+      out.textContent=prefs[list][name];
+      const inputEl=out.parentElement?.querySelector(".adminVoteInput");
+      if(inputEl) inputEl.value=prefs[list][name];
+    }
+  }
+  updateValidationBox();
+}
 function validVotesForControl(){
   const validMayor=sumObj(mayorVotes);
   const validList=sumObj(listVotes);
