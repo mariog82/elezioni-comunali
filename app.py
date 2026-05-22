@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Movimento 5Stelle": {
+    "Movimento 2050": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
