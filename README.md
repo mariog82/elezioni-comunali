@@ -220,3 +220,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   nome;telefono/codice;sezione;ruolo;pin
 - Separatore obbligatorio: ;
 - PIN predefinito: 1234 se non indicato.
+
+
+## Versione v27
+- Reso visibile in modo esplicito nel pannello amministratore il blocco:
+  `Importa rappresentanti / utenti da CSV`.
+- Il blocco è posizionato sopra la lista `Rappresentanti / utenti autorizzati`.
+- Pulsante: `Importa CSV rappresentanti/utenti`.
