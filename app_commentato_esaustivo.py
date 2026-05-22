@@ -1,19 +1,47 @@
+# ================================================================
+# APP FLASK PER RACCOLTA, CONTROLLO E CALCOLO RISULTATI ELETTORALI
+# ================================================================
+# File commentato in modo esteso.
+#
+# Obiettivo dell'applicazione:
+# - consentire ai rappresentanti di sezione di inserire i dati del seggio;
+# - salvare voti a sindaco, voti di lista e preferenze in un database SQLite;
+# - permettere all'amministratore di consultare dashboard, sezioni, utenti, esportazioni CSV;
+# - calcolare soglie, coalizioni ammesse, premio di maggioranza e ripartizione dei seggi.
+#
+# PUNTI RICHIESTI:
+# - Il calcolo del premio/voto di maggioranza è marcato con il commento: VOTO MAGGIORANZA.
+# - Il calcolo della ripartizione dei seggi è marcato con il commento: DISTRIBUZIONE SEGGI.
+# ================================================================
+
+# Librerie standard per leggere/scrivere file CSV e gestire flussi testuali in memoria.
 import csv
 import io
 
+# Componenti Flask usati per creare l'app web, gestire richieste HTTP, sessioni e risposte JSON/CSV.
 from flask import Flask, request, jsonify, send_from_directory, session, Response
+# Funzioni Werkzeug per salvare PIN/password in forma hashata e verificarli al login.
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from datetime import datetime
 import sqlite3, os, secrets, math
 
+# Percorso assoluto della cartella in cui si trova questo file. Serve per costruire percorsi portabili.
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(APP_DIR, "database.sqlite")
 STATIC_DIR = os.path.join(APP_DIR, "static")
 
+# Istanza principale dell'applicazione Flask.
+# static_folder indica la cartella dei file statici; static_url_path vuoto consente di servire index.html dalla root.
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
+# Struttura dati statica dell'elezione.
+# Contiene:
+# - l'elenco dei candidati sindaco;
+# - l'elenco delle liste;
+# - per ogni lista, la coalizione di riferimento e i candidati al consiglio.
+# Questa struttura è usata sia per generare le schede di inserimento dati sia per calcolare eletti e seggi.
 ELECTION_DATA = {
   "mayors": [
     "Nicola Barbera",
@@ -21,7 +49,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Città Aperta - Controcorrente": {
+    "Lista 01 - Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +78,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Movimento 5Stelle": {
+    "Lista 012 - Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +101,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Partito Democratico": {
+    "Lista 010 - Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,75 +130,94 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "De Luca Sindaco di Sicilia": {
+    "Lista 8 - De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Avremo Cura di Te": {
+    "Lista 5 - Avremo Cura di Te": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Scolaro Sindaco": {
+    "Lista 16 - Scolaro Sindaco": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Una Marcia in Più": {
+    "Lista 4 - Una Marcia in Più": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Barcellona Pozzo di Gotto in Comune": {
+    "Lista 13 - Barcellona Pozzo di Gotto in Comune": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Fratelli d’Italia": {
+    "Lista 15 - Fratelli d’Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Nicola Barbera Sindaco": {
+    "Lista 14 - Nicola Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "La Civica Barcellona P.G.": {
+    "Lista 17 - Lista Civica": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Fuori dal Coro": {
+    "Lista 9 - Fuori dal Coro": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Ascoltiamo Barcellona": {
+    "Lista 3 - Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Noi Ci Siamo": {
+    "Lista 7 - Noi Ci Siamo": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Forza Italia": {
+    "Lista 11 - Forza Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Azzurri per Barcellona P.G.": {
+    "Lista 6 - Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Vamos! Con Barbera Sindaco": {
+    "Lista 2 - Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
   }
 }
 
+# ----------------------------------------------------------------
+# Hash veloce del PIN
+# ----------------------------------------------------------------
+# Usato soprattutto nell'importazione CSV degli utenti.
+# Riduce il costo computazionale dell'hashing per evitare timeout su ambienti hosting lenti.
 def fast_pin_hash(pin):
     # Import CSV: hashing volutamente leggero per evitare timeout su Render.
     # check_password_hash resta compatibile con questo formato Werkzeug.
     return generate_password_hash(str(pin), method="pbkdf2:sha256:1", salt_length=4)
 
+# ----------------------------------------------------------------
+# Connessione al database SQLite
+# ----------------------------------------------------------------
+# Restituisce una connessione al database impostando row_factory=sqlite3.Row,
+# così le righe possono essere lette anche per nome colonna, ad esempio row['name'].
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+# ----------------------------------------------------------------
+# Inizializzazione del database
+# ----------------------------------------------------------------
+# Crea, se mancanti, le tabelle principali:
+# - users: utenti, admin e rappresentanti di sezione;
+# - reports: verbali/rilevazioni di sezione;
+# - votes: voti a sindaco, voti di lista e preferenze;
+# - settings: parametri generali dell'elezione.
+# Include anche migrazioni leggere per database creati con versioni precedenti.
 def init_db():
     conn = db()
     cur = conn.cursor()
@@ -251,11 +298,15 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Prima di ogni richiesta HTTP, Flask verifica che il database esista.
+# Se il file SQLite non è presente, viene creato e inizializzato.
 @app.before_request
 def ensure_db():
     if not os.path.exists(DB_PATH):
         init_db()
 
+# Recupera l'utente attualmente autenticato dalla sessione Flask.
+# Se non esiste una sessione valida o l'utente è disattivato, restituisce None.
 def current_user():
     user_id = session.get("uid")
     if not user_id:
@@ -265,9 +316,13 @@ def current_user():
     conn.close()
     return user
 
+# Restituisce solo i dati utente che possono essere inviati al frontend.
+# Non espone hash del PIN, token QR o altri dati interni.
 def public_user(user):
     return {"id": user["id"], "name": user["name"], "phone": user["phone"], "role": user["role"], "section": user["section"]}
 
+# Decoratore di protezione delle route.
+# Blocca l'accesso alle API se l'utente non ha effettuato il login.
 def login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -276,6 +331,8 @@ def login_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+# Decoratore di protezione per le funzioni riservate all'amministratore.
+# Prima controlla l'autenticazione, poi verifica che role == 'admin'.
 def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -287,6 +344,8 @@ def admin_required(fn):
         return fn(*args, **kwargs)
     return wrapper
 
+# Legge dal database le impostazioni generali dell'elezione.
+# Restituisce valori convertiti nei tipi corretti: interi per elettori/votanti/seggi, stringhe per sindaco vincitore e modalità.
 def get_settings(conn):
     rows = conn.execute("SELECT key, value FROM settings").fetchall()
     settings = {r["key"]: r["value"] for r in rows}
@@ -298,6 +357,18 @@ def get_settings(conn):
         "mode": settings.get("mode", "first"),
     }
 
+# ----------------------------------------------------------------
+# DISTRIBUZIONE SEGGI - Metodo D'Hondt
+# ----------------------------------------------------------------
+# Questa funzione riceve un dizionario di voti, per esempio:
+#   {'Coalizione A': 1000, 'Coalizione B': 700}
+# e il numero di seggi da distribuire.
+#
+# Per ogni lista/coalizione calcola i quozienti: voti/1, voti/2, voti/3, ...
+# Ordina tutti i quozienti in modo decrescente e assegna i seggi ai primi N quozienti,
+# dove N è il numero totale di seggi disponibili.
+#
+# Il risultato è un dizionario con il numero di seggi assegnati a ciascun soggetto.
 def d_hondt(votes, seats):
     result = {key: 0 for key in votes}
     quotients = []
@@ -309,45 +380,100 @@ def d_hondt(votes, seats):
         result[key] += 1
     return result
 
+# ----------------------------------------------------------------
+# Calcolo complessivo del risultato elettorale
+# ----------------------------------------------------------------
+# Questa funzione aggrega i voti salvati nel database, applica soglia di sbarramento,
+# calcola i voti di coalizione, attribuisce i seggi, applica l'eventuale premio
+# di maggioranza e individua i candidati eletti in base alle preferenze.
 def compute_elected(conn):
+    # Lettura dei parametri di configurazione: numero seggi, sindaco vincitore, modalità elettorale.
     settings = get_settings(conn)
+    # Numero di seggi del consiglio comunale. max(1, ...) evita valori nulli o negativi.
     seats = max(1, settings["council_seats"])
+    # Sindaco vincitore impostato dall'amministratore.
+    # È il riferimento per calcolare l'eventuale premio di maggioranza.
     winner = settings["winner_mayor"]
+    # Modalità elettorale: 'first' per primo turno, 'runoff' per ballottaggio.
     mode = settings["mode"]
+    # Aggregazione dei voti di lista su tutte le sezioni.
     list_rows = conn.execute("SELECT list_name AS name, SUM(votes) AS total FROM votes WHERE vote_type='lista' GROUP BY list_name").fetchall()
+    # Aggregazione delle preferenze personali dei candidati, raggruppate per lista e nome candidato.
     pref_rows = conn.execute("SELECT list_name, name, SUM(votes) AS total FROM votes WHERE vote_type='preferenza' GROUP BY list_name, name").fetchall()
+    # Aggregazione dei voti ai candidati sindaco.
     mayor_rows = conn.execute("SELECT name, SUM(votes) AS total FROM votes WHERE vote_type='sindaco' GROUP BY name").fetchall()
     mayor_votes = {row["name"]: int(row["total"] or 0) for row in mayor_rows}
     list_votes = {row["name"]: int(row["total"] or 0) for row in list_rows}
+    # Totale generale dei voti validi di lista. È la base per soglia e percentuali.
     total_list_votes = sum(list_votes.values())
+    # Soglia di sbarramento al 5% dei voti di lista complessivi.
     threshold = total_list_votes * 0.05
+    # Liste ammesse alla ripartizione: devono avere voti positivi e superare la soglia.
     admitted_lists = {name: votes for name, votes in list_votes.items() if votes > 0 and votes >= threshold}
+    # Somma dei voti delle liste ammesse, raggruppati per coalizione/sindaco collegato.
     coalition_votes = {}
     for list_name, votes in admitted_lists.items():
         coalition = ELECTION_DATA["lists"][list_name]["coalition"]
         coalition_votes[coalition] = coalition_votes.get(coalition, 0) + votes
+    # DISTRIBUZIONE SEGGI
+    # Prima ripartizione naturale dei seggi tra coalizioni con metodo D'Hondt.
+    # In questa fase non è ancora applicato il premio di maggioranza.
     coalition_seats = d_hondt(coalition_votes, seats) if coalition_votes else {}
+    # Voti di coalizione attribuiti al sindaco vincitore.
     winner_coal_votes = coalition_votes.get(winner, 0)
+    # VOTO MAGGIORANZA
+    # Percentuale della coalizione del sindaco vincitore sul totale dei voti di lista.
+    # Questo valore viene usato per verificare se il vincitore ha almeno il 40% al primo turno
+    # oppure se, in caso di ballottaggio, può accedere al premio secondo la logica implementata.
     winner_pct = (winner_coal_votes / total_list_votes * 100) if total_list_votes else 0
+    # VOTO MAGGIORANZA
+    # Percentuale massima raggiunta da una coalizione diversa da quella del sindaco vincitore.
+    # Serve a evitare il premio se un'altra coalizione supera il 50%.
     other_max_pct = max([v / total_list_votes * 100 for c, v in coalition_votes.items() if c != winner] or [0]) if total_list_votes else 0
+    # VOTO MAGGIORANZA
+    # Numero minimo di seggi garantiti alla coalizione vincente in caso di premio di maggioranza.
+    # Qui è fissato al 60% dei seggi, arrotondato per eccesso.
     premium_seats = math.ceil(seats * 0.60)
+    # Seggi che la coalizione vincente otterrebbe senza premio, cioè con la sola ripartizione D'Hondt.
     natural_winner_seats = coalition_seats.get(winner, 0)
+    # VOTO MAGGIORANZA
+    # Condizione centrale del premio di maggioranza.
+    # Il premio viene applicato solo se:
+    # 1) la coalizione vincente non ha già almeno il 60% dei seggi;
+    # 2) nessuna altra coalizione supera il 50%;
+    # 3) si è in modalità ballottaggio oppure la coalizione vincente ha almeno il 40% al primo turno.
     premium_applied = natural_winner_seats < premium_seats and other_max_pct <= 50 and (mode == "runoff" or winner_pct >= 40)
+    # VOTO MAGGIORANZA
+    # Se le condizioni sono rispettate, viene forzata l'assegnazione del numero minimo
+    # di seggi alla coalizione del sindaco vincitore.
     if premium_applied:
+        # Alla coalizione del sindaco vincitore vengono assegnati i seggi del premio.
         coalition_seats[winner] = premium_seats
+        # I seggi rimanenti sono distribuiti proporzionalmente alle altre coalizioni.
         remaining_seats = seats - premium_seats
         other_coalitions = {coalition: votes for coalition, votes in coalition_votes.items() if coalition != winner}
+        # DISTRIBUZIONE SEGGI
+        # Ripartizione dei soli seggi residui tra le coalizioni non vincenti.
         other_seats = d_hondt(other_coalitions, remaining_seats) if other_coalitions and remaining_seats > 0 else {}
         for coalition in other_coalitions:
             coalition_seats[coalition] = other_seats.get(coalition, 0)
+    # DISTRIBUZIONE SEGGI
+    # Dizionario finale dei seggi assegnati alle singole liste.
+    # Dopo aver stabilito quanti seggi spettano a ciascuna coalizione, i seggi della coalizione
+    # vengono distribuiti tra le liste interne alla coalizione stessa.
     list_seats = {}
     for coalition, coalition_seat_count in coalition_seats.items():
         lists_in_coalition = {list_name: votes for list_name, votes in admitted_lists.items() if ELECTION_DATA["lists"][list_name]["coalition"] == coalition}
+        # DISTRIBUZIONE SEGGI
+        # Ripartizione interna dei seggi della coalizione tra le sue liste ammesse.
         assigned = d_hondt(lists_in_coalition, coalition_seat_count) if lists_in_coalition and coalition_seat_count > 0 else {}
         list_seats.update(assigned)
+    # Costruzione di una struttura rapida per recuperare le preferenze di ogni candidato per lista.
     preferences = {}
     for row in pref_rows:
         preferences.setdefault(row["list_name"], {})[row["name"]] = int(row["total"] or 0)
+    # Individuazione degli eletti: per ogni lista si ordinano i candidati per preferenze decrescenti.
+    # In caso di parità, resta l'ordine di lista originario.
     elected = {}
     for list_name, list_obj in ELECTION_DATA["lists"].items():
         count = list_seats.get(list_name, 0)
@@ -356,6 +482,7 @@ def compute_elected(conn):
             ranked.append({"name": candidate, "votes": preferences.get(list_name, {}).get(candidate, 0), "order": index + 1})
         ranked.sort(key=lambda item: (-item["votes"], item["order"]))
         elected[list_name] = ranked[:count]
+    # Elenco dei candidati sindaco non vincenti, ordinati per voti.
     losing_mayors = sorted([{"name": name, "votes": mayor_votes.get(name, 0)} for name in ELECTION_DATA["mayors"] if name != winner], key=lambda item: -item["votes"])
     return {
         "settings": settings, "mayor_votes": mayor_votes, "list_votes": list_votes,
@@ -367,14 +494,17 @@ def compute_elected(conn):
         "other_max_pct": other_max_pct, "losing_mayors": losing_mayors,
     }
 
+# Route pubblica principale: restituisce la pagina index.html della web app.
 @app.route("/")
 def index():
     return send_from_directory(STATIC_DIR, "index.html")
 
+# Route della pagina di amministrazione.
 @app.route("/admin")
 def admin_page():
     return send_from_directory(STATIC_DIR, "admin.html")
 
+# API di login: accetta telefono/PIN oppure token QR e salva l'id utente in sessione.
 @app.post("/api/login")
 def login():
     data = request.get_json(force=True)
@@ -395,16 +525,19 @@ def login():
     session["uid"] = user["id"]
     return jsonify({"ok": True, "user": public_user(user)})
 
+# API di logout: elimina la sessione Flask.
 @app.post("/api/logout")
 def logout():
     session.clear()
     return jsonify({"ok": True})
 
+# Restituisce i dati dell'utente attualmente autenticato.
 @app.get("/api/me")
 @login_required
 def me():
     return jsonify({"ok": True, "user": public_user(current_user())})
 
+# Restituisce al frontend la configurazione elettorale e le impostazioni generali.
 @app.get("/api/config")
 @login_required
 def config():
@@ -414,6 +547,8 @@ def config():
     return jsonify({"ok": True, "data": ELECTION_DATA, "settings": settings})
 
 
+# Recupera l'ultimo report/voto inserito per una determinata sezione.
+# Serve al rappresentante per ritrovare i dati già salvati e modificarli prima della chiusura.
 @app.get("/api/my-report")
 @login_required
 def my_report():
@@ -472,6 +607,8 @@ def my_report():
         "updated_at": report["updated_at"]
     })
 
+# Salvataggio parziale del report di sezione.
+# Non chiude il seggio: consente invii progressivi e correzioni.
 @app.post("/api/report")
 @login_required
 def save_report():
@@ -521,6 +658,7 @@ def save_report():
     return jsonify({"ok": True, "message": "Dati inviati al server centrale"})
 
 
+# Verifica se una sezione risulta chiusa.
 @app.get("/api/section-status")
 @login_required
 def section_status():
@@ -533,6 +671,8 @@ def section_status():
     conn.close()
     return jsonify({"ok": True, "section": section, "closed": bool(row["closed"]) if row else False, "closed_at": row["closed_at"] if row else None})
 
+# Chiusura definitiva del seggio da parte del rappresentante.
+# Prima di chiudere controlla la quadratura tra votanti, voti validi, schede bianche e nulle.
 @app.post("/api/close-seat")
 @login_required
 def close_seat():
@@ -580,6 +720,8 @@ def close_seat():
     conn.commit(); conn.close(); session.clear()
     return jsonify({"ok": True, "message": "Grazie per il tuo contributo. Il seggio è stato chiuso correttamente."})
 
+# Riapertura amministrativa di una sezione già chiusa.
+# Permette al rappresentante di correggere dati già inviati.
 @app.post("/api/reopen-section")
 @admin_required
 def reopen_section():
@@ -619,6 +761,8 @@ def reopen_section():
 
 
 
+# Dashboard amministrativa.
+# Aggrega voti, preferenze, riepiloghi di sezione e risultato elettorale calcolato.
 @app.get("/api/dashboard")
 @admin_required
 def dashboard():
@@ -639,10 +783,12 @@ def dashboard():
         ORDER BY CAST(r.section AS INTEGER), r.section
     """).fetchall()
     ballot_totals = conn.execute("SELECT COALESCE(SUM(voters),0) AS voters, COALESCE(SUM(blank_ballots),0) AS blank_ballots, COALESCE(SUM(null_ballots),0) AS null_ballots, COALESCE(SUM(contested_ballots),0) AS section_electors FROM reports").fetchone()
+    # Calcola soglie, premio di maggioranza, distribuzione seggi ed eletti.
     election = compute_elected(conn)
     conn.close()
     return jsonify({"ok": True, "mayors": [dict(row) for row in mayors], "lists": [dict(row) for row in lists], "preferences": [dict(row) for row in preferences], "sections": [dict(row) for row in sections], "ballot_totals": dict(ballot_totals), "data": ELECTION_DATA, "election": election})
 
+# Aggiornamento delle impostazioni generali da pannello admin.
 @app.post("/api/settings")
 @admin_required
 def update_settings():
@@ -658,6 +804,7 @@ def update_settings():
     conn.close()
     return jsonify({"ok": True, "settings": settings})
 
+# Azzeramento completo dei voti e dei report. Richiede conferma testuale 'AZZERA'.
 @app.post("/api/reset-votes")
 @admin_required
 def reset_votes():
@@ -673,6 +820,7 @@ def reset_votes():
     conn.close()
     return jsonify({"ok": True, "message": "Voti azzerati"})
 
+# Elenco utenti per il pannello amministrativo.
 @app.get("/api/users")
 @admin_required
 def users():
@@ -681,6 +829,7 @@ def users():
     conn.close()
     return jsonify({"ok": True, "users": [dict(row) for row in rows]})
 
+# Creazione manuale di un nuovo utente.
 @app.post("/api/users")
 @admin_required
 def create_user():
@@ -708,6 +857,8 @@ def create_user():
 
 
 
+# Importazione utenti da file CSV.
+# Consente di creare o aggiornare rappresentanti/admin in blocco.
 @app.post("/api/users/import-csv")
 @admin_required
 def import_users_csv():
@@ -822,6 +973,7 @@ def import_users_csv():
     })
 
 
+# Aggiornamento dati utente esistente.
 @app.patch("/api/users/<int:user_id>")
 @admin_required
 def update_user(user_id):
@@ -859,6 +1011,7 @@ def update_user(user_id):
     conn.close()
     return jsonify({"ok": True, "message": "Utente aggiornato correttamente"})
 
+# Eliminazione utente. Non consente di eliminare l'utente attualmente collegato.
 @app.delete("/api/users/<int:user_id>")
 @admin_required
 def delete_user(user_id):
@@ -871,6 +1024,7 @@ def delete_user(user_id):
     conn.close()
     return jsonify({"ok": True})
 
+# Attivazione/disattivazione utente.
 @app.patch("/api/users/<int:user_id>/toggle")
 @admin_required
 def toggle_user(user_id):
@@ -889,6 +1043,7 @@ def toggle_user(user_id):
     return jsonify({"ok": True, "active": new_active})
 
 
+# Dettaglio completo per sezione: voti sindaco, voti lista e preferenze.
 @app.get("/api/section-details")
 @admin_required
 def section_details():
@@ -923,6 +1078,7 @@ def section_details():
 
     return jsonify({"ok": True, "sections": result, "data": ELECTION_DATA})
 
+# Esportazione CSV dei dati elettorali aggregati per sezione e tipo di voto.
 @app.get("/api/export.csv")
 @admin_required
 def export_csv():
@@ -1012,6 +1168,7 @@ def export_csv():
         headers={"Content-Disposition": "attachment; filename=report_comunali_barcellona.csv"},
     )
 
+# Avvio diretto dell'applicazione quando il file viene eseguito con python app.py.
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
