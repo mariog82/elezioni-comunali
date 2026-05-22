@@ -699,50 +699,84 @@ def create_user():
 
 
 
+
+
 @app.post("/api/users/import-csv")
 @admin_required
 def import_users_csv():
     if "file" not in request.files:
         return jsonify({"ok": False, "error": "File CSV mancante"}), 400
 
-    file = request.files["file"]
+    uploaded_file = request.files["file"]
 
     try:
-        content = file.read().decode("utf-8", errors="ignore")
+        content = uploaded_file.read().decode("utf-8-sig", errors="ignore")
     except Exception:
-        return jsonify({"ok": False, "error": "Impossibile leggere il file"}), 400
+        return jsonify({"ok": False, "error": "Impossibile leggere il file CSV"}), 400
 
-    lines = [x.strip() for x in content.splitlines() if x.strip()]
-
+    lines = [line.strip() for line in content.splitlines() if line.strip()]
     if not lines:
         return jsonify({"ok": False, "error": "CSV vuoto"}), 400
 
+    # Consente una riga intestazione: nome;telefono/codice;sezione;ruolo;pin
+    first = lines[0].lower().replace(" ", "")
+    if first.startswith("nome;") or "telefono" in first or "codice" in first:
+        lines = lines[1:]
+
     imported = 0
+    updated = 0
     skipped = 0
+    errors = []
 
     conn = db()
+    cur = conn.cursor()
 
-    for line in lines:
-        parts = [p.strip() for p in line.split(";")]
+    for idx, line in enumerate(lines, start=1):
+        parts = [part.strip() for part in line.split(";")]
 
-        if len(parts) < 4:
+        if len(parts) < 3:
             skipped += 1
+            errors.append(f"Riga {idx}: campi insufficienti")
             continue
 
         name = parts[0]
         phone = parts[1]
         section = parts[2] or None
-        role = parts[3] or "rappresentante"
+        role = parts[3] if len(parts) > 3 and parts[3] else "rappresentante"
         pin = parts[4] if len(parts) > 4 and parts[4] else "1234"
 
-        try:
-            conn.execute(
-                "INSERT INTO users(name, phone, section, role, pin_hash, active) VALUES(?,?,?,?,?,1)",
-                (name, phone, section, role, generate_password_hash(pin))
-            )
-            imported += 1
-        except Exception:
+        if role not in ["admin", "rappresentante"]:
+            role = "rappresentante"
+
+        if not name or not phone:
             skipped += 1
+            errors.append(f"Riga {idx}: nome o telefono/codice mancante")
+            continue
+
+        try:
+            existing = cur.execute("SELECT id FROM users WHERE phone=?", (phone,)).fetchone()
+
+            if existing:
+                if pin:
+                    cur.execute(
+                        "UPDATE users SET name=?, section=?, role=?, pin_hash=?, active=1 WHERE phone=?",
+                        (name, section, role, generate_password_hash(pin), phone)
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE users SET name=?, section=?, role=?, active=1 WHERE phone=?",
+                        (name, section, role, phone)
+                    )
+                updated += 1
+            else:
+                cur.execute(
+                    "INSERT INTO users(name, phone, section, role, pin_hash, qr_token, active, created_at) VALUES(?,?,?,?,?,?,1,?)",
+                    (name, phone, section, role, generate_password_hash(pin), secrets.token_urlsafe(24), datetime.now().isoformat(timespec="seconds"))
+                )
+                imported += 1
+        except Exception as exc:
+            skipped += 1
+            errors.append(f"Riga {idx}: {str(exc)}")
 
     conn.commit()
     conn.close()
@@ -750,8 +784,10 @@ def import_users_csv():
     return jsonify({
         "ok": True,
         "imported": imported,
+        "updated": updated,
         "skipped": skipped,
-        "message": f"Importati {imported} utenti. Saltati {skipped}."
+        "errors": errors[:10],
+        "message": f"Importati {imported}, aggiornati {updated}, saltati {skipped}."
     })
 
 @app.patch("/api/users/<int:user_id>")

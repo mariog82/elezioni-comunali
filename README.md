@@ -227,3 +227,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   `Importa rappresentanti / utenti da CSV`.
 - Il blocco è posizionato sopra la lista `Rappresentanti / utenti autorizzati`.
 - Pulsante: `Importa CSV rappresentanti/utenti`.
+
+
+## Versione v29
+- Corretto import CSV che restituiva HTML invece di JSON.
+- Endpoint `/api/users/import-csv` registrato prima dell'avvio Flask.
+- Import CSV ora crea nuovi utenti o aggiorna quelli esistenti con lo stesso telefono/codice.
+- Risposta sempre JSON con conteggio importati, aggiornati e saltati.
