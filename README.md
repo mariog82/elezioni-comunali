@@ -206,3 +206,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Editing dei rappresentanti/utenti autorizzati dal pannello amministratore.
 - È possibile modificare nome, telefono/codice, sezione, ruolo e PIN.
 - Il PIN è opzionale: lasciandolo vuoto resta invariato.
+
+
+## Versione v25
+- Rimane disponibile il blocco per aggiungere rappresentante/utente.
+- Nella lista utenti il pulsante `Salva modifiche` è sostituito da `Edit`.
+- `Edit` apre un popup per modificare nome, telefono/codice, sezione, ruolo e PIN opzionale.
