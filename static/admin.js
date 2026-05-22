@@ -367,50 +367,30 @@ async function renderDetailCharts(){
   if(available[0]) showPrefs(available[0],0);
 }
 
+let usersCache=[];
+
 async function loadUsers(){
   const d=await api("/api/users");
+  usersCache=d.users || [];
   const box=document.getElementById("users");
   box.innerHTML="";
 
-  d.users.forEach(u=>{
+  usersCache.forEach(u=>{
     const link=`${location.origin}/?token=${u.qr_token}`;
     const div=document.createElement("div");
     div.className="card";
-
     div.innerHTML=`
       <h3>${escapeHtml(u.name)}</h3>
-      <div class="grid">
-        <div>
-          <label>Nome</label>
-          <input id="edit_name_${u.id}" value="${escapeAttr(u.name)}">
-        </div>
-        <div>
-          <label>Telefono / codice</label>
-          <input id="edit_phone_${u.id}" value="${escapeAttr(u.phone)}">
-        </div>
-        <div>
-          <label>Sezione</label>
-          <input id="edit_section_${u.id}" value="${escapeAttr(u.section||"")}">
-        </div>
-        <div>
-          <label>Ruolo</label>
-          <select id="edit_role_${u.id}">
-            <option value="rappresentante" ${u.role==="rappresentante"?"selected":""}>rappresentante</option>
-            <option value="admin" ${u.role==="admin"?"selected":""}>admin</option>
-          </select>
-        </div>
-        <div>
-          <label>Nuovo PIN opzionale</label>
-          <input id="edit_pin_${u.id}" type="password" placeholder="Lascia vuoto per non cambiarlo">
-        </div>
-      </div>
       <p class="small">
-        Stato: <b>${u.active?"attivo":"disattivato"}</b><br>
-        Link QR/accesso:
+        <b>Codice:</b> ${escapeHtml(u.phone)}<br>
+        <b>Ruolo:</b> ${escapeHtml(u.role)}<br>
+        <b>Sezione:</b> ${escapeHtml(u.section||"tutte")}<br>
+        <b>Stato:</b> ${u.active?"attivo":"disattivato"}
       </p>
+      <label>Link QR/accesso</label>
       <input value="${escapeAttr(link)}" readonly onclick="this.select()">
       <div class="actions">
-        <button onclick="updateUser(${u.id})">Salva modifiche</button>
+        <button onclick="openEditUserPopup(${u.id})">Edit</button>
         <button class="secondary" onclick="toggleUser(${u.id})">${u.active?"Disattiva":"Riattiva"}</button>
         <button class="danger" onclick="deleteUser(${u.id})">Rimuovi</button>
       </div>
@@ -420,44 +400,48 @@ async function loadUsers(){
 }
 
 function escapeHtml(value){
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
+  return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
 function escapeAttr(value){
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
+  return String(value ?? "").replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
-async function updateUser(id){
-  const payload={
-    name:document.getElementById(`edit_name_${id}`).value.trim(),
-    phone:document.getElementById(`edit_phone_${id}`).value.trim(),
-    section:document.getElementById(`edit_section_${id}`).value.trim(),
-    role:document.getElementById(`edit_role_${id}`).value,
-    pin:document.getElementById(`edit_pin_${id}`).value.trim()
-  };
+function openEditUserPopup(id){
+  const u=usersCache.find(x=>x.id===id);
+  if(!u){ alert("Utente non trovato."); return; }
+  document.getElementById("editUserId").value=u.id;
+  document.getElementById("editUserName").value=u.name || "";
+  document.getElementById("editUserPhone").value=u.phone || "";
+  document.getElementById("editUserSection").value=u.section || "";
+  document.getElementById("editUserRole").value=u.role || "rappresentante";
+  document.getElementById("editUserPin").value="";
+  document.getElementById("editUserModal").classList.remove("hidden");
+}
 
+function closeEditUserPopup(){
+  document.getElementById("editUserModal").classList.add("hidden");
+}
+
+async function saveEditUserPopup(){
+  const id=document.getElementById("editUserId").value;
+  const payload={
+    name:document.getElementById("editUserName").value.trim(),
+    phone:document.getElementById("editUserPhone").value.trim(),
+    section:document.getElementById("editUserSection").value.trim(),
+    role:document.getElementById("editUserRole").value,
+    pin:document.getElementById("editUserPin").value.trim()
+  };
   if(!payload.name || !payload.phone){
     alert("Nome e telefono/codice sono obbligatori.");
     return;
   }
-
   try{
-    const res=await api(`/api/users/${id}`,{
-      method:"PATCH",
-      body:JSON.stringify(payload)
-    });
+    const res=await api(`/api/users/${id}`,{method:"PATCH",body:JSON.stringify(payload)});
     alert(res.message || "Utente aggiornato.");
+    closeEditUserPopup();
     await loadUsers();
-  }catch(e){
-    alert(e.message);
-  }
+  }catch(e){ alert(e.message); }
 }
 
 

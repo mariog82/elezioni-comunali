@@ -64,5 +64,30 @@
 <section class="card dangerBox"><h2>Azzeramento voti</h2><p>Questa operazione cancella tutti i voti e tutte le rilevazioni inviate dai rappresentanti. Gli utenti restano registrati.</p><button class="danger" onclick="resetVotes()">Azzera tutti i voti</button></section>
 </main>
 <script src="/admin.js"></script>
+
+<div id="editUserModal" class="modal hidden">
+  <div class="modalContent">
+    <h2>Modifica rappresentante/utente</h2>
+    <input type="hidden" id="editUserId">
+    <label>Nome</label>
+    <input id="editUserName">
+    <label>Telefono / codice</label>
+    <input id="editUserPhone">
+    <label>Sezione</label>
+    <input id="editUserSection">
+    <label>Ruolo</label>
+    <select id="editUserRole">
+      <option value="rappresentante">rappresentante</option>
+      <option value="admin">admin</option>
+    </select>
+    <label>Nuovo PIN opzionale</label>
+    <input id="editUserPin" type="password" placeholder="Lascia vuoto per non cambiarlo">
+    <div class="actions">
+      <button onclick="saveEditUserPopup()">Salva</button>
+      <button class="secondary" onclick="closeEditUserPopup()">Annulla</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

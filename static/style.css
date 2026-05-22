@@ -8,3 +8,8 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
 .adminrow{grid-template-columns:1fr 70px 110px 48px 48px}
 .adminVoteInput{padding:8px;border:1px solid #bbb;border-radius:8px;font-size:15px;text-align:center;width:100%;box-sizing:border-box}
 @media(max-width:700px){.adminrow{grid-template-columns:1fr 70px 90px 48px 48px}.adminVoteInput{grid-column:auto}}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.modal.hidden{display:none}
+.modalContent{background:white;border-radius:14px;padding:18px;max-width:520px;width:100%;box-shadow:0 10px 30px #0005}
+.modalContent h2{margin-top:0}
