@@ -371,14 +371,96 @@ async function loadUsers(){
   const d=await api("/api/users");
   const box=document.getElementById("users");
   box.innerHTML="";
+
   d.users.forEach(u=>{
     const link=`${location.origin}/?token=${u.qr_token}`;
     const div=document.createElement("div");
     div.className="card";
-    div.innerHTML=`<b>${u.name}</b><br>Codice: ${u.phone}<br>Ruolo: ${u.role}<br>Sezione: ${u.section||"tutte"}<br>Stato: ${u.active?"attivo":"disattivato"}<br><label>Link QR/accesso</label><input value="${link}" readonly onclick="this.select()"><button class="secondary" onclick="toggleUser(${u.id})">${u.active?"Disattiva":"Riattiva"}</button><button class="danger" onclick="deleteUser(${u.id})">Rimuovi</button>`;
+
+    div.innerHTML=`
+      <h3>${escapeHtml(u.name)}</h3>
+      <div class="grid">
+        <div>
+          <label>Nome</label>
+          <input id="edit_name_${u.id}" value="${escapeAttr(u.name)}">
+        </div>
+        <div>
+          <label>Telefono / codice</label>
+          <input id="edit_phone_${u.id}" value="${escapeAttr(u.phone)}">
+        </div>
+        <div>
+          <label>Sezione</label>
+          <input id="edit_section_${u.id}" value="${escapeAttr(u.section||"")}">
+        </div>
+        <div>
+          <label>Ruolo</label>
+          <select id="edit_role_${u.id}">
+            <option value="rappresentante" ${u.role==="rappresentante"?"selected":""}>rappresentante</option>
+            <option value="admin" ${u.role==="admin"?"selected":""}>admin</option>
+          </select>
+        </div>
+        <div>
+          <label>Nuovo PIN opzionale</label>
+          <input id="edit_pin_${u.id}" type="password" placeholder="Lascia vuoto per non cambiarlo">
+        </div>
+      </div>
+      <p class="small">
+        Stato: <b>${u.active?"attivo":"disattivato"}</b><br>
+        Link QR/accesso:
+      </p>
+      <input value="${escapeAttr(link)}" readonly onclick="this.select()">
+      <div class="actions">
+        <button onclick="updateUser(${u.id})">Salva modifiche</button>
+        <button class="secondary" onclick="toggleUser(${u.id})">${u.active?"Disattiva":"Riattiva"}</button>
+        <button class="danger" onclick="deleteUser(${u.id})">Rimuovi</button>
+      </div>
+    `;
     box.appendChild(div);
   });
 }
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function escapeAttr(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+async function updateUser(id){
+  const payload={
+    name:document.getElementById(`edit_name_${id}`).value.trim(),
+    phone:document.getElementById(`edit_phone_${id}`).value.trim(),
+    section:document.getElementById(`edit_section_${id}`).value.trim(),
+    role:document.getElementById(`edit_role_${id}`).value,
+    pin:document.getElementById(`edit_pin_${id}`).value.trim()
+  };
+
+  if(!payload.name || !payload.phone){
+    alert("Nome e telefono/codice sono obbligatori.");
+    return;
+  }
+
+  try{
+    const res=await api(`/api/users/${id}`,{
+      method:"PATCH",
+      body:JSON.stringify(payload)
+    });
+    alert(res.message || "Utente aggiornato.");
+    await loadUsers();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+
 async function createUser(){try{await api("/api/users",{method:"POST",body:JSON.stringify({name:document.getElementById("newName").value.trim(),phone:document.getElementById("newPhone").value.trim(),pin:document.getElementById("newPin").value.trim(),section:document.getElementById("newSection").value.trim(),role:document.getElementById("newRole").value})});alert("Utente creato");await loadUsers()}catch(e){alert(e.message)}}
 async function deleteUser(id){if(!confirm("Rimuovere definitivamente questo utente?"))return;try{await api(`/api/users/${id}`,{method:"DELETE"});await loadUsers()}catch(e){alert(e.message)}}
 async function toggleUser(id){if(!confirm("Cambiare stato utente?"))return;try{await api(`/api/users/${id}/toggle`,{method:"PATCH",body:"{}"});await loadUsers()}catch(e){alert(e.message)}}
