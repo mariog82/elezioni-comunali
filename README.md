@@ -148,7 +148,7 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 
 ## Versione v15
 - Se il rappresentante accede a un seggio già chiuso, oltre al messaggio compare il pulsante:
-  `Esci e cancella sessione`.
+  `Esci`.
 - Il pulsante richiama `/api/logout`, elimina il cookie lato browser e riporta alla pagina iniziale.
 
 
