@@ -455,6 +455,13 @@ loadDashboard();
 setInterval(loadDashboard,30000);
 
 
+
+
+window.addEventListener('unhandledrejection', function(e){
+  console.error(e.reason || e);
+});
+
+
 async function importUsersCsv(){
   const input = document.getElementById("csvUsersFile");
 
@@ -470,24 +477,30 @@ async function importUsersCsv(){
     const res = await fetch("/api/users/import-csv", {
       method: "POST",
       body: fd,
-      credentials: "include"
+      credentials: "include",
+      headers: {"Accept": "application/json"}
     });
 
-    let data;
     const text = await res.text();
+    let data = null;
 
     try{
       data = JSON.parse(text);
     }catch(e){
-      console.error(text);
-      throw new Error("Il server ha restituito una pagina HTML invece del JSON atteso. Verifica che Render abbia riavviato correttamente l'app.");
+      console.error("Risposta non JSON:", text);
+      throw new Error("Endpoint CSV non disponibile o errore server. Controlla il deploy Render e i log.");
     }
 
     if(!res.ok || !data.ok){
       throw new Error(data.error || "Errore import CSV");
     }
 
-    alert(data.message || "CSV importato.");
+    let msg = data.message || "CSV importato.";
+    if(data.errors && data.errors.length){
+      msg += "\n\nPrime righe saltate:\n" + data.errors.join("\n");
+    }
+
+    alert(msg);
     input.value = "";
     await loadUsers();
 
@@ -495,8 +508,3 @@ async function importUsersCsv(){
     alert(e.message);
   }
 }
-
-
-window.addEventListener('unhandledrejection', function(e){
-  console.error(e.reason || e);
-});
