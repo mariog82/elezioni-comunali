@@ -21,6 +21,7 @@ function escJs(s){
 }
 
 function setListDirect(listName, value){
+  if(!isAdmin()) return;
   listVotes[listName] = Math.max(0, parseInt(value || "0", 10) || 0);
   const out = document.getElementById(`list_${enc(listName)}`);
   if(out) out.textContent = listVotes[listName];
@@ -28,6 +29,7 @@ function setListDirect(listName, value){
 }
 
 function setVoteDirect(name, type, list, value){
+  if(!isAdmin()) return;
   const v = Math.max(0, parseInt(value || "0", 10) || 0);
   if(type === "mayor"){
     mayorVotes[name] = v;
@@ -133,7 +135,7 @@ function renderList(){
   panel.innerHTML=`<h3>${currentList} <span class="badge">${o.coalition}</span></h3>`;
 
   const lr=document.createElement("div");
-  lr.className="row adminrow";
+  lr.className=isAdmin() ? "row adminrow" : "row";
 
   const nome=document.createElement("div");
   nome.className="name";
@@ -144,25 +146,29 @@ function renderList(){
   valore.id=`list_${enc(currentList)}`;
   valore.textContent=listVotes[currentList]||0;
 
-  const inp=document.createElement("input");
-  inp.className="adminVoteInput";
-  inp.type="number";
-  inp.min="0";
-  inp.value=listVotes[currentList]||0;
-  inp.oninput=()=>setListDirect(currentList, inp.value);
-  inp.onchange=()=>setListDirect(currentList, inp.value);
+  lr.append(nome,valore);
+
+  if(isAdmin()){
+    const inp=document.createElement("input");
+    inp.className="adminVoteInput";
+    inp.type="number";
+    inp.min="0";
+    inp.value=listVotes[currentList]||0;
+    inp.oninput=()=>setListDirect(currentList, inp.value);
+    inp.onchange=()=>setListDirect(currentList, inp.value);
+    lr.appendChild(inp);
+  }
 
   const p=document.createElement("button"); p.className="plus"; p.textContent="+"; p.onclick=()=>changeList(1);
   const m=document.createElement("button"); m.className="minus"; m.textContent="-"; m.onclick=()=>changeList(-1);
-
-  lr.append(nome,valore,inp,p,m);
+  lr.append(p,m);
   panel.appendChild(lr);
 
   o.candidates.forEach(c=>panel.appendChild(row(c,"pref",currentList)));
 }
 function row(name,type,list){
   const r=document.createElement("div");
-  r.className="row adminrow";
+  r.className=isAdmin() ? "row adminrow" : "row";
 
   const n=document.createElement("div");
   n.className="name";
@@ -173,18 +179,22 @@ function row(name,type,list){
   v.id=type==="mayor"?`mayor_${enc(name)}`:`pref_${enc(list)}_${enc(name)}`;
   v.textContent=type==="mayor"?(mayorVotes[name]||0):(prefs[list][name]||0);
 
-  const inp=document.createElement("input");
-  inp.className="adminVoteInput";
-  inp.type="number";
-  inp.min="0";
-  inp.value=type==="mayor"?(mayorVotes[name]||0):(prefs[list][name]||0);
-  inp.oninput=()=>setVoteDirect(name,type,list,inp.value);
-  inp.onchange=()=>setVoteDirect(name,type,list,inp.value);
+  r.append(n,v);
+
+  if(isAdmin()){
+    const inp=document.createElement("input");
+    inp.className="adminVoteInput";
+    inp.type="number";
+    inp.min="0";
+    inp.value=type==="mayor"?(mayorVotes[name]||0):(prefs[list][name]||0);
+    inp.oninput=()=>setVoteDirect(name,type,list,inp.value);
+    inp.onchange=()=>setVoteDirect(name,type,list,inp.value);
+    r.appendChild(inp);
+  }
 
   const p=document.createElement("button"); p.className="plus"; p.textContent="+"; p.onclick=()=>changeVote(name,type,list,1);
   const m=document.createElement("button"); m.className="minus"; m.textContent="-"; m.onclick=()=>changeVote(name,type,list,-1);
-
-  r.append(n,v,inp,p,m);
+  r.append(p,m);
   return r;
 }
 function changeList(delta){
@@ -201,13 +211,9 @@ function changeVote(name,type,list,delta){
     document.getElementById(`mayor_${enc(name)}`).textContent=mayorVotes[name];
     const inp=document.getElementById(`mayor_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
     if(inp) inp.value=mayorVotes[name];
-    const inp=document.getElementById(`mayor_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=mayorVotes[name];
   }else{
     prefs[list][name]=Math.max(0,(prefs[list][name]||0)+delta);
     document.getElementById(`pref_${enc(list)}_${enc(name)}`).textContent=prefs[list][name];
-    const inp=document.getElementById(`pref_${enc(list)}_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
-    if(inp) inp.value=prefs[list][name];
     const inp=document.getElementById(`pref_${enc(list)}_${enc(name)}`)?.parentElement?.querySelector(".adminVoteInput");
     if(inp) inp.value=prefs[list][name];
   }
