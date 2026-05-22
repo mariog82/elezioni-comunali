@@ -234,3 +234,14 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Endpoint `/api/users/import-csv` registrato prima dell'avvio Flask.
 - Import CSV ora crea nuovi utenti o aggiorna quelli esistenti con lo stesso telefono/codice.
 - Risposta sempre JSON con conteggio importati, aggiornati e saltati.
+
+
+## Versione v30
+- Corretto timeout Render su `/api/users/import-csv`.
+- Import CSV ottimizzato:
+  - limite 1 MB;
+  - massimo 500 righe per import;
+  - parser CSV con separatore `;`;
+  - cache degli hash dei PIN;
+  - hashing PIN più leggero con `pbkdf2:sha256`.
+- L'import resta transazionale: in caso di errore grave viene fatto rollback.

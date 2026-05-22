@@ -701,6 +701,7 @@ def create_user():
 
 
 
+
 @app.post("/api/users/import-csv")
 @admin_required
 def import_users_csv():
@@ -710,75 +711,95 @@ def import_users_csv():
     uploaded_file = request.files["file"]
 
     try:
-        content = uploaded_file.read().decode("utf-8-sig", errors="ignore")
+        raw = uploaded_file.read()
+        if len(raw) > 1024 * 1024:
+            return jsonify({"ok": False, "error": "File troppo grande. Limite massimo: 1 MB"}), 400
+        content = raw.decode("utf-8-sig", errors="ignore")
     except Exception:
         return jsonify({"ok": False, "error": "Impossibile leggere il file CSV"}), 400
 
-    lines = [line.strip() for line in content.splitlines() if line.strip()]
-    if not lines:
+    if not content.strip():
         return jsonify({"ok": False, "error": "CSV vuoto"}), 400
 
-    # Consente una riga intestazione: nome;telefono/codice;sezione;ruolo;pin
-    first = lines[0].lower().replace(" ", "")
+    reader = csv.reader(io.StringIO(content), delimiter=";")
+    rows = []
+    for row in reader:
+        cleaned = [cell.strip() for cell in row]
+        if any(cleaned):
+            rows.append(cleaned)
+
+    if not rows:
+        return jsonify({"ok": False, "error": "CSV vuoto"}), 400
+
+    # Salta intestazione eventuale.
+    first = ";".join(rows[0]).lower().replace(" ", "")
     if first.startswith("nome;") or "telefono" in first or "codice" in first:
-        lines = lines[1:]
+        rows = rows[1:]
+
+    if len(rows) > 500:
+        return jsonify({"ok": False, "error": "Troppe righe. Import massimo consentito: 500 utenti per volta"}), 400
 
     imported = 0
     updated = 0
     skipped = 0
     errors = []
+    pin_hash_cache = {}
 
     conn = db()
     cur = conn.cursor()
 
-    for idx, line in enumerate(lines, start=1):
-        parts = [part.strip() for part in line.split(";")]
+    try:
+        for idx, row in enumerate(rows, start=1):
+            if len(row) < 3:
+                skipped += 1
+                errors.append(f"Riga {idx}: campi insufficienti")
+                continue
 
-        if len(parts) < 3:
-            skipped += 1
-            errors.append(f"Riga {idx}: campi insufficienti")
-            continue
+            name = row[0].strip()
+            phone = row[1].strip()
+            section = row[2].strip() or None
+            role = row[3].strip() if len(row) > 3 and row[3].strip() else "rappresentante"
+            pin = row[4].strip() if len(row) > 4 and row[4].strip() else "1234"
 
-        name = parts[0]
-        phone = parts[1]
-        section = parts[2] or None
-        role = parts[3] if len(parts) > 3 and parts[3] else "rappresentante"
-        pin = parts[4] if len(parts) > 4 and parts[4] else "1234"
+            if role not in ["admin", "rappresentante"]:
+                role = "rappresentante"
 
-        if role not in ["admin", "rappresentante"]:
-            role = "rappresentante"
+            if not name or not phone:
+                skipped += 1
+                errors.append(f"Riga {idx}: nome o telefono/codice mancante")
+                continue
 
-        if not name or not phone:
-            skipped += 1
-            errors.append(f"Riga {idx}: nome o telefono/codice mancante")
-            continue
+            # Evita il costoso hash ripetuto quando molte righe usano lo stesso PIN.
+            if pin not in pin_hash_cache:
+                pin_hash_cache[pin] = generate_password_hash(
+                    pin,
+                    method="pbkdf2:sha256",
+                    salt_length=8
+                )
+            pin_hash = pin_hash_cache[pin]
 
-        try:
             existing = cur.execute("SELECT id FROM users WHERE phone=?", (phone,)).fetchone()
 
             if existing:
-                if pin:
-                    cur.execute(
-                        "UPDATE users SET name=?, section=?, role=?, pin_hash=?, active=1 WHERE phone=?",
-                        (name, section, role, generate_password_hash(pin), phone)
-                    )
-                else:
-                    cur.execute(
-                        "UPDATE users SET name=?, section=?, role=?, active=1 WHERE phone=?",
-                        (name, section, role, phone)
-                    )
+                cur.execute(
+                    "UPDATE users SET name=?, section=?, role=?, pin_hash=?, active=1 WHERE phone=?",
+                    (name, section, role, pin_hash, phone)
+                )
                 updated += 1
             else:
                 cur.execute(
                     "INSERT INTO users(name, phone, section, role, pin_hash, qr_token, active, created_at) VALUES(?,?,?,?,?,?,1,?)",
-                    (name, phone, section, role, generate_password_hash(pin), secrets.token_urlsafe(24), datetime.now().isoformat(timespec="seconds"))
+                    (name, phone, section, role, pin_hash, secrets.token_urlsafe(24), datetime.now().isoformat(timespec="seconds"))
                 )
                 imported += 1
-        except Exception as exc:
-            skipped += 1
-            errors.append(f"Riga {idx}: {str(exc)}")
 
-    conn.commit()
+        conn.commit()
+
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore durante import CSV: {str(exc)}"}), 500
+
     conn.close()
 
     return jsonify({
@@ -787,8 +808,9 @@ def import_users_csv():
         "updated": updated,
         "skipped": skipped,
         "errors": errors[:10],
-        "message": f"Importati {imported}, aggiornati {updated}, saltati {skipped}."
+        "message": f"Import completato. Importati {imported}, aggiornati {updated}, saltati {skipped}."
     })
+
 
 @app.patch("/api/users/<int:user_id>")
 @admin_required
