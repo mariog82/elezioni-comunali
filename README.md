@@ -212,3 +212,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Rimane disponibile il blocco per aggiungere rappresentante/utente.
 - Nella lista utenti il pulsante `Salva modifiche` è sostituito da `Edit`.
 - `Edit` apre un popup per modificare nome, telefono/codice, sezione, ruolo e PIN opzionale.
+
+
+## Versione v26
+- Importazione CSV dei rappresentanti / utenti autorizzati.
+- Formato:
+  nome;telefono/codice;sezione;ruolo;pin
+- Separatore obbligatorio: ;
+- PIN predefinito: 1234 se non indicato.

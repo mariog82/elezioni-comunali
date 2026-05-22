@@ -698,6 +698,62 @@ def create_user():
     return jsonify({"ok": True})
 
 
+
+@app.post("/api/users/import-csv")
+@admin_required
+def import_users_csv():
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "File CSV mancante"}), 400
+
+    file = request.files["file"]
+
+    try:
+        content = file.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return jsonify({"ok": False, "error": "Impossibile leggere il file"}), 400
+
+    lines = [x.strip() for x in content.splitlines() if x.strip()]
+
+    if not lines:
+        return jsonify({"ok": False, "error": "CSV vuoto"}), 400
+
+    imported = 0
+    skipped = 0
+
+    conn = db()
+
+    for line in lines:
+        parts = [p.strip() for p in line.split(";")]
+
+        if len(parts) < 4:
+            skipped += 1
+            continue
+
+        name = parts[0]
+        phone = parts[1]
+        section = parts[2] or None
+        role = parts[3] or "rappresentante"
+        pin = parts[4] if len(parts) > 4 and parts[4] else "1234"
+
+        try:
+            conn.execute(
+                "INSERT INTO users(name, phone, section, role, pin_hash, active) VALUES(?,?,?,?,?,1)",
+                (name, phone, section, role, generate_password_hash(pin))
+            )
+            imported += 1
+        except Exception:
+            skipped += 1
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "message": f"Importati {imported} utenti. Saltati {skipped}."
+    })
+
 @app.patch("/api/users/<int:user_id>")
 @admin_required
 def update_user(user_id):
