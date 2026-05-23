@@ -114,7 +114,7 @@ ELECTION_DATA = {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 4 - Una Marcia in Più": {
+    "Lista 04 - Una Marcia in Più": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
