@@ -60,6 +60,20 @@
 </section>
 
 
+
+<section class="card importCsvBox">
+  <h2>Importa dati sezioni da CSV</h2>
+  <p class="small">
+    Formato CSV con separatore punto e virgola:<br>
+    <b>Sezione;Elettori;Votanti</b><br>
+    Se la sezione esiste viene aggiornata; se non esiste viene creata con voti iniziali a 0.
+  </p>
+  <input type="file" id="csvSectionsFile" accept=".csv,text/csv">
+  <div class="actions">
+    <button onclick="importSectionsCsv()">Importa CSV sezioni</button>
+  </div>
+</section>
+
 <section class="card importCsvBox">
   <h2>Importa rappresentanti / utenti da CSV</h2>
   <p class="small">

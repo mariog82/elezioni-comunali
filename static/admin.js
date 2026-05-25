@@ -508,3 +508,51 @@ async function importUsersCsv(){
     alert(e.message);
   }
 }
+
+
+async function importSectionsCsv(){
+  const input = document.getElementById("csvSectionsFile");
+
+  if(!input || !input.files || !input.files.length){
+    alert("Seleziona un file CSV sezioni.");
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("file", input.files[0]);
+
+  try{
+    const res = await fetch("/api/sections/import-csv", {
+      method: "POST",
+      body: fd,
+      credentials: "include",
+      headers: {"Accept": "application/json"}
+    });
+
+    const text = await res.text();
+    let data = null;
+
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      console.error("Risposta non JSON:", text);
+      throw new Error("Endpoint import sezioni non disponibile o errore server.");
+    }
+
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || "Errore import CSV sezioni");
+    }
+
+    let msg = data.message || "CSV sezioni importato.";
+    if(data.errors && data.errors.length){
+      msg += "\n\nPrime righe saltate:\n" + data.errors.join("\n");
+    }
+
+    alert(msg);
+    input.value = "";
+    await loadDashboard();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
