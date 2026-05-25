@@ -721,6 +721,126 @@ def create_user():
 
 
 
+
+@app.post("/api/sections/import-csv")
+@admin_required
+def import_sections_csv():
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "File CSV mancante"}), 400
+
+    uploaded_file = request.files["file"]
+
+    try:
+        raw = uploaded_file.read()
+        if len(raw) > 512 * 1024:
+            return jsonify({"ok": False, "error": "File troppo grande. Limite massimo: 512 KB"}), 400
+        content = raw.decode("utf-8-sig", errors="ignore")
+    except Exception:
+        return jsonify({"ok": False, "error": "Impossibile leggere il file CSV"}), 400
+
+    if not content.strip():
+        return jsonify({"ok": False, "error": "CSV vuoto"}), 400
+
+    reader = csv.reader(io.StringIO(content), delimiter=";")
+    rows = []
+    for row in reader:
+        cleaned = [cell.strip() for cell in row]
+        if any(cleaned):
+            rows.append(cleaned)
+
+    if not rows:
+        return jsonify({"ok": False, "error": "CSV vuoto"}), 400
+
+    first = ";".join(rows[0]).lower().replace(" ", "")
+    if first.startswith("sezione;") or "elettori" in first or "votanti" in first:
+        rows = rows[1:]
+
+    imported = 0
+    updated = 0
+    skipped = 0
+    errors = []
+    now = datetime.now().isoformat(timespec="seconds")
+
+    conn = db()
+    cur = conn.cursor()
+    admin_user = current_user()
+
+    try:
+        for idx, row in enumerate(rows, start=1):
+            if len(row) < 3:
+                skipped += 1
+                errors.append(f"Riga {idx}: formato richiesto Sezione;Elettori;Votanti")
+                continue
+
+            section = row[0].strip()
+            try:
+                section_electors = int(str(row[1]).replace(".", "").replace(",", "").strip() or 0)
+                voters = int(str(row[2]).replace(".", "").replace(",", "").strip() or 0)
+            except ValueError:
+                skipped += 1
+                errors.append(f"Riga {idx}: elettori o votanti non numerici")
+                continue
+
+            if not section:
+                skipped += 1
+                errors.append(f"Riga {idx}: sezione mancante")
+                continue
+
+            existing = cur.execute("SELECT id, closed FROM reports WHERE section=?", (section,)).fetchone()
+
+            if existing:
+                # Aggiorna solo elettori e votanti, preservando bianche, nulle, voti e stato chiusura.
+                cur.execute(
+                    "UPDATE reports SET voters=?, contested_ballots=?, updated_at=? WHERE section=?",
+                    (voters, section_electors, now, section)
+                )
+                updated += 1
+            else:
+                # Crea record base per la sezione. I voti saranno inseriti/aggiornati in seguito.
+                cur.execute(
+                    "INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (admin_user["id"], section, voters, 0, 0, section_electors, 0, None, now, now)
+                )
+                report_id = cur.lastrowid
+
+                for name in ELECTION_DATA["mayors"]:
+                    cur.execute(
+                        "INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)",
+                        (report_id, "sindaco", None, name, 0)
+                    )
+
+                for list_name, list_obj in ELECTION_DATA["lists"].items():
+                    cur.execute(
+                        "INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)",
+                        (report_id, "lista", list_name, list_name, 0)
+                    )
+
+                    for candidate in list_obj["candidates"]:
+                        cur.execute(
+                            "INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)",
+                            (report_id, "preferenza", list_name, candidate, 0)
+                        )
+
+                imported += 1
+
+        conn.commit()
+
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore import sezioni CSV: {str(exc)}"}), 500
+
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "updated": updated,
+        "skipped": skipped,
+        "errors": errors[:10],
+        "message": f"Import sezioni completato. Create {imported}, aggiornate {updated}, saltate {skipped}."
+    })
+
 @app.post("/api/users/import-csv")
 @admin_required
 def import_users_csv():

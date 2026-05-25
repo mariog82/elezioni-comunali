@@ -262,3 +262,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Invii successivi sulla stessa sezione/seggio: aggiornamento del record esistente.
 - Aggiunto indice unico `idx_reports_section_unique` su `reports(section)`.
 - In caso di duplicati storici, viene conservato il record più recente per sezione.
+
+
+## Versione v33
+- Nuovo import CSV amministratore per dati sezione:
+  `Sezione;Elettori;Votanti`
+- Se la sezione esiste: aggiorna elettori e votanti.
+- Se la sezione non esiste: crea il record sezione con voti iniziali a 0.
+- Gli elettori sono salvati nel campo interno `contested_ballots` per compatibilità con le versioni precedenti, ma visualizzati come `Numero di elettori`.
