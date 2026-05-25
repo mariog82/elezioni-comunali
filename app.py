@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Lista 001 - Città Aperta - Controcorrente": {
+    "Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Lista 0012 - Movimento 5Stelle": {
+    "Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Lista 0010 - Partito Democratico": {
+    "Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,59 +102,59 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "Lista 08 - De Luca Sindaco di Sicilia": {
+    "De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 05 - Avremo Cura di Te": {
+    "Avremo Cura di Te": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 16 - Scolaro Sindaco": {
+    "Scolaro Sindaco": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 04 - Una Marcia in Più": {
+    "Una Marcia in Più": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 13 - Barcellona Pozzo di Gotto in Comune": {
+    "Barcellona Pozzo di Gotto in Comune": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 15 - Fratelli d’Italia": {
+    "Fratelli d’Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 14 - Nicola Barbera Sindaco": {
+    "Nicola Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 17 - Lista Civica": {
+    "La Civica Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 09 - Fuori dal Coro": {
+    "Fuori dal Coro": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 03 - Ascoltiamo Barcellona": {
+    "Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 07 - Noi Ci Siamo": {
+    "Noi Ci Siamo": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 11 - Forza Italia": {
+    "Forza Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 06 - Azzurri per Barcellona P.G.": {
+    "Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 02 - Vamos! Con Barbera Sindaco": {
+    "Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
@@ -248,6 +248,19 @@ def init_db():
                 "INSERT INTO users(name, phone, pin_hash, qr_token, role, section, active, created_at) VALUES(?,?,?,?,?,?,1,?)",
                 (name, phone, generate_password_hash(pin), secrets.token_urlsafe(24), role, section, now),
             )
+
+    # Un solo record logico per sezione/seggio:
+    # primo inserimento = INSERT, salvataggi successivi = UPDATE.
+    cur.execute("""
+        DELETE FROM reports
+        WHERE id NOT IN (
+            SELECT MAX(id)
+            FROM reports
+            GROUP BY section
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_section_unique ON reports(section)")
+
     conn.commit()
     conn.close()
 
@@ -498,7 +511,7 @@ def save_report():
     now = datetime.now().isoformat(timespec="seconds")
     conn = db()
     cur = conn.cursor()
-    existing = cur.execute("SELECT id, closed FROM reports WHERE user_id=? AND section=?", (user["id"], section)).fetchone()
+    existing = cur.execute("SELECT id, closed FROM reports WHERE section=?", (section,)).fetchone()
     if existing and user["role"] != "admin" and existing["closed"]:
         conn.close()
         return jsonify({"ok": False, "error": "Il seggio risulta già chiuso. Non puoi più modificare o inviare dati."}), 403
@@ -560,7 +573,7 @@ def close_seat():
         return jsonify({"ok": False, "error": f"Non è possibile chiudere il seggio: votanti={voters}, totale valido + bianche + nulle={expected_voters}. Le contestate sono solo indicative."}), 400
     now = datetime.now().isoformat(timespec="seconds")
     conn = db(); cur = conn.cursor()
-    existing = cur.execute("SELECT id, closed FROM reports WHERE user_id=? AND section=?", (user["id"], section)).fetchone()
+    existing = cur.execute("SELECT id, closed FROM reports WHERE section=?", (section,)).fetchone()
     if existing and existing["closed"]:
         conn.close(); return jsonify({"ok": False, "error": "Il seggio è già chiuso."}), 403
     if existing:

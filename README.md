@@ -254,3 +254,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Hash PIN ultra-leggero per import CSV: `pbkdf2:sha256:1`.
 - Cache degli hash PIN ripetuti.
 - Procfile aggiornato con `gunicorn --timeout 120 app:app`.
+
+
+## Versione v32
+- La sezione/seggio diventa la chiave logica del salvataggio.
+- Primo invio di una sezione/seggio: nuovo record.
+- Invii successivi sulla stessa sezione/seggio: aggiornamento del record esistente.
+- Aggiunto indice unico `idx_reports_section_unique` su `reports(section)`.
+- In caso di duplicati storici, viene conservato il record più recente per sezione.
