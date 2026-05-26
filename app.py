@@ -602,6 +602,30 @@ def init_db():
     """)
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_section_unique ON reports(section)")
 
+
+    # Deduplica voti storici: conserva l'ultimo record per report/tipo/lista/nome.
+    cur.execute("""
+        DELETE FROM votes
+        WHERE id NOT IN (
+            SELECT MAX(id)
+            FROM votes
+            GROUP BY report_id, vote_type, COALESCE(list_name,''), name
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_unique_update_import ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
+
+
+    # Deduplica report storici: un solo report per sezione/TOTALE.
+    cur.execute("""
+        DELETE FROM reports
+        WHERE id NOT IN (
+            SELECT MAX(id)
+            FROM reports
+            GROUP BY section
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_section_update_import ON reports(section)")
+
     conn.commit()
     conn.close()
 
@@ -1211,79 +1235,72 @@ def _resolve_candidate(list_name, raw_name, raw_number=None):
     return None
 
 def _ensure_report(cur, section, user_id):
+    """
+    Garantisce un solo report per sezione/TOTALE.
+    Se esiste, aggiorna updated_at e restituisce l'id.
+    Se non esiste, crea il report base.
+    """
     now = datetime.now().isoformat(timespec="seconds")
-    row = cur.execute("SELECT id FROM reports WHERE section=?", (section,)).fetchone()
+    section = str(section or "").strip() or "TOTALE"
+
+    row = cur.execute(
+        "SELECT id FROM reports WHERE section=? ORDER BY id DESC LIMIT 1",
+        (section,)
+    ).fetchone()
+
     if row:
-        cur.execute("UPDATE reports SET user_id=?, updated_at=? WHERE section=?", (user_id, now, section))
+        cur.execute(
+            "UPDATE reports SET user_id=?, updated_at=? WHERE id=?",
+            (user_id, now, row["id"])
+        )
         return row["id"]
+
     cur.execute(
         "INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
         (user_id, section, 0, 0, 0, 0, 0, None, now, now)
     )
     report_id = cur.lastrowid
+
     for mayor in ELECTION_DATA["mayors"]:
-        cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "sindaco", None, mayor, 0))
+        _upsert_vote(cur, report_id, "sindaco", mayor, 0, None)
+
     for list_name, obj in ELECTION_DATA["lists"].items():
-        cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "lista", list_name, list_name, 0))
+        _upsert_vote(cur, report_id, "lista", list_name, 0, list_name)
         for cand in obj.get("candidates", []):
-            cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "preferenza", list_name, cand, 0))
+            _upsert_vote(cur, report_id, "preferenza", cand, 0, list_name)
+
     return report_id
 
 def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
+    """
+    Aggiorna il voto se già presente; inserisce solo se non esiste.
+    Evita duplicati per report_id + tipo voto + lista + nome.
+    """
     row = cur.execute(
-        "SELECT id FROM votes WHERE report_id=? AND vote_type=? AND COALESCE(list_name,'')=COALESCE(?, '') AND name=?",
+        """
+        SELECT id FROM votes
+        WHERE report_id=?
+          AND vote_type=?
+          AND COALESCE(list_name,'')=COALESCE(?, '')
+          AND name=?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
         (report_id, vote_type, list_name, name)
     ).fetchone()
+
     if row:
-        cur.execute("UPDATE votes SET votes=? WHERE id=?", (votes, row["id"]))
-    else:
-        cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, vote_type, list_name, name, votes))
+        cur.execute(
+            "UPDATE votes SET votes=? WHERE id=?",
+            (int(votes or 0), row["id"])
+        )
+        return row["id"]
 
-
-def _read_csv_file(max_rows=5000):
-    """
-    Legge il file CSV inviato via form-data con campo 'file'.
-    Usa separatore ';' e salta automaticamente l'eventuale intestazione.
-    """
-    if "file" not in request.files:
-        raise ValueError("File CSV mancante")
-
-    uploaded_file = request.files["file"]
-    raw = uploaded_file.read()
-
-    if len(raw) > 2 * 1024 * 1024:
-        raise ValueError("File troppo grande. Limite massimo: 2 MB")
-
-    content = raw.decode("utf-8-sig", errors="ignore")
-    if not content.strip():
-        raise ValueError("CSV vuoto")
-
-    reader = csv.reader(io.StringIO(content), delimiter=";")
-    rows = []
-    for row in reader:
-        cleaned = [str(cell).strip() for cell in row]
-        if any(cleaned):
-            rows.append(cleaned)
-
-    if not rows:
-        raise ValueError("CSV vuoto")
-
-    if len(rows) > max_rows + 1:
-        raise ValueError(f"Troppe righe. Massimo consentito: {max_rows}")
-
-    first = ";".join(rows[0]).lower().replace(" ", "")
-    header_words = [
-        "sezione", "numeroliste", "nomelista", "votivalidi",
-        "numerosind", "candidatosindaco", "votisolosind",
-        "numerocons", "nomecons", "votinulli", "schedenulle",
-        "schedebianche", "v.cont.noass"
-    ]
-
-    if any(word in first for word in header_words):
-        rows = rows[1:]
-
-    return rows
-
+    cur.execute(
+        "INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)",
+        (report_id, vote_type, list_name, name, int(votes or 0))
+    )
+    return cur.lastrowid
 
 def _intv(value, default=0):
     """

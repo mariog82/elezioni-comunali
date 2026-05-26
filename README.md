@@ -407,3 +407,19 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   vengono aggiornati automaticamente anche i voti delle liste collegate.
 - La somma delle preferenze importate per ogni lista viene salvata come voto lista collegato.
 - I grafici e le statistiche si aggiornano usando i nuovi totali delle liste.
+
+
+## Versione v53
+- Rimossa la sezione generica `Importazioni CSV voti`.
+- Aggiunta sezione dedicata `Importazione schede nulle e bianche`.
+- Import disponibili:
+  - schede totali;
+  - schede per sezione.
+
+
+## Versione v54
+- Gli import CSV ora fanno UPDATE dei voti esistenti.
+- Nuovi inserimenti avvengono solo se il record non esiste.
+- Un solo report per sezione/TOTALE.
+- Un solo voto per report/tipo/lista/nome.
+- Aggiunta deduplica automatica dei duplicati storici.
