@@ -435,3 +435,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - schede;
   - import totali;
   - import per sezione.
+
+
+## Versione v56
+- Gli import CSV di sindaci, liste e consiglieri aggiornano i voti esistenti.
+- Inserimento solo se il record voto non esiste ancora.
+- Deduplica automatica dei duplicati storici nella tabella `votes`.
+- L'import delle preferenze consiglieri aggiorna anche i voti della lista collegata.

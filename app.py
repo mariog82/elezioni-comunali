@@ -626,6 +626,18 @@ def init_db():
     """)
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_section_update_import ON reports(section)")
 
+
+    # Deduplica voti importati: un solo record per report/tipo/lista/nome.
+    cur.execute("""
+        DELETE FROM votes
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM votes
+            GROUP BY report_id, vote_type, COALESCE(list_name,''), name
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_update_csv_unique_v56 ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
+
     conn.commit()
     conn.close()
 
@@ -1273,32 +1285,35 @@ def _ensure_report(cur, section, user_id):
 
 def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     """
-    Aggiorna il voto se già presente; inserisce solo se non esiste.
-    Evita duplicati per report_id + tipo voto + lista + nome.
+    UPDATE dei voti importati via CSV.
+    Inserisce solo se il record non esiste.
     """
-    row = cur.execute(
+    votes = int(votes or 0)
+
+    rows = cur.execute(
         """
         SELECT id FROM votes
         WHERE report_id=?
           AND vote_type=?
           AND COALESCE(list_name,'')=COALESCE(?, '')
           AND name=?
-        ORDER BY id DESC
-        LIMIT 1
+        ORDER BY id ASC
         """,
         (report_id, vote_type, list_name, name)
-    ).fetchone()
+    ).fetchall()
 
-    if row:
-        cur.execute(
-            "UPDATE votes SET votes=? WHERE id=?",
-            (int(votes or 0), row["id"])
-        )
-        return row["id"]
+    if rows:
+        keep_id = rows[0]["id"]
+        cur.execute("UPDATE votes SET votes=? WHERE id=?", (votes, keep_id))
+
+        for duplicate in rows[1:]:
+            cur.execute("DELETE FROM votes WHERE id=?", (duplicate["id"],))
+
+        return keep_id
 
     cur.execute(
         "INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)",
-        (report_id, vote_type, list_name, name, int(votes or 0))
+        (report_id, vote_type, list_name, name, votes)
     )
     return cur.lastrowid
 
