@@ -388,6 +388,20 @@ def index():
 def admin_page():
     return send_from_directory(STATIC_DIR, "admin.html")
 
+
+@app.route("/admin/charts")
+def admin_charts_page():
+    return send_from_directory(STATIC_DIR, "admin_charts.html")
+
+@app.route("/admin/imports")
+def admin_imports_page():
+    return send_from_directory(STATIC_DIR, "admin_imports.html")
+
+@app.route("/admin/users")
+def admin_users_page():
+    return send_from_directory(STATIC_DIR, "admin_users.html")
+
+
 @app.route("/admin/tools")
 def admin_tools_page():
     return send_from_directory(STATIC_DIR, "admin_tools.html")

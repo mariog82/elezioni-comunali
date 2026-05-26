@@ -277,3 +277,17 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Aggiunti import CSV multipli per liste, sindaci, consiglieri e schede, sia totali sia per sezione.
 - Gli import senza sezione aggiornano la sezione speciale `TOTALE`.
 - Gli import per sezione creano o aggiornano il record della sezione.
+
+
+## Versione v35
+- Pannello admin principale alleggerito.
+- Rimosse dal pannello principale:
+  - grafici principali;
+  - grafici dettaglio per seggio;
+  - import dati sezioni;
+  - import rappresentanti/utenti;
+  - gestione utenti.
+- Nuove pagine:
+  - `/admin/charts` tramite pulsante `Grafici`;
+  - `/admin/imports` tramite pulsante `Importazione`;
+  - `/admin/users` tramite pulsante `Gestione utenti`.
