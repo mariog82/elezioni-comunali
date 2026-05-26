@@ -1165,29 +1165,47 @@ def _resolve_mayor(raw_name, raw_number=None):
     return None
 
 def _resolve_candidate(list_name, raw_name, raw_number=None):
-    # Match per Nome Cons: numero consigliere usato solo se nessun nome combacia.
     candidates = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
-    matches = [c for c in candidates if _contains_flexible(raw_name, c)]
+    if not candidates:
+        return None
+
+    matches = []
+    for cand in candidates:
+        try:
+            if _contains_flexible(raw_name, cand):
+                matches.append(cand)
+        except Exception:
+            pass
+
     if not matches:
         raw_tokens = set(_tokens(raw_name))
         for cand in candidates:
             cand_tokens = set(_tokens(cand))
+            if not raw_tokens or not cand_tokens:
+                continue
             common = raw_tokens & cand_tokens
             min_required = 1 if min(len(raw_tokens), len(cand_tokens)) <= 1 else 2
             if len(common) >= min_required:
                 matches.append(cand)
+
     if matches:
         if len(matches) == 1:
             return matches[0]
         raw_tokens = set(_tokens(raw_name))
-        matches.sort(key=lambda n: (len(raw_tokens & set(_tokens(n))), -abs(len(_tokens(n)) - len(raw_tokens))), reverse=True)
+        def _score(cand):
+            cand_tokens = set(_tokens(cand))
+            common = raw_tokens & cand_tokens
+            return (len(common), len(common) / max(len(raw_tokens), 1), -abs(len(cand_tokens) - len(raw_tokens)))
+        matches.sort(key=_score, reverse=True)
         return matches[0]
+
     try:
         n = int(str(raw_number or "").strip())
         if 1 <= n <= len(candidates):
-            return candidates[n-1]
+            return candidates[n - 1]
     except Exception:
         pass
+
     return None
 
 def _ensure_report(cur, section, user_id):
@@ -1224,171 +1242,108 @@ def _import_votes(kind, by_section):
         rows = _read_csv_file()
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
+
     admin_user = current_user()
+    if not admin_user:
+        return jsonify({"ok": False, "error": "Utente amministratore non riconosciuto"}), 401
+
     conn = db()
     cur = conn.cursor()
-    imported = skipped = 0
+    imported = 0
+    skipped = 0
     errors = []
+
     try:
         for idx, row in enumerate(rows, start=1):
             try:
+                if not row or not any(str(x).strip() for x in row):
+                    skipped += 1
+                    continue
+
                 section = "TOTALE"
                 off = 0
                 if by_section:
-                    if len(row) < 1 or not row[0].strip():
+                    if len(row) < 1 or not str(row[0]).strip():
                         raise ValueError("sezione mancante")
-                    section = row[0].strip()
+                    section = str(row[0]).strip()
                     off = 1
+
                 report_id = _ensure_report(cur, section, admin_user["id"])
+
                 if kind == "liste":
                     if len(row) < off + 3:
-                        raise ValueError("formato: [Sezione;]Numero Liste;Nome Lista;Voti validi")
-                    list_name = _resolve_list(row[off+1], row[off])
+                        raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Voti validi")
+                    nome_lista = str(row[off + 1]).strip()
+                    list_name = _resolve_list(nome_lista, row[off])
                     if not list_name:
-                        raise ValueError(f"lista non riconosciuta in app.py: {row[off+1]}")
-                    _upsert_vote(cur, report_id, "lista", list_name, _csv_int(row[off+2]), list_name)
+                        raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
+                    votes = _intv(row[off + 2])
+                    _upsert_vote(cur, report_id, "lista", list_name, votes, list_name)
+                    imported += 1
+
                 elif kind == "sindaci":
                     if len(row) < off + 4:
-                        raise ValueError("formato: [Sezione;]Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind")
-                    mayor = _resolve_mayor(row[off+1], row[off])
+                        raise ValueError("formato richiesto: [Sezione;]Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind")
+                    nome_sindaco = str(row[off + 1]).strip()
+                    mayor = _resolve_mayor(nome_sindaco, row[off])
                     if not mayor:
-                        raise ValueError(f"sindaco non riconosciuto: {row[off+1]}")
-                    _upsert_vote(cur, report_id, "sindaco", mayor, _csv_int(row[off+2]) + _csv_int(row[off+3]), None)
+                        raise ValueError(f"Candidato Sindaco non trovato in app.py: {nome_sindaco}")
+                    votes = _intv(row[off + 2])
+                    only = _intv(row[off + 3])
+                    _upsert_vote(cur, report_id, "sindaco", mayor, votes + only, None)
+                    imported += 1
+
                 elif kind == "consiglieri":
                     if len(row) < off + 5:
-                        raise ValueError("formato: [Sezione;]Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
-                    list_name = _resolve_list(row[off+1], row[off])
+                        raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
+                    nome_lista = str(row[off + 1]).strip()
+                    list_name = _resolve_list(nome_lista, row[off])
                     if not list_name:
-                        raise ValueError(f"lista non riconosciuta in app.py: {row[off+1]}")
-                    cand = _resolve_candidate(list_name, row[off+3], row[off+2])
-                    if not cand:
-                        raise ValueError(f"candidato consigliere non riconosciuto in app.py: {row[off+3]}")
-                    _upsert_vote(cur, report_id, "preferenza", cand, _csv_int(row[off+4]), list_name)
+                        raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
+                    nome_cons = str(row[off + 3]).strip()
+                    candidate = _resolve_candidate(list_name, nome_cons, row[off + 2])
+                    if not candidate:
+                        raise ValueError(f"Nome Cons non trovato in app.py per lista {list_name}: {nome_cons}")
+                    votes = _intv(row[off + 4])
+                    _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
+                    imported += 1
+
                 elif kind == "schede":
                     if len(row) < off + 4:
-                        raise ValueError("formato: [Sezione;]Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.")
-                    null_total = _csv_int(row[off]) + _csv_int(row[off+1]) + _csv_int(row[off+3])
-                    blank = _csv_int(row[off+2])
+                        raise ValueError("formato richiesto: [Sezione;]Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.")
+                    voti_nulli = _intv(row[off])
+                    schede_nulle = _intv(row[off + 1])
+                    schede_bianche = _intv(row[off + 2])
+                    v_cont_no_ass = _intv(row[off + 3])
                     now = datetime.now().isoformat(timespec="seconds")
-                    cur.execute("UPDATE reports SET null_ballots=?, blank_ballots=?, updated_at=? WHERE id=?", (null_total, blank, now, report_id))
-                imported += 1
+                    cur.execute(
+                        "UPDATE reports SET null_ballots=?, blank_ballots=?, updated_at=? WHERE id=?",
+                        (voti_nulli + schede_nulle + v_cont_no_ass, schede_bianche, now, report_id)
+                    )
+                    imported += 1
+
             except Exception as exc:
                 skipped += 1
-                errors.append(f"Riga {idx}: {str(exc)}")
+                if len(errors) < 50:
+                    errors.append(f"Riga {idx}: {str(exc)}")
+
         conn.commit()
+
     except Exception as exc:
-        conn.rollback(); conn.close()
-        return jsonify({"ok": False, "error": f"Errore import: {str(exc)}"}), 500
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore import {kind}: {str(exc)}"}), 500
+
     conn.close()
-    return jsonify({"ok": True, "imported": imported, "skipped": skipped, "errors": errors[:20], "message": f"Import completato. Righe elaborate {imported}, saltate {skipped}."})
-
-
-
-
-
-
-def csv_match_key(value):
-    """
-    Normalizza i nominativi letti da CSV e quelli presenti in app.py:
-    - minuscolo
-    - rimozione accenti
-    - rimozione punteggiatura/spazi
-    - uniforma apostrofi
-    """
-    value = str(value or "").strip().lower()
-    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
-    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[^a-z0-9]+", "", value)
-    return value
-
-def resolve_list_name_from_app(csv_list_name):
-    """
-    Assegna i voti confrontando Nome Lista del CSV con i nomi lista presenti in ELECTION_DATA in app.py.
-    Non usa il numero lista per attribuire il voto, così si evita l'associazione errata.
-    """
-    csv_key = csv_match_key(csv_list_name)
-
-    aliases = {
-        "movimento2050": "movimento5stelle",
-        "movimento5stelle": "movimento5stelle",
-        "movimento5stelle": "movimento5stelle",
-        "m5s": "movimento5stelle",
-        "pd": "partitodemocratico",
-        "partitodemocratico": "partitodemocratico",
-        "cittaaperta": "cittaapertacontrocorrente",
-        "cittaapertacontrocorrente": "cittaapertacontrocorrente",
-    }
-    csv_key = aliases.get(csv_key, csv_key)
-
-    for list_name in ELECTION_DATA["lists"].keys():
-        app_key = csv_match_key(list_name)
-        app_key = aliases.get(app_key, app_key)
-        if app_key == csv_key:
-            return list_name
-
-    return None
-
-def resolve_candidate_name_from_app(list_name, csv_candidate_name):
-    """
-    Assegna i voti confrontando Nome Cons del CSV con i candidati presenti in ELECTION_DATA in app.py.
-    Non usa il numero consigliere per attribuire il voto, così si evita l'associazione errata.
-    """
-    candidates = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
-    csv_key = csv_match_key(csv_candidate_name)
-
-    for candidate in candidates:
-        if csv_match_key(candidate) == csv_key:
-            return candidate
-
-    return None
-
-
-def csv_match_key(value):
-    value = str(value or "").strip().lower()
-    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
-    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[^a-z0-9]+", "", value)
-    return value
-
-def list_alias_key(key):
-    aliases = {
-        "movimento2050": "movimento5stelle",
-        "movimento5stelle": "movimento5stelle",
-        "m5s": "movimento5stelle",
-        "pd": "partitodemocratico",
-        "partitodemocratico": "partitodemocratico",
-        "cittaaperta": "cittaapertacontrocorrente",
-        "cittaapertacontrocorrente": "cittaapertacontrocorrente",
-    }
-    return aliases.get(key, key)
-
-def match_list_from_csv(nome_lista):
-    csv_key = list_alias_key(csv_match_key(nome_lista))
-    for app_list_name in ELECTION_DATA["lists"].keys():
-        if list_alias_key(csv_match_key(app_list_name)) == csv_key:
-            return app_list_name
-    return None
-
-def match_candidate_from_csv(list_name, nome_cons):
-    csv_key = csv_match_key(nome_cons)
-    for app_candidate in ELECTION_DATA["lists"].get(list_name, {}).get("candidates", []):
-        if csv_match_key(app_candidate) == csv_key:
-            return app_candidate
-    return None
-
-def get_csv_value(row, index, label):
-    if index >= len(row):
-        raise ValueError(f"campo mancante: {label}")
-    return row[index]
-
-def parse_valid_votes(value):
-    return int_csv(value)
-
-def clean_section(value):
-    section = str(value or "").strip()
-    if not section:
-        raise ValueError("sezione mancante")
-    return section
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Import completato. Righe assegnate {imported}, righe saltate {skipped}."
+    })
 
 @app.post("/api/import/liste")
 @admin_required

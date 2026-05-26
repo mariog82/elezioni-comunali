@@ -341,3 +341,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v43
 - Matching CSV flessibile: ignora maiuscole/minuscole, accenti, punteggiatura e ordine parole.
 - Liste e consiglieri vengono abbinati se i nomi sono contenuti nelle stringhe normalizzate; numero usato solo come fallback.
+
+
+## Versione v44
+- Corretto errore su `/api/import/consiglieri-sezioni`.
+- L'import restituisce sempre JSON e non blocca tutto per singole righe non riconosciute.
+- Le righe non importate vengono mostrate come errori di riga nel popup.
