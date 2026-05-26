@@ -374,7 +374,7 @@ async function closeSeat(){
   updateValidationBox();
   const voters=nval("voters");
   
-  if(!confirm("Confermi la chiusura definitiva del seggio? Dopo la chiusura non potrai più modificare o reinviare i dati."))return;
+  if(!confirm("Confermi la chiusura definitiva del seggio? Dopo la chiusura non potrai piu' modificare o reinviare i dati."))return;
   try{
     const res=await api("/api/close-seat",{method:"POST",body:JSON.stringify({
       section:document.getElementById("section").value.trim(),

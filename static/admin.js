@@ -2,7 +2,7 @@
 let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
 let currentPrefTableList=null;
-const DETAIL_LISTS=["Partito Democratico","Movimento 5Stelle","Città Aperta - Controcorrente"];
+const DETAIL_LISTS=["PARTITO DEMOCRATICO","MOVIMENTO 5STELLE","CITTA' APERTA - CONTROCORRENTE"];
 
 function hasEl(id){ return document.getElementById(id)!==null; }
 function safeEl(id){ return document.getElementById(id); }
