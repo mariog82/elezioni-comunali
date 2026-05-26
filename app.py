@@ -1237,6 +1237,51 @@ def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     else:
         cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, vote_type, list_name, name, votes))
 
+
+def _read_csv_file(max_rows=5000):
+    """
+    Legge il file CSV inviato via form-data con campo 'file'.
+    Usa separatore ';' e salta automaticamente l'eventuale intestazione.
+    """
+    if "file" not in request.files:
+        raise ValueError("File CSV mancante")
+
+    uploaded_file = request.files["file"]
+    raw = uploaded_file.read()
+
+    if len(raw) > 2 * 1024 * 1024:
+        raise ValueError("File troppo grande. Limite massimo: 2 MB")
+
+    content = raw.decode("utf-8-sig", errors="ignore")
+    if not content.strip():
+        raise ValueError("CSV vuoto")
+
+    reader = csv.reader(io.StringIO(content), delimiter=";")
+    rows = []
+    for row in reader:
+        cleaned = [str(cell).strip() for cell in row]
+        if any(cleaned):
+            rows.append(cleaned)
+
+    if not rows:
+        raise ValueError("CSV vuoto")
+
+    if len(rows) > max_rows + 1:
+        raise ValueError(f"Troppe righe. Massimo consentito: {max_rows}")
+
+    first = ";".join(rows[0]).lower().replace(" ", "")
+    header_words = [
+        "sezione", "numeroliste", "nomelista", "votivalidi",
+        "numerosind", "candidatosindaco", "votisolosind",
+        "numerocons", "nomecons", "votinulli", "schedenulle",
+        "schedebianche", "v.cont.noass"
+    ]
+
+    if any(word in first for word in header_words):
+        rows = rows[1:]
+
+    return rows
+
 def _import_votes(kind, by_section):
     try:
         rows = _read_csv_file()

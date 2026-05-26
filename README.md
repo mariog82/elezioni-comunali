@@ -347,3 +347,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Corretto errore su `/api/import/consiglieri-sezioni`.
 - L'import restituisce sempre JSON e non blocca tutto per singole righe non riconosciute.
 - Le righe non importate vengono mostrate come errori di riga nel popup.
+
+
+## Versione v45
+- Corretto errore `name '_read_csv_file' is not defined`.
+- Aggiunta funzione `_read_csv_file` per lettura CSV con separatore `;`.
+- Rimossi dalla pagina importazione:
+  - `Liste per sezione`
+  - `Sindaci per sezione`
+- Gli endpoint rimossi restituiscono JSON 410 se richiamati accidentalmente.
