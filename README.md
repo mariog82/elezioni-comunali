@@ -383,3 +383,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v49
 - Corretto errore `name 're' is not defined`.
 - Import `re` aggiunto correttamente in `app.py`.
+
+
+## Versione v50
+- Corretto errore `name '_intv' is not defined`.
+- Aggiunta funzione `_intv()` per conversione robusta dei valori numerici CSV.

@@ -1284,6 +1284,30 @@ def _read_csv_file(max_rows=5000):
 
     return rows
 
+
+def _intv(value, default=0):
+    """
+    Conversione robusta a intero:
+    - gestisce None;
+    - stringhe vuote;
+    - virgole/punti/spazi;
+    - ritorna default in caso di errore.
+    """
+    try:
+        if value is None:
+            return default
+
+        text = str(value).strip()
+
+        if not text:
+            return default
+
+        text = text.replace(".", "").replace(",", ".")
+
+        return int(float(text))
+    except Exception:
+        return default
+
 def _import_votes(kind, by_section):
     try:
         rows = _read_csv_file()
