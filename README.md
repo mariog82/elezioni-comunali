@@ -291,3 +291,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - `/admin/charts` tramite pulsante `Grafici`;
   - `/admin/imports` tramite pulsante `Importazione`;
   - `/admin/users` tramite pulsante `Gestione utenti`.
+
+
+## Versione v36
+- Corretto errore `cannot read properties of null`.
+- Il JavaScript amministratore ora funziona correttamente nelle pagine separate:
+  `/admin`, `/admin/charts`, `/admin/imports`, `/admin/users`.
