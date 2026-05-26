@@ -2,7 +2,7 @@
 let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
 let currentPrefTableList=null;
-const DETAIL_LISTS=["Lista 010 - Partito Democratico","Lista 012 - Movimento 5Stelle","Lista 001 - Città Aperta - Controcorrente"];
+const DETAIL_LISTS=["Partito Democratico","Movimento 5Stelle","Città Aperta - Controcorrente"];
 
 async function api(url, options={}){
   const res=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json"},...options});
