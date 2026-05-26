@@ -423,3 +423,15 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Un solo report per sezione/TOTALE.
 - Un solo voto per report/tipo/lista/nome.
 - Aggiunta deduplica automatica dei duplicati storici.
+
+
+## Versione v55
+- Corretto definitivamente errore `_read_csv_file is not defined`.
+- Aggiunta funzione globale `_read_csv_file()`.
+- Gestione CSV standardizzata per tutti gli import:
+  - liste;
+  - sindaci;
+  - consiglieri;
+  - schede;
+  - import totali;
+  - import per sezione.

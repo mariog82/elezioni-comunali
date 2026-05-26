@@ -1325,6 +1325,65 @@ def _intv(value, default=0):
     except Exception:
         return default
 
+
+def _read_csv_file(max_rows=10000):
+    """
+    Lettura CSV standardizzata per tutti gli import.
+    Separatore obbligatorio: ;
+    """
+    if "file" not in request.files:
+        raise ValueError("File CSV mancante")
+
+    uploaded = request.files["file"]
+
+    raw = uploaded.read()
+
+    if not raw:
+        raise ValueError("File CSV vuoto")
+
+    if len(raw) > 5 * 1024 * 1024:
+        raise ValueError("File troppo grande (max 5MB)")
+
+    text = raw.decode("utf-8-sig", errors="ignore")
+
+    reader = csv.reader(io.StringIO(text), delimiter=";")
+
+    rows = []
+
+    for row in reader:
+        cleaned = [str(x).strip() for x in row]
+
+        if any(cleaned):
+            rows.append(cleaned)
+
+    if not rows:
+        raise ValueError("CSV senza dati")
+
+    if len(rows) > max_rows:
+        raise ValueError(f"CSV troppo grande. Massimo {max_rows} righe")
+
+    # Rimozione automatica intestazione
+    first_line = ";".join(rows[0]).lower()
+
+    header_keywords = [
+        "sezione",
+        "numero liste",
+        "nome lista",
+        "voti validi",
+        "numero sind",
+        "candidato sindaco",
+        "numero cons",
+        "nome cons",
+        "schede nulle",
+        "schede bianche"
+    ]
+
+    if any(k in first_line for k in header_keywords):
+        rows = rows[1:]
+
+    return rows
+
+
 def _import_votes(kind, by_section):
     try:
         rows = _read_csv_file()
