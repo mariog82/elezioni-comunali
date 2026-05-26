@@ -331,3 +331,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Le preferenze sono assegnate confrontando `Nome Cons` del CSV con i candidati della lista in `ELECTION_DATA` di app.py.
 - Il confronto è normalizzato: minuscolo, senza accenti, senza spazi e punteggiatura.
 - `Numero Liste` e `Numero Cons` non vengono usati per attribuire i voti.
+
+
+## Versione v42
+- Inseriti/aggiornati i candidati consiglieri delle liste mancanti dai file BARBERA(1).odt e SCOLARO(1).odt.
+- Il matching CSV continua a confrontare `Nome Lista` con i nomi lista presenti in ELECTION_DATA dentro app.py.
