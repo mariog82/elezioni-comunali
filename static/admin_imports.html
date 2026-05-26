@@ -49,6 +49,30 @@
 </section>
 
 <section class="card">
+  <h2>Importazione schede nulle e bianche</h2>
+  <p class="small">
+    Carica i CSV relativi a voti nulli, schede nulle, schede bianche e voti contestati/non assegnati.
+    Tutti i file devono usare il separatore <b>;</b>.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h3>Schede totali</h3>
+      <p class="small">Formato: <b>Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
+      <input type="file" id="csv_tot_schede" accept=".csv,text/csv">
+      <button onclick="importGenericCsv('csv_tot_schede','/api/import/schede')">Importa schede totali</button>
+    </div>
+
+    <div class="card">
+      <h3>Schede per sezione</h3>
+      <p class="small">Formato: <b>Sezione;Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
+      <input type="file" id="csv_sez_schede" accept=".csv,text/csv">
+      <button onclick="importGenericCsv('csv_sez_schede','/api/import/schede-sezioni')">Importa schede per sezione</button>
+    </div>
+  </div>
+</section>
+
+
+<section class="card">
   <h2>Importazione voti sezione</h2>
   <p class="small">
     Carica i CSV dei risultati per singola sezione/seggio. Tutti i file devono usare il separatore <b>;</b>.
@@ -78,15 +102,7 @@
 </section>
 
 
-<section class="card">
-<h2>Importazioni CSV voti</h2>
-<p class="small">Tutti i file devono usare separatore <b>;</b>. Gli import senza sezione vengono caricati nella sezione speciale <b>TOTALE</b>.</p>
-<div class="grid">
-  <div class="card"><h3>6. Consiglieri per sezione</h3><p class="small">Sezione;Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi</p><input type="file" id="csv_consiglieri_sezioni" accept=".csv"><button onclick="importGenericCsv('csv_consiglieri_sezioni','/api/import/consiglieri-sezioni')">Importa</button></div>
-  <div class="card"><h3>7. Schede totali</h3><p class="small">Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</p><input type="file" id="csv_schede" accept=".csv"><button onclick="importGenericCsv('csv_schede','/api/import/schede')">Importa</button></div>
-  <div class="card"><h3>8. Schede per sezione</h3><p class="small">Sezione;Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</p><input type="file" id="csv_schede_sezioni" accept=".csv"><button onclick="importGenericCsv('csv_schede_sezioni','/api/import/schede-sezioni')">Importa</button></div>
-</div>
-</section>
+
 <section class="card importCsvBox">
   <h2>Importa rappresentanti / utenti da CSV</h2>
   <p class="small">
