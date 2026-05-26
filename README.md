@@ -356,3 +356,25 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - `Liste per sezione`
   - `Sindaci per sezione`
 - Gli endpoint rimossi restituiscono JSON 410 se richiamati accidentalmente.
+
+
+## Versione v46
+- Corretto errore `name 'unicodedata' is not defined`.
+- Import `unicodedata` aggiunto correttamente in `app.py`.
+
+
+## Versione v47
+- Rimosso il blocco `Importa dati sezioni da CSV` dalle pagine amministratore.
+- L'endpoint `/api/sections/import-csv` restituisce JSON 410 se richiamato accidentalmente.
+
+
+## Versione v48
+- Aggiunta sezione `Importazione voti totali` nella pagina Importazione.
+- Upload separati per:
+  - CSV candidati sindaco totali;
+  - CSV liste totali;
+  - CSV preferenze consiglieri totali.
+- I tre import usano gli endpoint totali già presenti:
+  - `/api/import/sindaci`
+  - `/api/import/liste`
+  - `/api/import/consiglieri`

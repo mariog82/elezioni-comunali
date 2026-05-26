@@ -1,3 +1,4 @@
+import unicodedata
 import csv
 import io
 
