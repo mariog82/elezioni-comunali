@@ -1081,87 +1081,113 @@ def create_user():
 
 
 def _norm(value):
-    return " ".join(str(value or "").strip().split()).lower()
+    value = str(value or "").strip().lower()
+    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-z0-9]+", "", value)
+    return value
 
-def _csv_int(value):
-    text = str(value or "").strip().replace(".", "").replace(",", "")
-    return int(text) if text else 0
+def _tokens(value):
+    value = str(value or "").strip().lower()
+    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    tokens = re.findall(r"[a-z0-9]+", value)
+    stop = {"detto","detta","di","de","del","della","dei","degli","delle","il","la","lo","le","i","gli","un","una","e","ed","con","per","sindaco","sindaca","lista"}
+    return [t for t in tokens if t not in stop and len(t) > 1]
 
-def _read_csv_file(max_rows=2500):
-    if "file" not in request.files:
-        raise ValueError("File CSV mancante")
-    raw = request.files["file"].read()
-    if len(raw) > 2 * 1024 * 1024:
-        raise ValueError("File troppo grande. Limite massimo: 2 MB")
-    content = raw.decode("utf-8-sig", errors="ignore")
-    reader = csv.reader(io.StringIO(content), delimiter=";")
-    rows = []
-    for row in reader:
-        cleaned = [c.strip() for c in row]
-        if any(cleaned):
-            rows.append(cleaned)
-    if not rows:
-        raise ValueError("CSV vuoto")
-    if len(rows) > max_rows + 1:
-        raise ValueError(f"Troppe righe. Massimo consentito: {max_rows}")
-    first = ";".join(rows[0]).lower().replace(" ", "")
-    headers = ["sezione", "nomelista", "candidatosindaco", "nomecons", "votinulli", "schedenulle", "numeroliste", "numerosind"]
-    if any(h in first for h in headers):
-        rows = rows[1:]
-    return rows
+def _contains_flexible(csv_value, app_value):
+    ck = _norm(csv_value)
+    ak = _norm(app_value)
+    if not ck or not ak:
+        return False
+    if ck == ak or ck in ak or ak in ck:
+        return True
+    ct = _tokens(csv_value)
+    at = _tokens(app_value)
+    if not ct or not at:
+        return False
+    csv_in_app = all(any(c == a or c in a or a in c for a in at) for c in ct)
+    app_in_csv = all(any(a == c or a in c or c in a for c in ct) for a in at)
+    return csv_in_app or app_in_csv
+
+def _list_alias(key):
+    aliases = {
+        "movimento2050": "movimento5stelle",
+        "movimento5stelle": "movimento5stelle",
+        "m5s": "movimento5stelle",
+        "pd": "partitodemocratico",
+        "partitodemocratico": "partitodemocratico",
+        "cittaaperta": "cittaapertacontrocorrente",
+        "cittaapertacontrocorrente": "cittaapertacontrocorrente"
+    }
+    return aliases.get(key, key)
 
 def _resolve_list(raw_name, raw_number=None):
-    lists = list(ELECTION_DATA["lists"].keys())
+    # Match per Nome Lista: numero lista usato solo se nessun nome combacia.
+    raw_key = _list_alias(_norm(raw_name))
+    matches = []
+    for name in ELECTION_DATA["lists"].keys():
+        app_key = _list_alias(_norm(name))
+        if app_key == raw_key:
+            return name
+        if _contains_flexible(raw_name, name):
+            matches.append(name)
+    if matches:
+        if len(matches) == 1:
+            return matches[0]
+        raw_tokens = set(_tokens(raw_name))
+        matches.sort(key=lambda n: len(raw_tokens & set(_tokens(n))), reverse=True)
+        return matches[0]
     try:
         n = int(str(raw_number or "").strip())
+        lists = list(ELECTION_DATA["lists"].keys())
         if 1 <= n <= len(lists):
             return lists[n-1]
     except Exception:
         pass
-    raw = _norm(raw_name)
-    aliases = {
-        "movimento 2050": "MOVIMENTO 5STELLE",
-        "movimento 5 stelle": "MOVIMENTO 5STELLE",
-        "movimento 5stelle": "MOVIMENTO 5STELLE",
-        "citta aperta controcorrente": "CITTA' APERTA - CONTROCORRENTE",
-        "citta aperta - controcorrente": "CITTA' APERTA - CONTROCORRENTE",
-        "citta' aperta controcorrente": "CITTA' APERTA - CONTROCORRENTE",
-        "pd": "PARTITO DEMOCRATICO",
-        "partito democratico": "PARTITO DEMOCRATICO",
-    }
-    if raw in aliases and aliases[raw] in ELECTION_DATA["lists"]:
-        return aliases[raw]
-    for name in lists:
-        if _norm(name) == raw:
-            return name
     return None
 
 def _resolve_mayor(raw_name, raw_number=None):
-    mayors = ELECTION_DATA["mayors"]
+    matches = [m for m in ELECTION_DATA["mayors"] if _contains_flexible(raw_name, m)]
+    if matches:
+        if len(matches) == 1:
+            return matches[0]
+        raw_tokens = set(_tokens(raw_name))
+        matches.sort(key=lambda n: len(raw_tokens & set(_tokens(n))), reverse=True)
+        return matches[0]
     try:
         n = int(str(raw_number or "").strip())
+        mayors = ELECTION_DATA["mayors"]
         if 1 <= n <= len(mayors):
             return mayors[n-1]
     except Exception:
         pass
-    raw = _norm(raw_name)
-    for name in mayors:
-        if _norm(name) == raw:
-            return name
     return None
 
 def _resolve_candidate(list_name, raw_name, raw_number=None):
+    # Match per Nome Cons: numero consigliere usato solo se nessun nome combacia.
     candidates = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
+    matches = [c for c in candidates if _contains_flexible(raw_name, c)]
+    if not matches:
+        raw_tokens = set(_tokens(raw_name))
+        for cand in candidates:
+            cand_tokens = set(_tokens(cand))
+            common = raw_tokens & cand_tokens
+            min_required = 1 if min(len(raw_tokens), len(cand_tokens)) <= 1 else 2
+            if len(common) >= min_required:
+                matches.append(cand)
+    if matches:
+        if len(matches) == 1:
+            return matches[0]
+        raw_tokens = set(_tokens(raw_name))
+        matches.sort(key=lambda n: (len(raw_tokens & set(_tokens(n))), -abs(len(_tokens(n)) - len(raw_tokens))), reverse=True)
+        return matches[0]
     try:
         n = int(str(raw_number or "").strip())
         if 1 <= n <= len(candidates):
             return candidates[n-1]
     except Exception:
         pass
-    raw = _norm(raw_name)
-    for name in candidates:
-        if _norm(name) == raw:
-            return name
     return None
 
 def _ensure_report(cur, section, user_id):

@@ -336,3 +336,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v42
 - Inseriti/aggiornati i candidati consiglieri delle liste mancanti dai file BARBERA(1).odt e SCOLARO(1).odt.
 - Il matching CSV continua a confrontare `Nome Lista` con i nomi lista presenti in ELECTION_DATA dentro app.py.
+
+
+## Versione v43
+- Matching CSV flessibile: ignora maiuscole/minuscole, accenti, punteggiatura e ordine parole.
+- Liste e consiglieri vengono abbinati se i nomi sono contenuti nelle stringhe normalizzate; numero usato solo come fallback.
