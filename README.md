@@ -273,5 +273,7 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 
 
 ## Versione v34
-- Pagina /admin/import con import CSV multipli richiesti.
-- Pagine /admin/grafici e /admin/preferenze separate.
+- Aggiunta pagina separata `/admin/tools` per grafici, importazioni CSV e gestione utenti.
+- Aggiunti import CSV multipli per liste, sindaci, consiglieri e schede, sia totali sia per sezione.
+- Gli import senza sezione aggiornano la sezione speciale `TOTALE`.
+- Gli import per sezione creano o aggiornano il record della sezione.
