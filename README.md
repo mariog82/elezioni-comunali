@@ -310,3 +310,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Sostituita `ù` con `U'`.
 - Sostituita `à` con `A'`.
 - La trasformazione è stata applicata senza rendere maiuscole le parole chiave Python, per non rompere l'esecuzione dell'applicazione.
+
+
+## Versione v39
+- Nell'import CSV il confronto di `Nome Lista` avviene tutto in minuscolo/normalizzato.
+- Nell'import CSV il confronto di `Nome Cons` avviene tutto in minuscolo/normalizzato.
+- Il numero lista e il numero consigliere restano fallback se il nome non viene riconosciuto.

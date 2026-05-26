@@ -918,19 +918,22 @@ def _import_votes(kind, by_section):
     return jsonify({"ok": True, "imported": imported, "skipped": skipped, "errors": errors[:20], "message": f"Import completato. Righe elaborate {imported}, saltate {skipped}."})
 
 
-def normalize_list_import_name(value):
+
+
+def lower_key_for_csv_match(value):
     import unicodedata
-    value = str(value or "").strip()
+    value = str(value or "").strip().lower()
     value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[^a-zA-Z0-9]+", "", value).lower()
+    value = re.sub(r"[^a-z0-9]+", "", value)
     return value
 
 def resolve_list_name_from_csv_name(csv_name, number=None):
     """
-    Per gli import CSV attribuisce i voti confrontando prima il Nome Lista del file.
-    Il Numero Liste è solo fallback.
+    Confronta Nome Lista in minuscolo/normalizzato.
+    Il Numero Liste viene usato solo come fallback.
     """
-    raw = normalize_list_import_name(csv_name)
+    raw = lower_key_for_csv_match(csv_name)
+
     aliases = {
         "movimento2050": "MOVIMENTO 5STELLE",
         "movimento5stelle": "MOVIMENTO 5STELLE",
@@ -943,7 +946,7 @@ def resolve_list_name_from_csv_name(csv_name, number=None):
     }
 
     for list_name in ELECTION_DATA["lists"].keys():
-        if normalize_list_import_name(list_name) == raw:
+        if lower_key_for_csv_match(list_name) == raw:
             return list_name
 
     if raw in aliases and aliases[raw] in ELECTION_DATA["lists"]:
@@ -955,6 +958,28 @@ def resolve_list_name_from_csv_name(csv_name, number=None):
             lists = list(ELECTION_DATA["lists"].keys())
             if 1 <= n <= len(lists):
                 return lists[n - 1]
+        except Exception:
+            pass
+
+    return None
+
+def resolve_candidate_name_from_csv_name(list_name, csv_candidate_name, number=None):
+    """
+    Confronta Nome Cons in minuscolo/normalizzato.
+    Il Numero Cons viene usato solo come fallback.
+    """
+    candidates = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
+    raw = lower_key_for_csv_match(csv_candidate_name)
+
+    for candidate in candidates:
+        if lower_key_for_csv_match(candidate) == raw:
+            return candidate
+
+    if number is not None:
+        try:
+            n = int(str(number).strip())
+            if 1 <= n <= len(candidates):
+                return candidates[n - 1]
         except Exception:
             pass
 
