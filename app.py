@@ -1325,6 +1325,9 @@ def _import_votes(kind, by_section):
     imported = 0
     skipped = 0
     errors = []
+    # Per import preferenze totali/per sezione: accumula i voti dei consiglieri per lista
+    # per aggiornare anche i voti della lista collegata.
+    list_totals_from_preferences = {}
 
     try:
         for idx, row in enumerate(rows, start=1):
@@ -1379,6 +1382,7 @@ def _import_votes(kind, by_section):
                         raise ValueError(f"Nome Cons non trovato in app.py per lista {list_name}: {nome_cons}")
                     votes = _intv(row[off + 4])
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
+                    list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes
                     imported += 1
 
                 elif kind == "schede":
@@ -1399,6 +1403,13 @@ def _import_votes(kind, by_section):
                 skipped += 1
                 if len(errors) < 50:
                     errors.append(f"Riga {idx}: {str(exc)}")
+
+        # Se il file importato contiene preferenze consiglieri, aggiorna anche i voti
+        # delle liste collegate. In questo modo i grafici liste/statistiche si aggiornano
+        # automaticamente anche caricando solo il CSV delle preferenze.
+        if kind == "consiglieri":
+            for (report_id, list_name), total_votes in list_totals_from_preferences.items():
+                _upsert_vote(cur, report_id, "lista", list_name, total_votes, list_name)
 
         conn.commit()
 

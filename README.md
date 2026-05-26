@@ -388,3 +388,22 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v50
 - Corretto errore `name '_intv' is not defined`.
 - Aggiunta funzione `_intv()` per conversione robusta dei valori numerici CSV.
+
+
+## Versione v51
+- Aggiunta sezione `Importazione voti sezione` nella pagina Importazione.
+- Upload separati per:
+  - candidati sindaco per sezione;
+  - liste per sezione;
+  - preferenze consiglieri per sezione.
+- Riabilitati gli endpoint:
+  - `/api/import/sindaci-sezioni`
+  - `/api/import/liste-sezioni`
+  - `/api/import/consiglieri-sezioni`
+
+
+## Versione v52
+- Nell'import `Preferenze totali consiglieri`, oltre ai voti dei singoli candidati,
+  vengono aggiornati automaticamente anche i voti delle liste collegate.
+- La somma delle preferenze importate per ogni lista viene salvata come voto lista collegato.
+- I grafici e le statistiche si aggiornano usando i nuovi totali delle liste.
