@@ -556,3 +556,20 @@ async function importSectionsCsv(){
     alert(e.message);
   }
 }
+
+
+async function importGenericCsv(inputId, endpoint){
+  const input=document.getElementById(inputId);
+  if(!input || !input.files || !input.files.length){ alert("Seleziona un file CSV."); return; }
+  const fd=new FormData(); fd.append("file", input.files[0]);
+  try{
+    const res=await fetch(endpoint,{method:"POST",body:fd,credentials:"include",headers:{"Accept":"application/json"}});
+    const text=await res.text();
+    let data;
+    try{ data=JSON.parse(text); }catch(e){ console.error(text); throw new Error("Risposta non valida dal server. Controlla i log Render."); }
+    if(!res.ok || !data.ok) throw new Error(data.error || "Errore import CSV");
+    let msg=data.message || "Import completato.";
+    if(data.errors && data.errors.length){ msg += "\n\nPrime righe saltate:\n" + data.errors.join("\n"); }
+    alert(msg); input.value=""; await loadDashboard();
+  }catch(e){ alert(e.message); }
+}
