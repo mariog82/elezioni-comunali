@@ -21,7 +21,7 @@ ELECTION_DATA = {
     "Melangela Scolaro"
   ],
   "lists": {
-    "Lista 001 - Città Aperta - Controcorrente": {
+    "Città Aperta - Controcorrente": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Ben R'Houma Monia",
@@ -50,7 +50,7 @@ ELECTION_DATA = {
         "Yahiaoui Ayoub"
       ]
     },
-    "Lista 012 - Movimento 5Stelle": {
+    "Movimento 5Stelle": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Arrigo Antonino",
@@ -73,7 +73,7 @@ ELECTION_DATA = {
         "Turrisi Giuseppe detto Gepi"
       ]
     },
-    "Lista 010 - Partito Democratico": {
+    "Partito Democratico": {
       "coalition": "David Bongiovanni",
       "candidates": [
         "Bongiovanni David",
@@ -102,59 +102,59 @@ ELECTION_DATA = {
         "Zangla Angela"
       ]
     },
-    "Lista 08 - De Luca Sindaco di Sicilia": {
+    "De Luca Sindaco di Sicilia": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 05 - Avremo Cura di Te": {
+    "Avremo Cura di Te": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 16 - Scolaro Sindaco": {
+    "Scolaro Sindaco": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 04 - Una Marcia in Più": {
+    "Una Marcia in Più": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 13 - Barcellona Pozzo di Gotto in Comune": {
+    "Barcellona Pozzo di Gotto in Comune": {
       "coalition": "Melangela Scolaro",
       "candidates": []
     },
-    "Lista 15 - Fratelli d’Italia": {
+    "Fratelli d’Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 14 - Nicola Barbera Sindaco": {
+    "Nicola Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 17 - Lista Civica Barcellona P.G.": {
+    "La Civica Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 09 - Fuori dal Coro": {
+    "Fuori dal Coro": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 03 - Ascoltiamo Barcellona": {
+    "Ascoltiamo Barcellona": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 07 - Noi Ci Siamo": {
+    "Noi Ci Siamo": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 11 - Forza Italia": {
+    "Forza Italia": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 06 - Azzurri per Barcellona P.G.": {
+    "Azzurri per Barcellona P.G.": {
       "coalition": "Nicola Barbera",
       "candidates": []
     },
-    "Lista 02 - Vamos! Con Barbera Sindaco": {
+    "Vamos! Con Barbera Sindaco": {
       "coalition": "Nicola Barbera",
       "candidates": []
     }
@@ -387,6 +387,18 @@ def index():
 @app.route("/admin")
 def admin_page():
     return send_from_directory(STATIC_DIR, "admin.html")
+
+@app.route("/admin/import")
+def admin_import_page():
+    return send_from_directory(STATIC_DIR, "import.html")
+
+@app.route("/admin/grafici")
+def admin_grafici_page():
+    return send_from_directory(STATIC_DIR, "grafici.html")
+
+@app.route("/admin/preferenze")
+def admin_preferenze_page():
+    return send_from_directory(STATIC_DIR, "preferenze.html")
 
 @app.post("/api/login")
 def login():
@@ -721,6 +733,157 @@ def create_user():
 
 
 
+
+
+def _csv_rows():
+    if "file" not in request.files:
+        return None, ("File CSV mancante", 400)
+    raw = request.files["file"].read()
+    if len(raw) > 1024 * 1024:
+        return None, ("File troppo grande. Limite 1 MB", 400)
+    content = raw.decode("utf-8-sig", errors="ignore")
+    rows = [[c.strip() for c in r] for r in csv.reader(io.StringIO(content), delimiter=";") if any(c.strip() for c in r)]
+    if not rows:
+        return None, ("CSV vuoto", 400)
+    first = ";".join(rows[0]).lower().replace(" ", "")
+    if any(x in first for x in ["sezione", "numeroliste", "nomelista", "numerosind", "candidatosindaco", "numerocons", "nomecons", "votinulli"]):
+        rows = rows[1:]
+    return rows, None
+
+def _toint(v):
+    try:
+        return int(str(v).strip().replace(".", "").replace(",", "") or 0)
+    except Exception:
+        return 0
+
+def _find_list(num, name):
+    lists = list(ELECTION_DATA["lists"].keys())
+    n = _toint(num)
+    if 1 <= n <= len(lists): return lists[n-1]
+    name = (name or "").strip().lower()
+    for l in lists:
+        if l.lower() == name: return l
+    return None
+
+def _find_mayor(num, name):
+    mayors = ELECTION_DATA["mayors"]
+    n = _toint(num)
+    if 1 <= n <= len(mayors): return mayors[n-1]
+    name = (name or "").strip().lower()
+    for m in mayors:
+        if m.lower() == name: return m
+    return None
+
+def _find_cons(list_name, num, name):
+    cands = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
+    n = _toint(num)
+    if 1 <= n <= len(cands): return cands[n-1]
+    name = (name or "").strip().lower()
+    for c in cands:
+        if c.lower() == name: return c
+    return None
+
+def _report(cur, section, user_id):
+    now = datetime.now().isoformat(timespec="seconds")
+    r = cur.execute("SELECT id FROM reports WHERE section=?", (section,)).fetchone()
+    if r: return r["id"]
+    cur.execute("INSERT INTO reports(user_id,section,voters,blank_ballots,null_ballots,contested_ballots,closed,closed_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (user_id, section, 0, 0, 0, 0, 0, None, now, now))
+    rid = cur.lastrowid
+    for m in ELECTION_DATA["mayors"]:
+        cur.execute("INSERT INTO votes(report_id,vote_type,list_name,name,votes) VALUES(?,?,?,?,0)", (rid, "sindaco", None, m))
+    for l,o in ELECTION_DATA["lists"].items():
+        cur.execute("INSERT INTO votes(report_id,vote_type,list_name,name,votes) VALUES(?,?,?,?,0)", (rid, "lista", l, l))
+        for c in o.get("candidates", []):
+            cur.execute("INSERT INTO votes(report_id,vote_type,list_name,name,votes) VALUES(?,?,?,?,0)", (rid, "preferenza", l, c))
+    return rid
+
+def _set_vote(cur, rid, typ, lname, name, votes):
+    r = cur.execute("SELECT id FROM votes WHERE report_id=? AND vote_type=? AND COALESCE(list_name,'')=COALESCE(?,'') AND name=?", (rid, typ, lname, name)).fetchone()
+    if r:
+        cur.execute("UPDATE votes SET votes=? WHERE id=?", (votes, r["id"]))
+    else:
+        cur.execute("INSERT INTO votes(report_id,vote_type,list_name,name,votes) VALUES(?,?,?,?,?)", (rid, typ, lname, name, votes))
+
+def _import_common(kind):
+    rows, err = _csv_rows()
+    if err: return jsonify({"ok": False, "error": err[0]}), err[1]
+    conn = db(); cur = conn.cursor(); user = current_user()
+    imp = skip = 0; errors=[]; now = datetime.now().isoformat(timespec="seconds")
+    try:
+        for i,row in enumerate(rows, start=1):
+            try:
+                if kind == "list_total":
+                    if len(row)<3: raise ValueError("Numero Liste;Nome Lista;Voti validi")
+                    rid=_report(cur,"TOTALE",user["id"]); lname=_find_list(row[0],row[1]); 
+                    if not lname: raise ValueError("lista non trovata")
+                    _set_vote(cur,rid,"lista",lname,lname,_toint(row[2]))
+                elif kind == "list_section":
+                    if len(row)<4: raise ValueError("Sezione;Numero Liste;Nome Lista;Voti validi")
+                    rid=_report(cur,row[0],user["id"]); lname=_find_list(row[1],row[2])
+                    if not lname: raise ValueError("lista non trovata")
+                    _set_vote(cur,rid,"lista",lname,lname,_toint(row[3]))
+                elif kind == "mayor_total":
+                    if len(row)<3: raise ValueError("Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind")
+                    rid=_report(cur,"TOTALE",user["id"]); m=_find_mayor(row[0],row[1])
+                    if not m: raise ValueError("sindaco non trovato")
+                    _set_vote(cur,rid,"sindaco",None,m,_toint(row[2])+(_toint(row[3]) if len(row)>3 else 0))
+                elif kind == "mayor_section":
+                    if len(row)<4: raise ValueError("Sezione;Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind")
+                    rid=_report(cur,row[0],user["id"]); m=_find_mayor(row[1],row[2])
+                    if not m: raise ValueError("sindaco non trovato")
+                    _set_vote(cur,rid,"sindaco",None,m,_toint(row[3])+(_toint(row[4]) if len(row)>4 else 0))
+                elif kind == "cons_total":
+                    if len(row)<5: raise ValueError("Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
+                    rid=_report(cur,"TOTALE",user["id"]); lname=_find_list(row[0],row[1])
+                    if not lname: raise ValueError("lista non trovata")
+                    c=_find_cons(lname,row[2],row[3])
+                    if not c: raise ValueError("consigliere non trovato/non gestito")
+                    _set_vote(cur,rid,"preferenza",lname,c,_toint(row[4]))
+                elif kind == "cons_section":
+                    if len(row)<6: raise ValueError("Sezione;Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
+                    rid=_report(cur,row[0],user["id"]); lname=_find_list(row[1],row[2])
+                    if not lname: raise ValueError("lista non trovata")
+                    c=_find_cons(lname,row[3],row[4])
+                    if not c: raise ValueError("consigliere non trovato/non gestito")
+                    _set_vote(cur,rid,"preferenza",lname,c,_toint(row[5]))
+                elif kind == "ballots":
+                    off=1 if len(row)>=5 else 0
+                    section=row[0] if off else "TOTALE"
+                    if len(row)<4+off: raise ValueError("Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss")
+                    rid=_report(cur,section,user["id"])
+                    cur.execute("UPDATE reports SET null_ballots=?, blank_ballots=?, updated_at=? WHERE id=?", (_toint(row[1+off]), _toint(row[2+off]), now, rid))
+                cur.execute("UPDATE reports SET updated_at=? WHERE id=?", (now, rid))
+                imp += 1
+            except Exception as e:
+                skip += 1; errors.append(f"Riga {i}: {e}")
+        conn.commit()
+    except Exception as e:
+        conn.rollback(); conn.close()
+        return jsonify({"ok": False, "error": str(e)}), 500
+    conn.close()
+    return jsonify({"ok": True, "message": f"Import completato. Righe importate {imp}, saltate {skip}.", "errors": errors[:10]})
+
+@app.post("/api/import/list-votes-total")
+@admin_required
+def import_list_votes_total(): return _import_common("list_total")
+@app.post("/api/import/list-votes-section")
+@admin_required
+def import_list_votes_section(): return _import_common("list_section")
+@app.post("/api/import/mayor-votes-total")
+@admin_required
+def import_mayor_votes_total(): return _import_common("mayor_total")
+@app.post("/api/import/mayor-votes-section")
+@admin_required
+def import_mayor_votes_section(): return _import_common("mayor_section")
+@app.post("/api/import/council-votes-total")
+@admin_required
+def import_council_votes_total(): return _import_common("cons_total")
+@app.post("/api/import/council-votes-section")
+@admin_required
+def import_council_votes_section(): return _import_common("cons_section")
+@app.post("/api/import/ballots")
+@admin_required
+def import_ballots(): return _import_common("ballots")
 
 @app.post("/api/sections/import-csv")
 @admin_required

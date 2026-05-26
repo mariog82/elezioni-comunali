@@ -270,3 +270,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Se la sezione esiste: aggiorna elettori e votanti.
 - Se la sezione non esiste: crea il record sezione con voti iniziali a 0.
 - Gli elettori sono salvati nel campo interno `contested_ballots` per compatibilità con le versioni precedenti, ma visualizzati come `Numero di elettori`.
+
+
+## Versione v34
+- Pagina /admin/import con import CSV multipli richiesti.
+- Pagine /admin/grafici e /admin/preferenze separate.
