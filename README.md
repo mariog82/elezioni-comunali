@@ -297,3 +297,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Corretto errore `cannot read properties of null`.
 - Il JavaScript amministratore ora funziona correttamente nelle pagine separate:
   `/admin`, `/admin/charts`, `/admin/imports`, `/admin/users`.
+
+
+## Versione v37
+- Nell'importazione dei voti di lista l'attribuzione avviene confrontando prioritariamente il `Nome Lista` nel CSV.
+- Il `Numero Liste` viene usato solo come fallback.
+- Il confronto ignora maiuscole/minuscole, accenti, spazi e punteggiatura.

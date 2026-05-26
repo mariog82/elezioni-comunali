@@ -917,6 +917,49 @@ def _import_votes(kind, by_section):
     conn.close()
     return jsonify({"ok": True, "imported": imported, "skipped": skipped, "errors": errors[:20], "message": f"Import completato. Righe elaborate {imported}, saltate {skipped}."})
 
+
+def normalize_list_import_name(value):
+    import unicodedata
+    value = str(value or "").strip()
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-zA-Z0-9]+", "", value).lower()
+    return value
+
+def resolve_list_name_from_csv_name(csv_name, number=None):
+    """
+    Per gli import CSV attribuisce i voti confrontando prima il Nome Lista del file.
+    Il Numero Liste è solo fallback.
+    """
+    raw = normalize_list_import_name(csv_name)
+    aliases = {
+        "movimento2050": "Movimento 5Stelle",
+        "movimento5stelle": "Movimento 5Stelle",
+        "movimento5stelle": "Movimento 5Stelle",
+        "m5s": "Movimento 5Stelle",
+        "partitodemocratico": "Partito Democratico",
+        "pd": "Partito Democratico",
+        "cittaapertacontrocorrente": "Città Aperta - Controcorrente",
+        "cittaaperta": "Città Aperta - Controcorrente",
+    }
+
+    for list_name in ELECTION_DATA["lists"].keys():
+        if normalize_list_import_name(list_name) == raw:
+            return list_name
+
+    if raw in aliases and aliases[raw] in ELECTION_DATA["lists"]:
+        return aliases[raw]
+
+    if number is not None:
+        try:
+            n = int(str(number).strip())
+            lists = list(ELECTION_DATA["lists"].keys())
+            if 1 <= n <= len(lists):
+                return lists[n - 1]
+        except Exception:
+            pass
+
+    return None
+
 @app.post("/api/import/liste")
 @admin_required
 def import_liste_totali():
