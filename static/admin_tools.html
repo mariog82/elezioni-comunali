@@ -9,6 +9,15 @@
 <body>
 <header><h1>Pannello amministratore</h1></header>
 <main>
+
+<section class="card">
+  <h2>Statistiche aggiornate automaticamente</h2>
+  <p class="small">
+    I grafici usano i dati salvati sul server. Se importi le preferenze totali dei consiglieri,
+    la web app aggiorna anche i voti delle liste collegate sommando le preferenze importate.
+  </p>
+</section>
+
 <section class="card topbar">
 <button class="secondary" onclick="location.href='/admin'">Torna pannello admin</button>
 <div><button onclick="loadDashboard()">Aggiorna</button><button class="secondary" onclick="location.href='/admin/tools'">Vai a grafici/import/utenti</button><button class="secondary" onclick="location.href='/api/export.csv'">Esporta CSV</button></div>
@@ -91,6 +100,36 @@
     </div>
   </div>
 </section>
+
+<section class="card">
+  <h2>Importazione voti sezione</h2>
+  <p class="small">
+    Carica i CSV dei risultati per singola sezione/seggio. Tutti i file devono usare il separatore <b>;</b>.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h3>Voti candidati sindaco per sezione</h3>
+      <p class="small">Formato: <b>Sezione;Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
+      <input type="file" id="csv_sez_sindaci" accept=".csv,text/csv">
+      <button onclick="importGenericCsv('csv_sez_sindaci','/api/import/sindaci-sezioni')">Importa sindaci per sezione</button>
+    </div>
+
+    <div class="card">
+      <h3>Voti liste per sezione</h3>
+      <p class="small">Formato: <b>Sezione;Numero Liste;Nome Lista;Voti validi</b></p>
+      <input type="file" id="csv_sez_liste" accept=".csv,text/csv">
+      <button onclick="importGenericCsv('csv_sez_liste','/api/import/liste-sezioni')">Importa liste per sezione</button>
+    </div>
+
+    <div class="card">
+      <h3>Preferenze consiglieri per sezione</h3>
+      <p class="small">Formato: <b>Sezione;Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi</b></p>
+      <input type="file" id="csv_sez_consiglieri" accept=".csv,text/csv">
+      <button onclick="importGenericCsv('csv_sez_consiglieri','/api/import/consiglieri-sezioni')">Importa consiglieri per sezione</button>
+    </div>
+  </div>
+</section>
+
 
 <section class="card">
 <h2>Importazioni CSV voti</h2>
