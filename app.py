@@ -880,7 +880,7 @@ def _import_votes(kind, by_section):
                         raise ValueError("formato: [Sezione;]Numero Liste;Nome Lista;Voti validi")
                     list_name = _resolve_list(row[off+1], row[off])
                     if not list_name:
-                        raise ValueError(f"lista non riconosciuta: {row[off+1]}")
+                        raise ValueError(f"lista non riconosciuta in app.py: {row[off+1]}")
                     _upsert_vote(cur, report_id, "lista", list_name, _csv_int(row[off+2]), list_name)
                 elif kind == "sindaci":
                     if len(row) < off + 4:
@@ -894,10 +894,10 @@ def _import_votes(kind, by_section):
                         raise ValueError("formato: [Sezione;]Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
                     list_name = _resolve_list(row[off+1], row[off])
                     if not list_name:
-                        raise ValueError(f"lista non riconosciuta: {row[off+1]}")
+                        raise ValueError(f"lista non riconosciuta in app.py: {row[off+1]}")
                     cand = _resolve_candidate(list_name, row[off+3], row[off+2])
                     if not cand:
-                        raise ValueError(f"candidato non riconosciuto: {row[off+3]}")
+                        raise ValueError(f"candidato consigliere non riconosciuto in app.py: {row[off+3]}")
                     _upsert_vote(cur, report_id, "preferenza", cand, _csv_int(row[off+4]), list_name)
                 elif kind == "schede":
                     if len(row) < off + 4:
@@ -920,68 +920,60 @@ def _import_votes(kind, by_section):
 
 
 
-def lower_key_for_csv_match(value):
-    import unicodedata
+
+
+def csv_match_key(value):
+    """
+    Normalizza i nominativi letti da CSV e quelli presenti in app.py:
+    - minuscolo
+    - rimozione accenti
+    - rimozione punteggiatura/spazi
+    - uniforma apostrofi
+    """
     value = str(value or "").strip().lower()
+    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
     value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
     value = re.sub(r"[^a-z0-9]+", "", value)
     return value
 
-def resolve_list_name_from_csv_name(csv_name, number=None):
+def resolve_list_name_from_app(csv_list_name):
     """
-    Confronta Nome Lista in minuscolo/normalizzato.
-    Il Numero Liste viene usato solo come fallback.
+    Assegna i voti confrontando Nome Lista del CSV con i nomi lista presenti in ELECTION_DATA in app.py.
+    Non usa il numero lista per attribuire il voto, così si evita l'associazione errata.
     """
-    raw = lower_key_for_csv_match(csv_name)
+    csv_key = csv_match_key(csv_list_name)
 
     aliases = {
-        "movimento2050": "MOVIMENTO 5STELLE",
-        "movimento5stelle": "MOVIMENTO 5STELLE",
-        "movimento5stelle": "MOVIMENTO 5STELLE",
-        "m5s": "MOVIMENTO 5STELLE",
-        "partitodemocratico": "PARTITO DEMOCRATICO",
-        "pd": "PARTITO DEMOCRATICO",
-        "cittaapertacontrocorrente": "CITTA' APERTA - CONTROCORRENTE",
-        "cittaaperta": "CITTA' APERTA - CONTROCORRENTE",
+        "movimento2050": "movimento5stelle",
+        "movimento5stelle": "movimento5stelle",
+        "movimento5stelle": "movimento5stelle",
+        "m5s": "movimento5stelle",
+        "pd": "partitodemocratico",
+        "partitodemocratico": "partitodemocratico",
+        "cittaaperta": "cittaapertacontrocorrente",
+        "cittaapertacontrocorrente": "cittaapertacontrocorrente",
     }
+    csv_key = aliases.get(csv_key, csv_key)
 
     for list_name in ELECTION_DATA["lists"].keys():
-        if lower_key_for_csv_match(list_name) == raw:
+        app_key = csv_match_key(list_name)
+        app_key = aliases.get(app_key, app_key)
+        if app_key == csv_key:
             return list_name
-
-    if raw in aliases and aliases[raw] in ELECTION_DATA["lists"]:
-        return aliases[raw]
-
-    if number is not None:
-        try:
-            n = int(str(number).strip())
-            lists = list(ELECTION_DATA["lists"].keys())
-            if 1 <= n <= len(lists):
-                return lists[n - 1]
-        except Exception:
-            pass
 
     return None
 
-def resolve_candidate_name_from_csv_name(list_name, csv_candidate_name, number=None):
+def resolve_candidate_name_from_app(list_name, csv_candidate_name):
     """
-    Confronta Nome Cons in minuscolo/normalizzato.
-    Il Numero Cons viene usato solo come fallback.
+    Assegna i voti confrontando Nome Cons del CSV con i candidati presenti in ELECTION_DATA in app.py.
+    Non usa il numero consigliere per attribuire il voto, così si evita l'associazione errata.
     """
     candidates = ELECTION_DATA["lists"].get(list_name, {}).get("candidates", [])
-    raw = lower_key_for_csv_match(csv_candidate_name)
+    csv_key = csv_match_key(csv_candidate_name)
 
     for candidate in candidates:
-        if lower_key_for_csv_match(candidate) == raw:
+        if csv_match_key(candidate) == csv_key:
             return candidate
-
-    if number is not None:
-        try:
-            n = int(str(number).strip())
-            if 1 <= n <= len(candidates):
-                return candidates[n - 1]
-        except Exception:
-            pass
 
     return None
 

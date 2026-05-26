@@ -316,3 +316,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Nell'import CSV il confronto di `Nome Lista` avviene tutto in minuscolo/normalizzato.
 - Nell'import CSV il confronto di `Nome Cons` avviene tutto in minuscolo/normalizzato.
 - Il numero lista e il numero consigliere restano fallback se il nome non viene riconosciuto.
+
+
+## Versione v40
+- Dopo il caricamento CSV, i voti delle liste vengono assegnati confrontando `Nome Lista` con i nomi presenti in `ELECTION_DATA` dentro `app.py`.
+- I voti dei consiglieri vengono assegnati confrontando `Nome Cons` con i candidati presenti in `ELECTION_DATA` dentro `app.py`.
+- `Numero Liste` e `Numero Cons` non vengono più usati per attribuire il voto, evitando associazioni errate.
+- Il confronto è normalizzato: minuscolo, senza accenti, senza spazi/punteggiatura.
