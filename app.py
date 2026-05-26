@@ -16,146 +16,146 @@ app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
 ELECTION_DATA = {
   "mayors": [
-    "Nicola Barbera",
-    "David Bongiovanni",
-    "Melangela Scolaro"
+    "NICOLA BARBERA",
+    "DAVID BONGIOVANNI",
+    "MELANGELA SCOLARO"
   ],
   "lists": {
-    "Città Aperta - Controcorrente": {
-      "coalition": "David Bongiovanni",
+    "CITTA' APERTA - CONTROCORRENTE": {
+      "coalition": "DAVID BONGIOVANNI",
       "candidates": [
-        "Ben R'Houma Monia",
-        "Campo Raffaella",
-        "Centineo Pietro",
-        "Chiofalo Gaetano",
-        "Cicero Antonino",
-        "Crinò Pietro",
-        "Gattignolo Elisa",
-        "Giglio Antonio Mario",
-        "Maio Antonino",
-        "Mamì Antonio Dario",
-        "Materia Claudio",
-        "Mirabile Katia",
-        "Naselli Domenica Adele detta Mimma",
-        "Paratore Sebastiano Giuseppe Marco",
-        "Poma Elena Albertina",
-        "Puliafito Salvatore Giovanni",
-        "Putzu Giovanna",
-        "Rivilli Noelia Jacqueline",
-        "Salerni Angelo",
-        "Sidoti Gabriele",
-        "Siracusa Carmela",
-        "Torre Giovanna",
-        "Valenti Maria Carmen",
-        "Yahiaoui Ayoub"
+        "BEN R'HOUMA MONIA",
+        "CAMPO RAFFAELLA",
+        "CENTINEO PIETRO",
+        "CHIOFALO GAETANO",
+        "CICERO ANTONINO",
+        "CRINÒ PIETRO",
+        "GATTIGNOLO ELISA",
+        "GIGLIO ANTONIO MARIO",
+        "MAIO ANTONINO",
+        "MAMÌ ANTONIO DARIO",
+        "MATERIA CLAUDIO",
+        "MIRABILE KATIA",
+        "NASELLI DOMENICA ADELE DETTA MIMMA",
+        "PARATORE SEBASTIANO GIUSEPPE MARCO",
+        "POMA ELENA ALBERTINA",
+        "PULIAFITO SALVATORE GIOVANNI",
+        "PUTZU GIOVANNA",
+        "RIVILLI NOELIA JACQUELINE",
+        "SALERNI ANGELO",
+        "SIDOTI GABRIELE",
+        "SIRACUSA CARMELA",
+        "TORRE GIOVANNA",
+        "VALENTI MARIA CARMEN",
+        "YAHIAOUI AYOUB"
       ]
     },
-    "Movimento 5Stelle": {
-      "coalition": "David Bongiovanni",
+    "MOVIMENTO 5STELLE": {
+      "coalition": "DAVID BONGIOVANNI",
       "candidates": [
-        "Arrigo Antonino",
-        "Cambria Angelino detto Linuccio",
-        "Ciminelli Erika",
-        "Coppolino Maria Pia",
-        "Corrado Fabrizio",
-        "Donnina Giovanni",
-        "El Hessania Abdelkrim detto Karim",
-        "Genovese Biagio",
-        "Giglio Ruggero detto Ruggero",
-        "Giorgianni Vera detta Vera",
-        "Giunta Antonino",
-        "Giunta Gabriella",
-        "Infantino Marco",
-        "Mazzeo Angelo",
-        "Mirabile Alessandra Rosaria",
-        "Presti Stefania",
-        "Recupero Gaetano",
-        "Turrisi Giuseppe detto Gepi"
+        "ARRIGO ANTONINO",
+        "CAMBRIA ANGELINO DETTO LINUCCIO",
+        "CIMINELLI ERIKA",
+        "COPPOLINO MARIA PIA",
+        "CORRADO FABRIZIO",
+        "DONNINA GIOVANNI",
+        "EL HESSANIA ABDELKRIM DETTO KARIM",
+        "GENOVESE BIAGIO",
+        "GIGLIO RUGGERO DETTO RUGGERO",
+        "GIORGIANNI VERA DETTA VERA",
+        "GIUNTA ANTONINO",
+        "GIUNTA GABRIELLA",
+        "INFANTINO MARCO",
+        "MAZZEO ANGELO",
+        "MIRABILE ALESSANDRA ROSARIA",
+        "PRESTI STEFANIA",
+        "RECUPERO GAETANO",
+        "TURRISI GIUSEPPE DETTO GEPI"
       ]
     },
-    "Partito Democratico": {
-      "coalition": "David Bongiovanni",
+    "PARTITO DEMOCRATICO": {
+      "coalition": "DAVID BONGIOVANNI",
       "candidates": [
-        "Bongiovanni David",
-        "Calamuneri Orazio",
-        "Ceraolo Carmelo Michele",
-        "Cucumo Stefania",
-        "Di Pasquale Francesco detto Franco",
-        "Epifanio Stefania",
-        "Floramo Domenica detta Dominga",
-        "Franchina Loredana",
-        "Garofalo Mario",
-        "Gitto Lorenzo",
-        "Imbesi Gianluca",
-        "Immesi Ilenia detta Ilenia",
-        "Lembo Giusy detta Giusi",
-        "Mancuso Felice",
-        "Mostaccio Domenica",
-        "Nichitellea Nicoleta Mariana detta Nicoletta",
-        "Saija Stefano Antonio",
-        "Santanocita Francesca",
-        "Spinella Paolo",
-        "Torre Rosaria detta Sara",
-        "Tujiri Khadija detta Gigia",
-        "Turrisi Antonio",
-        "Vazza Milena",
-        "Zangla Angela"
+        "BONGIOVANNI DAVID",
+        "CALAMUNERI ORAZIO",
+        "CERAOLO CARMELO MICHELE",
+        "CUCUMO STEFANIA",
+        "DI PASQUALE FRANCESCO DETTO FRANCO",
+        "EPIFANIO STEFANIA",
+        "FLORAMO DOMENICA DETTA DOMINGA",
+        "FRANCHINA LOREDANA",
+        "GAROFALO MARIO",
+        "GITTO LORENZO",
+        "IMBESI GIANLUCA",
+        "IMMESI ILENIA DETTA ILENIA",
+        "LEMBO GIUSY DETTA GIUSI",
+        "MANCUSO FELICE",
+        "MOSTACCIO DOMENICA",
+        "NICHITELLEA NICOLETA MARIANA DETTA NICOLETTA",
+        "SAIJA STEFANO ANTONIO",
+        "SANTANOCITA FRANCESCA",
+        "SPINELLA PAOLO",
+        "TORRE ROSARIA DETTA SARA",
+        "TUJIRI KHADIJA DETTA GIGIA",
+        "TURRISI ANTONIO",
+        "VAZZA MILENA",
+        "ZANGLA ANGELA"
       ]
     },
-    "De Luca Sindaco di Sicilia": {
-      "coalition": "Melangela Scolaro",
+    "DE LUCA SINDACO DI SICILIA": {
+      "coalition": "MELANGELA SCOLARO",
       "candidates": []
     },
-    "Avremo Cura di Te": {
-      "coalition": "Melangela Scolaro",
+    "AVREMO CURA DI TE": {
+      "coalition": "MELANGELA SCOLARO",
       "candidates": []
     },
-    "Scolaro Sindaco": {
-      "coalition": "Melangela Scolaro",
+    "SCOLARO SINDACO": {
+      "coalition": "MELANGELA SCOLARO",
       "candidates": []
     },
-    "Una Marcia in Più": {
-      "coalition": "Melangela Scolaro",
+    "UNA MARCIA IN PIU'": {
+      "coalition": "MELANGELA SCOLARO",
       "candidates": []
     },
-    "Barcellona Pozzo di Gotto in Comune": {
-      "coalition": "Melangela Scolaro",
+    "BARCELLONA POZZO DI GOTTO IN COMUNE": {
+      "coalition": "MELANGELA SCOLARO",
       "candidates": []
     },
-    "Fratelli d’Italia": {
-      "coalition": "Nicola Barbera",
+    "FRATELLI D’ITALIA": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Nicola Barbera Sindaco": {
-      "coalition": "Nicola Barbera",
+    "NICOLA BARBERA SINDACO": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "La Civica Barcellona P.G.": {
-      "coalition": "Nicola Barbera",
+    "LA CIVICA BARCELLONA P.G.": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Fuori dal Coro": {
-      "coalition": "Nicola Barbera",
+    "FUORI DAL CORO": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Ascoltiamo Barcellona": {
-      "coalition": "Nicola Barbera",
+    "ASCOLTIAMO BARCELLONA": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Noi Ci Siamo": {
-      "coalition": "Nicola Barbera",
+    "NOI CI SIAMO": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Forza Italia": {
-      "coalition": "Nicola Barbera",
+    "FORZA ITALIA": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Azzurri per Barcellona P.G.": {
-      "coalition": "Nicola Barbera",
+    "AZZURRI PER BARCELLONA P.G.": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     },
-    "Vamos! Con Barbera Sindaco": {
-      "coalition": "Nicola Barbera",
+    "VAMOS! CON BARBERA SINDACO": {
+      "coalition": "NICOLA BARBERA",
       "candidates": []
     }
   }
@@ -230,7 +230,7 @@ def init_db():
         "total_electors": "0",
         "total_voters": "0",
         "council_seats": "24",
-        "winner_mayor": "Nicola Barbera",
+        "winner_mayor": "NICOLA BARBERA",
         "mode": "first"
     }
     for key, value in defaults.items():
@@ -307,7 +307,7 @@ def get_settings(conn):
         "total_electors": int(settings.get("total_electors", "0") or 0),
         "total_voters": int(settings.get("total_voters", "0") or 0),
         "council_seats": int(settings.get("council_seats", "24") or 24),
-        "winner_mayor": settings.get("winner_mayor", "Nicola Barbera"),
+        "winner_mayor": settings.get("winner_mayor", "NICOLA BARBERA"),
         "mode": settings.get("mode", "first"),
     }
 
@@ -532,7 +532,7 @@ def save_report():
     existing = cur.execute("SELECT id, closed FROM reports WHERE section=?", (section,)).fetchone()
     if existing and user["role"] != "admin" and existing["closed"]:
         conn.close()
-        return jsonify({"ok": False, "error": "Il seggio risulta già chiuso. Non puoi più modificare o inviare dati."}), 403
+        return jsonify({"ok": False, "error": "Il seggio risulta gia' chiuso. Non puoi piu' modificare o inviare dati."}), 403
     if existing:
         report_id = existing["id"]
         cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, report_id))
@@ -593,7 +593,7 @@ def close_seat():
     conn = db(); cur = conn.cursor()
     existing = cur.execute("SELECT id, closed FROM reports WHERE section=?", (section,)).fetchone()
     if existing and existing["closed"]:
-        conn.close(); return jsonify({"ok": False, "error": "Il seggio è già chiuso."}), 403
+        conn.close(); return jsonify({"ok": False, "error": "Il seggio è gia' chiuso."}), 403
     if existing:
         report_id = existing["id"]
         cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, closed=1, closed_at=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, now, report_id))
@@ -634,7 +634,7 @@ def reopen_section():
         conn.close()
         return jsonify({"ok": False, "error": "Nessuna rilevazione trovata per questo seggio"}), 404
 
-    # Riattiva il seggio mantenendo tutti i dati già aggiornati presenti nel database.
+    # Riattiva il seggio mantenendo tutti i dati gia' aggiornati presenti nel database.
     cur.execute(
         "UPDATE reports SET closed=0, closed_at=NULL, updated_at=? WHERE section=?",
         (now, section)
@@ -645,7 +645,7 @@ def reopen_section():
 
     return jsonify({
         "ok": True,
-        "message": "Seggio riattivato con i dati aggiornati già presenti. Il rappresentante può nuovamente accedere e modificare."
+        "message": "Seggio riattivato con i dati aggiornati gia' presenti. Il rappresentante può nuovamente accedere e modificare."
     })
 
 
@@ -729,7 +729,7 @@ def create_user():
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        return jsonify({"ok": False, "error": "Telefono/codice già esistente"}), 409
+        return jsonify({"ok": False, "error": "Telefono/codice gia' esistente"}), 409
     conn.close()
     return jsonify({"ok": True})
 
@@ -781,14 +781,14 @@ def _resolve_list(raw_name, raw_number=None):
         pass
     raw = _norm(raw_name)
     aliases = {
-        "movimento 2050": "Movimento 5Stelle",
-        "movimento 5 stelle": "Movimento 5Stelle",
-        "movimento 5stelle": "Movimento 5Stelle",
-        "citta aperta controcorrente": "Città Aperta - Controcorrente",
-        "citta aperta - controcorrente": "Città Aperta - Controcorrente",
-        "città aperta controcorrente": "Città Aperta - Controcorrente",
-        "pd": "Partito Democratico",
-        "partito democratico": "Partito Democratico",
+        "movimento 2050": "MOVIMENTO 5STELLE",
+        "movimento 5 stelle": "MOVIMENTO 5STELLE",
+        "movimento 5stelle": "MOVIMENTO 5STELLE",
+        "citta aperta controcorrente": "CITTA' APERTA - CONTROCORRENTE",
+        "citta aperta - controcorrente": "CITTA' APERTA - CONTROCORRENTE",
+        "citta' aperta controcorrente": "CITTA' APERTA - CONTROCORRENTE",
+        "pd": "PARTITO DEMOCRATICO",
+        "partito democratico": "PARTITO DEMOCRATICO",
     }
     if raw in aliases and aliases[raw] in ELECTION_DATA["lists"]:
         return aliases[raw]
@@ -932,14 +932,14 @@ def resolve_list_name_from_csv_name(csv_name, number=None):
     """
     raw = normalize_list_import_name(csv_name)
     aliases = {
-        "movimento2050": "Movimento 5Stelle",
-        "movimento5stelle": "Movimento 5Stelle",
-        "movimento5stelle": "Movimento 5Stelle",
-        "m5s": "Movimento 5Stelle",
-        "partitodemocratico": "Partito Democratico",
-        "pd": "Partito Democratico",
-        "cittaapertacontrocorrente": "Città Aperta - Controcorrente",
-        "cittaaperta": "Città Aperta - Controcorrente",
+        "movimento2050": "MOVIMENTO 5STELLE",
+        "movimento5stelle": "MOVIMENTO 5STELLE",
+        "movimento5stelle": "MOVIMENTO 5STELLE",
+        "m5s": "MOVIMENTO 5STELLE",
+        "partitodemocratico": "PARTITO DEMOCRATICO",
+        "pd": "PARTITO DEMOCRATICO",
+        "cittaapertacontrocorrente": "CITTA' APERTA - CONTROCORRENTE",
+        "cittaaperta": "CITTA' APERTA - CONTROCORRENTE",
     }
 
     for list_name in ELECTION_DATA["lists"].keys():
@@ -1156,7 +1156,7 @@ def import_users_csv():
     if len(rows) > 100:
         return jsonify({
             "ok": False,
-            "error": "Troppe righe. Import massimo consentito: 100 utenti per volta. Dividi il CSV in più file."
+            "error": "Troppe righe. Import massimo consentito: 100 utenti per volta. Dividi il CSV in piu' file."
         }), 400
 
     now = datetime.now().isoformat(timespec="seconds")
@@ -1172,7 +1172,7 @@ def import_users_csv():
         existing_rows = cur.execute("SELECT phone FROM users").fetchall()
         existing_phones = {r["phone"] for r in existing_rows}
 
-        # Cache hashing: se più utenti hanno stesso PIN, l'hash si calcola una sola volta.
+        # Cache hashing: se piu' utenti hanno stesso PIN, l'hash si calcola una sola volta.
         pin_hash_cache = {}
 
         for idx, row in enumerate(rows, start=1):
@@ -1265,7 +1265,7 @@ def update_user(user_id):
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
-        return jsonify({"ok": False, "error": "Telefono/codice già esistente"}), 409
+        return jsonify({"ok": False, "error": "Telefono/codice gia' esistente"}), 409
 
     conn.close()
     return jsonify({"ok": True, "message": "Utente aggiornato correttamente"})

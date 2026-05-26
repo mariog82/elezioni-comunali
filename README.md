@@ -303,3 +303,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Nell'importazione dei voti di lista l'attribuzione avviene confrontando prioritariamente il `Nome Lista` nel CSV.
 - Il `Numero Liste` viene usato solo come fallback.
 - Il confronto ignora maiuscole/minuscole, accenti, spazi e punteggiatura.
+
+
+## Versione v38
+- In `app.py` i dati elettorali principali sono stati trasformati in maiuscolo.
+- Sostituita `ù` con `U'`.
+- Sostituita `à` con `A'`.
+- La trasformazione è stata applicata senza rendere maiuscole le parole chiave Python, per non rompere l'esecuzione dell'applicazione.
