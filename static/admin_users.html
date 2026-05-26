@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestione utenti</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<header><h1>Gestione utenti</h1><div>Rappresentanti e amministratori</div></header>
+<main>
+<section class="card topbar">
+<button class="secondary" onclick="location.href='/admin'">Pannello admin</button>
+<div>
+<button onclick="loadDashboard()">Aggiorna</button>
+
+<button class="secondary" onclick="location.href='/'">Torna all'app</button>
+</div>
+</section>
+<section class="card"><h2>Rappresentanti / utenti autorizzati</h2><div class="grid"><input id="newName" placeholder="Nome"><input id="newPhone" placeholder="Telefono/codice"><input id="newPin" placeholder="PIN"><input id="newSection" placeholder="Sezione"><select id="newRole"><option value="rappresentante">rappresentante</option><option value="admin">admin</option></select></div><button onclick="createUser()">Aggiungi rappresentante/utente</button><div id="users"></div></section>
+</main>
+<script src="/admin.js"></script>
+</body>
+</html>
