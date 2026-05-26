@@ -323,3 +323,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - I voti dei consiglieri vengono assegnati confrontando `Nome Cons` con i candidati presenti in `ELECTION_DATA` dentro `app.py`.
 - `Numero Liste` e `Numero Cons` non vengono più usati per attribuire il voto, evitando associazioni errate.
 - Il confronto è normalizzato: minuscolo, senza accenti, senza spazi/punteggiatura.
+
+
+## Versione v41
+- Corretto matching import CSV per voti di lista e preferenze consiglieri.
+- I voti di lista sono assegnati confrontando `Nome Lista` del CSV con i nomi lista in `ELECTION_DATA` di app.py.
+- Le preferenze sono assegnate confrontando `Nome Cons` del CSV con i candidati della lista in `ELECTION_DATA` di app.py.
+- Il confronto è normalizzato: minuscolo, senza accenti, senza spazi e punteggiatura.
+- `Numero Liste` e `Numero Cons` non vengono usati per attribuire i voti.

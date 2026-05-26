@@ -977,6 +977,54 @@ def resolve_candidate_name_from_app(list_name, csv_candidate_name):
 
     return None
 
+
+def csv_match_key(value):
+    value = str(value or "").strip().lower()
+    value = value.replace("’", "'").replace("`", "'").replace("´", "'")
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-z0-9]+", "", value)
+    return value
+
+def list_alias_key(key):
+    aliases = {
+        "movimento2050": "movimento5stelle",
+        "movimento5stelle": "movimento5stelle",
+        "m5s": "movimento5stelle",
+        "pd": "partitodemocratico",
+        "partitodemocratico": "partitodemocratico",
+        "cittaaperta": "cittaapertacontrocorrente",
+        "cittaapertacontrocorrente": "cittaapertacontrocorrente",
+    }
+    return aliases.get(key, key)
+
+def match_list_from_csv(nome_lista):
+    csv_key = list_alias_key(csv_match_key(nome_lista))
+    for app_list_name in ELECTION_DATA["lists"].keys():
+        if list_alias_key(csv_match_key(app_list_name)) == csv_key:
+            return app_list_name
+    return None
+
+def match_candidate_from_csv(list_name, nome_cons):
+    csv_key = csv_match_key(nome_cons)
+    for app_candidate in ELECTION_DATA["lists"].get(list_name, {}).get("candidates", []):
+        if csv_match_key(app_candidate) == csv_key:
+            return app_candidate
+    return None
+
+def get_csv_value(row, index, label):
+    if index >= len(row):
+        raise ValueError(f"campo mancante: {label}")
+    return row[index]
+
+def parse_valid_votes(value):
+    return int_csv(value)
+
+def clean_section(value):
+    section = str(value or "").strip()
+    if not section:
+        raise ValueError("sezione mancante")
+    return section
+
 @app.post("/api/import/liste")
 @admin_required
 def import_liste_totali():
