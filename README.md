@@ -378,3 +378,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - `/api/import/sindaci`
   - `/api/import/liste`
   - `/api/import/consiglieri`
+
+
+## Versione v49
+- Corretto errore `name 're' is not defined`.
+- Import `re` aggiunto correttamente in `app.py`.
