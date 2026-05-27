@@ -4,6 +4,21 @@ let detailCharts=[];
 let currentPrefTableList=null;
 const DETAIL_LISTS=["PARTITO DEMOCRATICO","MOVIMENTO 5STELLE","CITTA' APERTA - CONTROCORRENTE"];
 
+function listLabelWithCoalition(name){
+  try{
+    const data = lastData && lastData.data && lastData.data.lists ? lastData.data.lists : {};
+    const obj = data[name] || {};
+    const coalition = (obj.coalition || "").trim();
+    return coalition ? `${name} - ${coalition}` : name;
+  }catch(e){
+    return name;
+  }
+}
+
+function candidateDisplayName(row){
+  return (row && (row.display_name || row.candidate_name || row.name)) || "";
+}
+
 function hasEl(id){ return document.getElementById(id)!==null; }
 function safeEl(id){ return document.getElementById(id); }
 
@@ -118,7 +133,7 @@ function drawMainCharts(d){
   if(!hasEl("mayorPieChart") && !hasEl("listPieChart") && !hasEl("listBarChart")) return;
   destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
 
-  const mayorLabels=d.mayors.map(x=>x.name);
+  const mayorLabels=d.mayors.map(x=>listLabelWithCoalition(x.name));
   const mayorValues=d.mayors.map(x=>x.total||0);
   if(hasEl("mayorPieChart")){
     mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
@@ -128,7 +143,7 @@ function drawMainCharts(d){
     });
   }
 
-  const listLabels=d.lists.map(x=>x.name);
+  const listLabels=d.lists.map(x=>listLabelWithCoalition(x.name));
   const listValues=d.lists.map(x=>x.total||0);
   if(hasEl("listPieChart")){
     listPieChart=new Chart(document.getElementById("listPieChart"),{
@@ -200,7 +215,7 @@ function renderPrefTableTabs(d){
   const ranked=d.data.lists[listName].candidates.map((name,idx)=>({name,total:totals[name]||0,order:idx+1}))
     .sort((a,b)=>b.total-a.total || a.order-b.order);
 
-  let html=`<div class="card"><h3>${listName}</h3><div class="tablewrap"><table><tr><th>Pos.</th><th>Candidato</th><th>Preferenze</th></tr>`;
+  let html=`<div class="card"><h3>${listName}</h3><div class="tablewrap"><table><tr><th>Pos.</th><th>Nome Candidato</th><th>Preferenze</th></tr>`;
   ranked.forEach((r,i)=>html+=`<tr><td>${i+1}</td><td>${r.name}</td><td>${r.total}</td></tr>`);
   html+="</table></div></div>";
   box.innerHTML=html;
@@ -219,7 +234,7 @@ function renderElected(d){
 
   Object.entries(d.data.lists).forEach(([l,obj])=>{
     const seats=e.list_seats[l]||0;
-    const elected=(e.elected[l]||[]).map(x=>`<div class="elected">${x.name} (${x.votes})</div>`).join("");
+    const elected=(e.elected[l]||[]).map(x=>`<div class="elected">${listLabelWithCoalition(x.name)} (${x.votes})</div>`).join("");
     const under=(e.list_votes[l]||0)>0 && !e.admitted_lists[l] ? ` <span class="badge">sotto soglia 5%</span>`:"";
     html+=`<tr><td>${l}${under}</td><td>${obj.coalition}</td><td>${e.list_votes[l]||0}</td><td><b>${seats}</b></td><td>${elected||"<span class='muted'>Nessun candidato candidato gestito</span>"}</td></tr>`;
   });
