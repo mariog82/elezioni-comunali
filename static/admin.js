@@ -221,7 +221,7 @@ function renderElected(d){
     const seats=e.list_seats[l]||0;
     const elected=(e.elected[l]||[]).map(x=>`<div class="elected">${x.name} (${x.votes})</div>`).join("");
     const under=(e.list_votes[l]||0)>0 && !e.admitted_lists[l] ? ` <span class="badge">sotto soglia 5%</span>`:"";
-    html+=`<tr><td>${l}${under}</td><td>${obj.coalition}</td><td>${e.list_votes[l]||0}</td><td><b>${seats}</b></td><td>${elected||"<span class='muted'>Nessun candidato consigliere gestito</span>"}</td></tr>`;
+    html+=`<tr><td>${l}${under}</td><td>${obj.coalition}</td><td>${e.list_votes[l]||0}</td><td><b>${seats}</b></td><td>${elected||"<span class='muted'>Nessun candidato candidato gestito</span>"}</td></tr>`;
   });
   html+=`</table></div>`;
   document.getElementById("electedBox").innerHTML=html;
