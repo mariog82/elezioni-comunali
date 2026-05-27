@@ -496,3 +496,31 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Rimosse da app.py le liste e i candidati consiglieri hardcoded.
 - Le liste e i candidati vengono caricati solo da CSV.
 - Import consiglieri crea dinamicamente lista, coalizione e candidato.
+
+
+## Versione v64
+- Nella tabella `Tabelle candidato-preferenze` la colonna `Candidato`
+  mostra il `Nome Candidato` importato dal file CSV.
+- Mantenuta la formattazione originale del nome candidato caricato.
+
+
+## Versione v65
+- Tutti gli import CSV lavorano in modalità UPDATE-FIRST.
+- Report aggiornati per sezione/TOTALE invece di duplicati.
+- Voti di sindaci, liste e consiglieri aggiornati per chiave logica.
+- Liste e candidati da CSV aggiornati se già esistenti, creati solo se mancanti.
+- Deduplica automatica di report e voti duplicati storici.
+
+
+## Versione v66
+- Nelle tabelle/grafici il nome della lista viene mostrato insieme alla coalizione caricata da CSV.
+- Nelle tabelle candidato-preferenze la colonna candidato mostra `Nome Candidato` importato dal file CSV.
+- Aggiornate le intestazioni: `Lista / Coalizione` e `Nome Candidato`.
+
+
+## Versione v67
+- Solo per l'import CSV totale dei candidati (`/api/import/consiglieri`):
+  - elimina prima i record già presenti di liste e preferenze;
+  - svuota `ELECTION_DATA["lists"]`;
+  - reinserisce liste, coalizioni e candidati dal CSV.
+- Gli altri import continuano a lavorare in modalità update.

@@ -161,6 +161,29 @@ def init_db():
     """)
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_update_csv_unique_v56 ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
 
+
+    # UPDATE CSV: un solo report per sezione/TOTALE.
+    cur.execute("""
+        DELETE FROM reports
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM reports
+            GROUP BY section
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_update_csv_v65 ON reports(section)")
+
+    # UPDATE CSV: un solo voto per report/tipo/lista/nome.
+    cur.execute("""
+        DELETE FROM votes
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM votes
+            GROUP BY report_id, vote_type, COALESCE(list_name,''), name
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_update_csv_v65 ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
+
     conn.commit()
     conn.close()
 
@@ -368,7 +391,7 @@ def my_report():
         return jsonify({"ok": True, "exists": False, "section": section})
 
     votes = conn.execute(
-        "SELECT vote_type, list_name, name, votes FROM votes WHERE report_id=?",
+        "SELECT vote_type, list_name, name, name AS display_name, votes FROM votes WHERE report_id=?",
         (report["id"],)
     ).fetchall()
     conn.close()
@@ -770,43 +793,75 @@ def _resolve_candidate(list_name, raw_name, raw_number=None):
     return None
 
 
+
+def _list_label_with_coalition(list_name):
+    obj = ELECTION_DATA.get("lists", {}).get(list_name, {})
+    coalition = str(obj.get("coalition", "") or "").strip()
+    if coalition:
+        return f"{list_name} - {coalition}"
+    return list_name
+
 def _ensure_dynamic_list(list_name, coalition=""):
+    """
+    UPDATE-FIRST:
+    crea la lista se manca, altrimenti aggiorna coalizione e mantiene la lista esistente.
+    """
     list_name = str(list_name or "").strip()
     coalition = str(coalition or "").strip()
+
     if not list_name:
         return None
+
     existing = _resolve_list(list_name, None)
+
     if existing:
         if coalition:
             ELECTION_DATA["lists"][existing]["coalition"] = coalition
         return existing
-    ELECTION_DATA["lists"][list_name] = {"coalition": coalition, "candidates": []}
+
+    ELECTION_DATA["lists"][list_name] = {
+        "coalition": coalition,
+        "candidates": []
+    }
     return list_name
 
+
 def _ensure_dynamic_candidate(list_name, candidate_name):
+    """
+    UPDATE-FIRST:
+    crea il candidato se manca, altrimenti mantiene quello esistente.
+    """
     list_name = str(list_name or "").strip()
     candidate_name = str(candidate_name or "").strip()
+
     if not list_name or not candidate_name:
         return None
+
     if list_name not in ELECTION_DATA["lists"]:
-        ELECTION_DATA["lists"][list_name] = {"coalition": "", "candidates": []}
+        ELECTION_DATA["lists"][list_name] = {
+            "coalition": "",
+            "candidates": []
+        }
+
     existing = _resolve_candidate(list_name, candidate_name, None)
+
     if existing:
         return existing
+
     ELECTION_DATA["lists"][list_name]["candidates"].append(candidate_name)
     return candidate_name
 
 def _ensure_report(cur, section, user_id):
     """
-    Garantisce un solo report per sezione/TOTALE.
-    Se esiste, aggiorna updated_at e restituisce l'id.
-    Se non esiste, crea il report base.
+    UPDATE-FIRST:
+    per ogni sezione/TOTALE mantiene un solo report.
+    Se il report esiste lo aggiorna, se non esiste lo crea.
     """
     now = datetime.now().isoformat(timespec="seconds")
     section = str(section or "").strip() or "TOTALE"
 
     row = cur.execute(
-        "SELECT id FROM reports WHERE section=? ORDER BY id DESC LIMIT 1",
+        "SELECT id FROM reports WHERE section=? ORDER BY id ASC LIMIT 1",
         (section,)
     ).fetchone()
 
@@ -835,8 +890,10 @@ def _ensure_report(cur, section, user_id):
 
 def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     """
-    UPDATE dei voti importati via CSV.
+    UPDATE-FIRST:
+    aggiorna il voto esistente per report/tipo/lista/nome.
     Inserisce solo se il record non esiste.
+    Se trova duplicati storici, mantiene il primo record e cancella gli altri.
     """
     votes = int(votes or 0)
 
@@ -856,8 +913,8 @@ def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
         keep_id = rows[0]["id"]
         cur.execute("UPDATE votes SET votes=? WHERE id=?", (votes, keep_id))
 
-        for duplicate in rows[1:]:
-            cur.execute("DELETE FROM votes WHERE id=?", (duplicate["id"],))
+        for dup in rows[1:]:
+            cur.execute("DELETE FROM votes WHERE id=?", (dup["id"],))
 
         return keep_id
 
@@ -971,6 +1028,13 @@ def _import_votes(kind, by_section):
     list_totals_from_preferences = {}
 
     try:
+        # reset_all_candidates_import_done_v67
+        # Solo per l'import CSV dei candidati totali (/api/import/consiglieri):
+        # elimina liste/candidati/voti lista/preferenze esistenti e ricarica da zero.
+        if kind == "consiglieri" and not by_section:
+            cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
+            ELECTION_DATA["lists"].clear()
+
         for idx, row in enumerate(rows, start=1):
             try:
                 if not row or not any(str(x).strip() for x in row):
@@ -1028,25 +1092,14 @@ def _import_votes(kind, by_section):
                         raise ValueError(f"Nome Lista non valido: {nome_lista}")
 
                     candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
+                    display_candidate_name = nome_candidato.strip()
                     if not candidate:
                         raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
 
                     if len(row) > off + 5:
                         votes = _intv(row[off + 5])
                     else:
-                        existing_vote = cur.execute(
-                            """
-                            SELECT votes FROM votes
-                            WHERE report_id=?
-                              AND vote_type='preferenza'
-                              AND COALESCE(list_name,'')=COALESCE(?, '')
-                              AND name=?
-                            ORDER BY id DESC
-                            LIMIT 1
-                            """,
-                            (report_id, list_name, candidate)
-                        ).fetchone()
-                        votes = existing_vote["votes"] if existing_vote else 0
+                        votes = 0
 
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
                     list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes
