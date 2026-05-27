@@ -453,3 +453,14 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - voti consiglieri;
   - voti lista collegata;
   - grafici/statistiche.
+
+
+## Versione v58
+- Modificato formato import consiglieri.
+- Nuova intestazione CSV supportata:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi`
+- Continuano a funzionare:
+  - update automatico voti;
+  - match flessibile nomi;
+  - aggiornamento voti lista collegata;
+  - aggiornamento grafici/statistiche.

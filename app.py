@@ -1461,19 +1461,33 @@ def _import_votes(kind, by_section):
                     imported += 1
 
                 elif kind == "consiglieri":
-                    if len(row) < off + 5:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
+                    # Nuovo formato:
+                    # [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    if len(row) < off + 6:
+                        raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
+
+                    numero_lista = row[off]
                     nome_lista = str(row[off + 1]).strip()
-                    list_name = _resolve_list(nome_lista, row[off])
+
+                    list_name = _resolve_list(nome_lista, numero_lista)
+
                     if not list_name:
                         raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
-                    nome_cons = str(row[off + 3]).strip()
-                    candidate = _resolve_candidate(list_name, nome_cons, row[off + 2])
+
+                    numero_candidato = row[off + 3]
+                    nome_candidato = str(row[off + 4]).strip()
+
+                    candidate = _resolve_candidate(list_name, nome_candidato, numero_candidato)
+
                     if not candidate:
-                        raise ValueError(f"Nome Cons non trovato in app.py per lista {list_name}: {nome_cons}")
-                    votes = _intv(row[off + 4])
+                        raise ValueError(f"Nome Candidato non trovato in app.py per lista {list_name}: {nome_candidato}")
+
+                    votes = _intv(row[off + 5])
+
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
-                    list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes
+
+                    list_totals_from_preferences[(report_id, list_name)] =                         list_totals_from_preferences.get((report_id, list_name), 0) + votes
+
                     imported += 1
 
                 elif kind == "schede":
