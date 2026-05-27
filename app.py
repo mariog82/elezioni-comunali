@@ -22,484 +22,7 @@ ELECTION_DATA = {
     "DAVID BONGIOVANNI",
     "MELANGELA SCOLARO"
   ],
-  "lists": {
-    "CITTA' APERTA - CONTROCORRENTE": {
-      "coalition": "DAVID BONGIOVANNI",
-      "candidates": [
-        "BEN R'HOUMA MONIA",
-        "CAMPO RAFFAELLA",
-        "CENTINEO PIETRO",
-        "CHIOFALO GAETANO",
-        "CICERO ANTONINO",
-        "CRINÒ PIETRO",
-        "GATTIGNOLO ELISA",
-        "GIGLIO ANTONIO MARIO",
-        "MAIO ANTONINO",
-        "MAMÌ ANTONIO DARIO",
-        "MATERIA CLAUDIO",
-        "MIRABILE KATIA",
-        "NASELLI DOMENICA ADELE DETTA MIMMA",
-        "PARATORE SEBASTIANO GIUSEPPE MARCO",
-        "POMA ELENA ALBERTINA",
-        "PULIAFITO SALVATORE GIOVANNI",
-        "PUTZU GIOVANNA",
-        "RIVILLI NOELIA JACQUELINE",
-        "SALERNI ANGELO",
-        "SIDOTI GABRIELE",
-        "SIRACUSA CARMELA",
-        "TORRE GIOVANNA",
-        "VALENTI MARIA CARMEN",
-        "YAHIAOUI AYOUB"
-      ]
-    },
-    "MOVIMENTO 5STELLE": {
-      "coalition": "DAVID BONGIOVANNI",
-      "candidates": [
-        "ARRIGO ANTONINO",
-        "CAMBRIA ANGELINO DETTO LINUCCIO",
-        "CIMINELLI ERIKA",
-        "COPPOLINO MARIA PIA",
-        "CORRADO FABRIZIO",
-        "DONNINA GIOVANNI",
-        "EL HESSANIA ABDELKRIM DETTO KARIM",
-        "GENOVESE BIAGIO",
-        "GIGLIO RUGGERO DETTO RUGGERO",
-        "GIORGIANNI VERA DETTA VERA",
-        "GIUNTA ANTONINO",
-        "GIUNTA GABRIELLA",
-        "INFANTINO MARCO",
-        "MAZZEO ANGELO",
-        "MIRABILE ALESSANDRA ROSARIA",
-        "PRESTI STEFANIA",
-        "RECUPERO GAETANO",
-        "TURRISI GIUSEPPE DETTO GEPI"
-      ]
-    },
-    "PARTITO DEMOCRATICO": {
-      "coalition": "DAVID BONGIOVANNI",
-      "candidates": [
-        "BONGIOVANNI DAVID",
-        "CALAMUNERI ORAZIO",
-        "CERAOLO CARMELO MICHELE",
-        "CUCUMO STEFANIA",
-        "DI PASQUALE FRANCESCO DETTO FRANCO",
-        "EPIFANIO STEFANIA",
-        "FLORAMO DOMENICA DETTA DOMINGA",
-        "FRANCHINA LOREDANA",
-        "GAROFALO MARIO",
-        "GITTO LORENZO",
-        "IMBESI GIANLUCA",
-        "IMMESI ILENIA DETTA ILENIA",
-        "LEMBO GIUSY DETTA GIUSI",
-        "MANCUSO FELICE",
-        "MOSTACCIO DOMENICA",
-        "NICHITELLEA NICOLETA MARIANA DETTA NICOLETTA",
-        "SAIJA STEFANO ANTONIO",
-        "SANTANOCITA FRANCESCA",
-        "SPINELLA PAOLO",
-        "TORRE ROSARIA DETTA SARA",
-        "TUJIRI KHADIJA DETTA GIGIA",
-        "TURRISI ANTONIO",
-        "VAZZA MILENA",
-        "ZANGLA ANGELA"
-      ]
-    },
-    "DE LUCA SINDACO DI SICILIA": {
-      "coalition": "MELANGELA SCOLARO",
-      "candidates": [
-        "DOMINGA ACCETTA",
-        "SEBASTIANO BORGHESE",
-        "ANGELA MARIA CALATOZZO",
-        "CLAUDIA CAPPELLANO",
-        "PRANVERA CECAJ",
-        "GIUSEPPE CRISAFULLI",
-        "LUCA CUCINOTTA",
-        "NUNZIATA GRAZIELLA D’AMICO DETTA D’AMICO NANCY",
-        "CLAUDIO FEBO",
-        "SIMONA GITTO",
-        "VANESSA LO MONACO",
-        "FRANCESCA LUCIA MANDANICI DETTA FRANCESCA MANDANICI",
-        "CLARISSA MARCINI",
-        "ANNALISA MUNAFÒ",
-        "CELESTINA NANIA",
-        "PAOLO PINO",
-        "GIUSEPPE PULIAFITO DETTO RUBENS",
-        "FEDERICO SCARPACI",
-        "SERGIO VITO SCOLARO DETTO SERGIO SCOLARO",
-        "GIULIA MARIA SIDOTI DETTA GIULIA",
-        "FABIANA SIMONETTA",
-        "ANTONIO SOFIA",
-        "RITA SPICCIA",
-        "NICOLA TORRE"
-      ]
-    },
-    "AVREMO CURA DI TE": {
-      "coalition": "MELANGELA SCOLARO",
-      "candidates": [
-        "GRAZIANO ANGELO ACCETTA DETTO GRAZIANO",
-        "MARIADRIANA ALOISI",
-        "CRISTIAN BAMBACI",
-        "GIAN FRANCO BRIGANDÌ",
-        "EMANUELA BUCCA",
-        "CARMELO BUCCA",
-        "SANTA CALIRI",
-        "SALVATORE CALLISTO",
-        "BARBARA CAVALLARO",
-        "SERENA MARIA CONSOLI",
-        "SEBASTIANO CORICA",
-        "VINCENZO FOTI",
-        "GIUSEPPE ISGRÒ",
-        "GIUSEPPE LAQUIDARA DETTO GIUSEPPE LAGUIDARA DETTO GIUSEPPE LA GUIDARA",
-        "EMANUELE MUNAFÒ",
-        "ROSARIO CARMELO NATALE DETTO ROSARIO NATALE",
-        "VALENTINA GIUSY PANTÈ",
-        "MAURIZIO PIZZUTO",
-        "GISELLA PUDDU",
-        "GABRIELE SPINA"
-      ]
-    },
-    "SCOLARO SINDACO": {
-      "coalition": "MELANGELA SCOLARO",
-      "candidates": [
-        "NIEVIS MARIA ACCETTA DETTA NIVES ACCETTA",
-        "CONCETTA ALOSI DETTA CETTY ALOSI",
-        "ANASTASI MARCO DETTO MARCO NASTASI",
-        "FORTUNATO BARBARO",
-        "SARA ASSUNTA AGOSTINA BASILICÒ DETTA SARA BASILICÒ",
-        "GIOVANNI BENENATI",
-        "VINCENZA BRIGANDÌ",
-        "FILIPPO CASTELLANO",
-        "ORAZIO CICCIARI",
-        "TINDARO DI PASQUALE",
-        "COSTANZA GALLO",
-        "LUANA CARMEN MACCARI DETTA LUANA MACCARI",
-        "ALESSIA MERLINO",
-        "ALESSANDRO NANIA",
-        "SALVATORE PRESTI",
-        "CARMELITA PREVITI",
-        "SALVATORE PULIAFITO",
-        "GIOVANNA STEFANIA PUNTURO DETTA GIOVANNA",
-        "SIMONA CLEMENTINA ROSINA DETTA SIMONA ROSINA",
-        "SANDY SIRACUSA DETTA SENDY SIRACUSA",
-        "ROSALBA CINZIA SMEDILE DETTA CINZIA SMEDILE",
-        "GIUSEPPE SOTTILE",
-        "STEFANO STURNIOLO",
-        "GIOVANNI VALENTI"
-      ]
-    },
-    "UNA MARCIA IN PIU'": {
-      "coalition": "MELANGELA SCOLARO",
-      "candidates": [
-        "AMALIA ABBATE",
-        "LUCA ARCORACI",
-        "CARMELO BILARDO",
-        "ANTONINO BIONDO",
-        "COSIMO BUCCA",
-        "CARMELA CALABRESE",
-        "LUCIA CALIRI",
-        "ANTONINO COMPOSTO",
-        "ROSARIO CONDIPODERO",
-        "VINCENZO CRINÒ",
-        "MIRKO FORTUNATO DE PASQUALE",
-        "HABDERRAMIN EL HORCHE DETTO ABRAMO",
-        "ELIDA GURAY",
-        "ZEZEM IBTISEM DETTA SEM",
-        "GIOVANNA LO CASCIO",
-        "DARIO ANGELO MAIMONE",
-        "ROBERTA MARIA MANCUSO DETTA ROBERTA",
-        "SALVATORE RAGUSA",
-        "IGNAZIO ROTELLA",
-        "BENEDETTO RUSSO",
-        "MELANGELA SCOLARO",
-        "ANTONINO SOTTILE",
-        "GUGLIELMO TORRE",
-        "JOSÈ ANGELO VIRGILLITO DETTO VIRGILLITO"
-      ]
-    },
-    "BARCELLONA POZZO DI GOTTO IN COMUNE": {
-      "coalition": "MELANGELA SCOLARO",
-      "candidates": [
-        "GIUSEPPE ABBATE",
-        "PAOLO CALABRÒ",
-        "CARMELO FABIO CAPPELLANO DETTO FABIO",
-        "LEONE CASILE",
-        "WALTER GIUSEPPE COPPOLINO",
-        "GIUSEPPE CRISAFULLI",
-        "GIAN PAOLO GENOVESE",
-        "FRANCESCA MARIAPIA GIUNTA",
-        "FRANCESCO GIUNTA",
-        "SANTINA GIUNTA",
-        "GIUSEPPA PASQUA GRASSO DETTA GIUSY",
-        "ANTONINO LIZIO DETTO ANTHONY",
-        "ALESSANDRA MAIO",
-        "GIUSEPPE MANDANICI",
-        "MELANIA ANTONELLA MAZZEO",
-        "GAETANO MERCADANTE",
-        "CRISTINA MIANO",
-        "ROSARIO MOLICA FRANCO",
-        "STEFANO ANTONINO PELLEGRINO",
-        "DONATO RAIMONDO",
-        "FILIPPO RUSSO",
-        "MARIA DONATELLA SOTTILE",
-        "ILENIA TORRE",
-        "DANIELE TROVATO"
-      ]
-    },
-    "FRATELLI D’ITALIA": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "EDUARDO BARCA DETTO EDUARDO",
-        "GIORGIO LEONARDO CATALFAMO",
-        "SALVATORE CHILLEMI",
-        "VERA CUCÉ",
-        "FORTUNATO D’AMICO",
-        "LUIGI SEBASTIANO DALIA",
-        "ERIKA DE FRANCESCO",
-        "GRETA DI NUZZO DETTA DINUZZO",
-        "CARMELO GIUNTA",
-        "CARMELA IMBESI DETTA CARMEN DETTA GUERCIO",
-        "VANESSA CHRISTINE ISGRÒ",
-        "GIAMPIERO LA ROSA DETTO LAROSA",
-        "ANTONINA LEPRO DETTA ANTONELLA",
-        "FRANCESCA TINDARA LO PRESTI",
-        "ALESSANDRA MIRABILE",
-        "CESARE MOLINO",
-        "DAISY FRANCESCA MUNNIA",
-        "ANNA MUSCARA'",
-        "ANGELO PARIDE PINO DETTO PARIDE DETTO ANGELO",
-        "AGOSTINA RECUPERO",
-        "AURORA STINCONE",
-        "CONCETTA SAPORITA",
-        "MARIA GABRIELA TORRE",
-        "EVELYN TINDARA TRAPANI"
-      ]
-    },
-    "NICOLA BARBERA SINDACO": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "SEBASTIANO BAURO",
-        "MICHELE BENGALA",
-        "GIOVANNI BATTISTA BUCALO DETTO TITTA DETTO BUCOLO",
-        "TIZIANO CHIOFALO",
-        "CETTINA CICCIARI",
-        "MARIA CICERO",
-        "DOMENICO GIUNTA",
-        "MARIA GRANATA",
-        "FRANCESCO FAZIO",
-        "GIULIA FLORAMO",
-        "CHIARA ITALIANO",
-        "TINDARA LABOZZETTA DETTA TINA",
-        "SONIA LANZA",
-        "LUCIA MAZZEO",
-        "PATRIZIA ANTONELLA MILONE",
-        "LORENZO MUNAFÒ",
-        "GIUSEPPE OCCELLO",
-        "FRANCESCO PERDICHIZZI",
-        "CARMELO PIRRI",
-        "DANIELA PORCINO",
-        "CARMELO RAVIDA'",
-        "ANTONINO STEFANO SOTTILE",
-        "ANDREANA FRANCESCA SPECIALE",
-        "IRENE STAGNO"
-      ]
-    },
-    "LA CIVICA BARCELLONA P.G.": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "SANDRA ALESCI",
-        "CARMEN ALESCI",
-        "MARIA CARMELA BUCCHERI",
-        "COSIMO CALVO",
-        "PAMELA CAMPO",
-        "ANTONELLA CAPONE",
-        "VINCENZO CATANESI",
-        "MARIA CHILLEMI",
-        "ANTONINA ROSALIA SMERALDA COSTANTINO",
-        "IRENE FAZIO",
-        "GIORGIO FERRARA",
-        "GIANLUCA ANGELO GRASSO",
-        "COSIMO GLIELMI",
-        "GIUSEPPINA LIOTTA",
-        "MARTINA MAIO",
-        "CARMELO MUNAFÒ",
-        "CATERINA PULIAFITO",
-        "ANGELA SALMERI",
-        "LUCIANO SAMUELE SCARPACI",
-        "MARIA SCOLARO",
-        "VELIO ANDREA SPARTA'",
-        "SALVATORE TRASACCO",
-        "MICHELE LETTERIO ZANGLA",
-        "CARMELINA ZARCONE"
-      ]
-    },
-    "FUORI DAL CORO": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "ROBERTO MOLINO",
-        "MICHELE MANDANICI",
-        "ANTONINO TINDARO MANGANO DETTO NINO",
-        "LAURA ANTONELLA ALIBERTI",
-        "ROSA SALVO",
-        "FRANCESCA CALIRI",
-        "FILIPPA SIMONA MAGGISTRO CONTENTA",
-        "WAFAA ZANBIB",
-        "CORRADA SIRACUSA",
-        "CARMELO VIOLA",
-        "SHPRESA SENAJ DETTA SPERANZA",
-        "CATERINA AGRILLO DETTA KATRINE",
-        "FEDERICO DI SALVO",
-        "LUCIA GERBINO DETTA LUCIA PULEJO",
-        "SEBASTIANA CALABRÒ DETTA LILIANA",
-        "TINDARO GRASSO",
-        "GIUSEPPINA SOTTILE",
-        "CATERINA BARTOLONE",
-        "MAURO BRANCIFORTE",
-        "ANDREA GIULIO GIORGIANNI",
-        "ELEONORA MARIA ILACQUA",
-        "MARIA VANESSA SINDONI",
-        "AURORA TORRE",
-        "ROSALIA PAGANO"
-      ]
-    },
-    "ASCOLTIAMO BARCELLONA": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "ENRICO ALFIO BACCARINI",
-        "VITTORIA BERTAMI",
-        "DOMENICO MIRKO BONACETO",
-        "GIUSEPPE CAMBRIA",
-        "MARIA CONTI",
-        "FRANCESCO CORDARO",
-        "CATERINA CHIOFALO",
-        "PROVVIDENZA ANTONINA CHIOFALO",
-        "MARIA TINDARA GULLO",
-        "MYRIAM IUCULANO",
-        "NUNZIO LA MACCHIA",
-        "GIUSEPPE LEMBO",
-        "DOMENICA MILONE",
-        "MICHELE PINO",
-        "LUDOVICA RAFFA",
-        "NATALE TINDARO PARATORE",
-        "CLAUDIO PASCALONE",
-        "LUCA TALAMO"
-      ]
-    },
-    "NOI CI SIAMO": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "MARIA CARMELA ABBATE",
-        "GIOVANNI ALESCI",
-        "SALVATORE BENENATI",
-        "ORNELLA TINDARA CANNATA",
-        "GIUSEPPE CATALANO",
-        "VIVIANNA COPPOLINO",
-        "DORIANA D’AMICO",
-        "MARTIN ELIAS FAZIO",
-        "STEFANO GIORGIANNI",
-        "FRANCESCO GIUNTA",
-        "ARLETA TERESA LIS",
-        "GIUSEPPE MAIO",
-        "MARIA GRAZIA MAZZEO",
-        "SEBASTIANO SALVATORE MIANO",
-        "VINCENZO NANIA",
-        "MARIA OTERA",
-        "DANIELE PICCOLO",
-        "CLELIA PUDDU",
-        "DANIELA SAFFIOTI",
-        "GIUSEPPE ANTONINO SCARPACI",
-        "SALVATORE TORRE",
-        "SALVATORE TRIFILÒ",
-        "MARCO VIOLA"
-      ]
-    },
-    "FORZA ITALIA": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "ALFREDO GIOVANNI ASPA",
-        "LUIGI BAMBACI",
-        "MARIO BARRESI",
-        "ORAZIO BENINATI",
-        "ANTONIO BIONDO",
-        "PAOLA BUCCA",
-        "ANGELA BUCOLO",
-        "CARMELO CALDERONE",
-        "MARIA CARUSO",
-        "TINDARO GIOVINAZZO",
-        "DANIELA IANNELLO",
-        "ANDREANA IMPOLLINO DETTA LILIANA",
-        "MARIKA LAX DETTA CATALFAMO",
-        "SEBASTIANO MIGLIORE",
-        "CARMELA PERDICHIZZI DETTA CARMELINA",
-        "TOMMASO MARIA PINO",
-        "LIDIA PIRRI",
-        "FRANCESCO PULIAFITO",
-        "CARMEN ELENA ROMINU",
-        "DANIELA SCARPACI",
-        "JASMINE SCIACCA",
-        "GIANLUCA SIDOTI",
-        "ELISABETTA SOFIA",
-        "DOMENICO TRIO DETTO MIMMO"
-      ]
-    },
-    "AZZURRI PER BARCELLONA P.G.": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "ALESSANDRO ABBATE",
-        "GIUSEPPE ANTONIO ALIQUÒ",
-        "FABIANA BARTOLOTTA DETTA FABIANA",
-        "GIANFRANCO BENENATI",
-        "GIOVANNI CAMPANELLA",
-        "COSIMA ANNA CARANNA",
-        "FRANCO SALVATORE CARUSO",
-        "GIUSEPPE COPPOLINO",
-        "RICCARDO D’AMICO",
-        "GIOVANNI DE PASQUALE",
-        "ANTONELLA DRAGO FERRANTE",
-        "GRAZIELLA GENOVESE",
-        "LORENZO GITTO",
-        "CATERINA VANESSA GIUNTA",
-        "FERDINANDO GROSSO",
-        "VALERIA ITALIANO",
-        "OKSANA KRAVCHENKO DETTA OXA",
-        "DIEGO LANZA",
-        "LUANA CONCETTA MARCHESE",
-        "ELEONORA MARIA ANTONINA MARZULLO",
-        "SEBASTIANO MAZZEO",
-        "ALESSANDRO MIANO",
-        "YVONNE SAJA",
-        "ANTONINO SCIACCA"
-      ]
-    },
-    "VAMOS! CON BARBERA SINDACO": {
-      "coalition": "NICOLA BARBERA",
-      "candidates": [
-        "GIUSEPPE GIOVANNI ALOSI DETTO PEPPINO",
-        "ANDREA BARRESI",
-        "ROSARIO BILARDO",
-        "MARIA TINDARA BIONDO",
-        "FULVIO LUCA BUCCA",
-        "CARMELO CALDERONE",
-        "SANTINA ELVIRA CAPONE",
-        "NICOLÒ CHILLEMI",
-        "ANTONINO D’AMICO",
-        "GIUSI D’ANGELO",
-        "MARISA DI SALVO",
-        "ANTONINO FAMA'",
-        "ROSARIO INGEGNERI",
-        "FRANCESCO LA ROCCA DETTO FRANCO",
-        "PIETRO MARCHESE",
-        "ANGELA MENDOLIA",
-        "ELIBJONDA METUSHAJ DETTA ELI",
-        "MARIA CARMELA MIANO",
-        "CARMELINA MILONE",
-        "PAOLO PICCOLO",
-        "ANGELA TELLERI",
-        "RITA TORRE",
-        "DENISE TRAVIGLIA",
-        "CARMELA VILLALBA DETTA CARMEN"
-      ]
-    }
-  }
+  "lists": {}
 }
 
 def fast_pin_hash(pin):
@@ -1246,6 +769,33 @@ def _resolve_candidate(list_name, raw_name, raw_number=None):
 
     return None
 
+
+def _ensure_dynamic_list(list_name, coalition=""):
+    list_name = str(list_name or "").strip()
+    coalition = str(coalition or "").strip()
+    if not list_name:
+        return None
+    existing = _resolve_list(list_name, None)
+    if existing:
+        if coalition:
+            ELECTION_DATA["lists"][existing]["coalition"] = coalition
+        return existing
+    ELECTION_DATA["lists"][list_name] = {"coalition": coalition, "candidates": []}
+    return list_name
+
+def _ensure_dynamic_candidate(list_name, candidate_name):
+    list_name = str(list_name or "").strip()
+    candidate_name = str(candidate_name or "").strip()
+    if not list_name or not candidate_name:
+        return None
+    if list_name not in ELECTION_DATA["lists"]:
+        ELECTION_DATA["lists"][list_name] = {"coalition": "", "candidates": []}
+    existing = _resolve_candidate(list_name, candidate_name, None)
+    if existing:
+        return existing
+    ELECTION_DATA["lists"][list_name]["candidates"].append(candidate_name)
+    return candidate_name
+
 def _ensure_report(cur, section, user_id):
     """
     Garantisce un solo report per sezione/TOTALE.
@@ -1441,7 +991,7 @@ def _import_votes(kind, by_section):
                     if len(row) < off + 3:
                         raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Voti validi")
                     nome_lista = str(row[off + 1]).strip()
-                    list_name = _resolve_list(nome_lista, row[off])
+                    list_name = _ensure_dynamic_list(nome_lista, "")
                     if not list_name:
                         raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
                     votes = _intv(row[off + 2])
@@ -1462,49 +1012,44 @@ def _import_votes(kind, by_section):
 
                 elif kind == "consiglieri":
                     # Formato:
-                    # Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
-                    # oppure:
-                    # Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+                    # [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+                    # Colonna Voti validi opzionale come ultima colonna.
                     if len(row) < off + 5:
-                        raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+                        raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
 
                     numero_lista = row[off]
                     nome_lista = str(row[off + 1]).strip()
-
-                    list_name = _resolve_list(nome_lista, numero_lista)
-
-                    if not list_name:
-                        raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
-
+                    coalizione = str(row[off + 2]).strip()
                     numero_candidato = row[off + 3]
                     nome_candidato = str(row[off + 4]).strip()
 
-                    candidate = _resolve_candidate(list_name, nome_candidato, numero_candidato)
+                    list_name = _ensure_dynamic_list(nome_lista, coalizione)
+                    if not list_name:
+                        raise ValueError(f"Nome Lista non valido: {nome_lista}")
 
+                    candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
                     if not candidate:
-                        raise ValueError(f"Nome Candidato non trovato in app.py per lista {list_name}: {nome_candidato}")
+                        raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
 
-                    # Nessun campo voti nel CSV:
-                    # mantiene il voto esistente oppure inizializza a 0.
-                    existing_vote = cur.execute(
-                        """
-                        SELECT votes FROM votes
-                        WHERE report_id=?
-                          AND vote_type='preferenza'
-                          AND COALESCE(list_name,'')=COALESCE(?, '')
-                          AND name=?
-                        ORDER BY id DESC
-                        LIMIT 1
-                        """,
-                        (report_id, list_name, candidate)
-                    ).fetchone()
-
-                    votes = existing_vote["votes"] if existing_vote else 0
+                    if len(row) > off + 5:
+                        votes = _intv(row[off + 5])
+                    else:
+                        existing_vote = cur.execute(
+                            """
+                            SELECT votes FROM votes
+                            WHERE report_id=?
+                              AND vote_type='preferenza'
+                              AND COALESCE(list_name,'')=COALESCE(?, '')
+                              AND name=?
+                            ORDER BY id DESC
+                            LIMIT 1
+                            """,
+                            (report_id, list_name, candidate)
+                        ).fetchone()
+                        votes = existing_vote["votes"] if existing_vote else 0
 
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
-
-                    list_totals_from_preferences[(report_id, list_name)] =                         list_totals_from_preferences.get((report_id, list_name), 0) + votes
-
+                    list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes
                     imported += 1
 
                 elif kind == "schede":

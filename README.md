@@ -491,3 +491,8 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Nelle sezioni `Preferenze consiglieri per sezione` e `Preferenze totali consiglieri`:
   - `Nome Cons` sostituito con `Nome Candidato`;
   - `Numero Cons` sostituito con `Numero Candidato`.
+
+## Versione v63
+- Rimosse da app.py le liste e i candidati consiglieri hardcoded.
+- Le liste e i candidati vengono caricati solo da CSV.
+- Import consiglieri crea dinamicamente lista, coalizione e candidato.
