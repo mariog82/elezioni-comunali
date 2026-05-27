@@ -442,3 +442,14 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Inserimento solo se il record voto non esiste ancora.
 - Deduplica automatica dei duplicati storici nella tabella `votes`.
 - L'import delle preferenze consiglieri aggiorna anche i voti della lista collegata.
+
+
+## Versione v57
+- Aggiunta in testa alla pagina Importazione la sezione:
+  `Importazione prioritaria consiglieri`
+- Formato CSV:
+  `Numero Lista;Nome Lista;Numero Cons;Nome Cons;Voti validi`
+- L'import aggiorna automaticamente:
+  - voti consiglieri;
+  - voti lista collegata;
+  - grafici/statistiche.
