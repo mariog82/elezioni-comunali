@@ -315,7 +315,7 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v39
 - Nell'import CSV il confronto di `Nome Lista` avviene tutto in minuscolo/normalizzato.
 - Nell'import CSV il confronto di `Nome Candidato` avviene tutto in minuscolo/normalizzato.
-- Il numero lista e il numero consigliere restano fallback se il nome non viene riconosciuto.
+- Il numero lista e il numero candidato restano fallback se il nome non viene riconosciuto.
 
 
 ## Versione v40
@@ -482,6 +482,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 
 ## Versione v61
 - Corretta dicitura:
-  - `Nme cCons` -> `Nome Candidato`
-  - `Nome Cons` -> `Nome Candidato`
-  - `Numero Cons` -> `Numero Candidato`
+  - `Nome Candidato` -> `Nome Candidato`
+  - `Nome Candidato` -> `Nome Candidato`
+  - `Numero Candidato` -> `Numero Candidato`
+
+
+## Versione v62
+- Nelle sezioni `Preferenze consiglieri per sezione` e `Preferenze totali consiglieri`:
+  - `Nome Cons` sostituito con `Nome Candidato`;
+  - `Numero Cons` sostituito con `Numero Candidato`.
