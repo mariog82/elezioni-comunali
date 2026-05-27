@@ -2,7 +2,6 @@ import unicodedata
 import csv
 import re
 import io
-import json
 
 from flask import Flask, request, jsonify, send_from_directory, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -503,51 +502,6 @@ ELECTION_DATA = {
   }
 }
 
-
-def load_election_data_from_settings():
-    """Carica eventuali liste/candidati personalizzati salvati dall'amministratore."""
-    global ELECTION_DATA
-    try:
-        if not os.path.exists(DB_PATH):
-            return
-        conn = sqlite3.connect(DB_PATH)
-        row = conn.execute("SELECT value FROM settings WHERE key='election_data_json'").fetchone()
-        conn.close()
-        if row and row[0]:
-            data = json.loads(row[0])
-            if isinstance(data, dict) and isinstance(data.get('mayors'), list) and isinstance(data.get('lists'), dict):
-                ELECTION_DATA = data
-    except Exception:
-        pass
-
-def _allowed_lists_from_user(user):
-    raw = ''
-    try:
-        raw = user['allowed_lists'] or ''
-    except Exception:
-        raw = ''
-    if not raw:
-        return []
-    return [x.strip() for x in raw.split('|') if x.strip()]
-
-def election_data_for_user(user):
-    if not user or user['role'] == 'admin':
-        return ELECTION_DATA
-    allowed = _allowed_lists_from_user(user)
-    if not allowed:
-        return ELECTION_DATA
-    lists = {k:v for k,v in ELECTION_DATA['lists'].items() if k in allowed}
-    mayors = sorted(set(ELECTION_DATA['mayors']) | {v.get('coalition') for v in lists.values() if v.get('coalition')})
-    return {'mayors': mayors, 'lists': lists}
-
-def _safe_split_votes(value):
-    if isinstance(value, list):
-        return value
-    try:
-        return json.loads(value or '[]')
-    except Exception:
-        return []
-
 def fast_pin_hash(pin):
     # Import CSV: hashing volutamente leggero per evitare timeout su Render.
     # check_password_hash resta compatibile con questo formato Werkzeug.
@@ -569,7 +523,6 @@ def init_db():
         qr_token TEXT NOT NULL UNIQUE,
         role TEXT NOT NULL,
         section TEXT,
-        allowed_lists TEXT,
         active INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL
     )""")
@@ -581,7 +534,6 @@ def init_db():
         blank_ballots INTEGER NOT NULL DEFAULT 0,
         null_ballots INTEGER NOT NULL DEFAULT 0,
         contested_ballots INTEGER NOT NULL DEFAULT 0,
-        split_votes_json TEXT NOT NULL DEFAULT '[]',
         closed INTEGER NOT NULL DEFAULT 0,
         closed_at TEXT,
         created_at TEXT NOT NULL,
@@ -598,17 +550,12 @@ def init_db():
         FOREIGN KEY(report_id) REFERENCES reports(id)
     )""")
 
-    user_cols = [row["name"] for row in cur.execute("PRAGMA table_info(users)").fetchall()]
-    if "allowed_lists" not in user_cols:
-        cur.execute("ALTER TABLE users ADD COLUMN allowed_lists TEXT")
-
     report_cols = [row["name"] for row in cur.execute("PRAGMA table_info(reports)").fetchall()]
     migrations = {
         "voters": "ALTER TABLE reports ADD COLUMN voters INTEGER NOT NULL DEFAULT 0",
         "blank_ballots": "ALTER TABLE reports ADD COLUMN blank_ballots INTEGER NOT NULL DEFAULT 0",
         "null_ballots": "ALTER TABLE reports ADD COLUMN null_ballots INTEGER NOT NULL DEFAULT 0",
         "contested_ballots": "ALTER TABLE reports ADD COLUMN contested_ballots INTEGER NOT NULL DEFAULT 0",
-        "split_votes_json": "ALTER TABLE reports ADD COLUMN split_votes_json TEXT NOT NULL DEFAULT '[]'",
         "closed": "ALTER TABLE reports ADD COLUMN closed INTEGER NOT NULL DEFAULT 0",
         "closed_at": "ALTER TABLE reports ADD COLUMN closed_at TEXT"
     }
@@ -625,8 +572,7 @@ def init_db():
         "total_voters": "0",
         "council_seats": "24",
         "winner_mayor": "NICOLA BARBERA",
-        "mode": "first",
-        "election_data_json": json.dumps(ELECTION_DATA, ensure_ascii=False)
+        "mode": "first"
     }
     for key, value in defaults.items():
         cur.execute("INSERT OR IGNORE INTO settings(key, value) VALUES(?, ?)", (key, value))
@@ -699,7 +645,6 @@ def init_db():
 def ensure_db():
     if not os.path.exists(DB_PATH):
         init_db()
-    load_election_data_from_settings()
 
 def current_user():
     user_id = session.get("uid")
@@ -711,12 +656,7 @@ def current_user():
     return user
 
 def public_user(user):
-    allowed = []
-    try:
-        allowed = _allowed_lists_from_user(user)
-    except Exception:
-        allowed = []
-    return {"id": user["id"], "name": user["name"], "phone": user["phone"], "role": user["role"], "section": user["section"], "allowed_lists": allowed}
+    return {"id": user["id"], "name": user["name"], "phone": user["phone"], "role": user["role"], "section": user["section"]}
 
 def login_required(fn):
     @wraps(fn)
@@ -843,19 +783,6 @@ def admin_users_page():
 def admin_tools_page():
     return send_from_directory(STATIC_DIR, "admin_tools.html")
 
-
-@app.route("/admin/intelligence")
-def admin_intelligence_page():
-    return send_from_directory(STATIC_DIR, "admin_intelligence.html")
-
-@app.route("/admin/social")
-def admin_social_page():
-    return send_from_directory(STATIC_DIR, "admin_social.html")
-
-@app.route("/public-dashboard")
-def public_dashboard_page():
-    return send_from_directory(STATIC_DIR, "public_dashboard.html")
-
 @app.post("/api/login")
 def login():
     data = request.get_json(force=True)
@@ -892,7 +819,7 @@ def config():
     conn = db()
     settings = get_settings(conn)
     conn.close()
-    return jsonify({"ok": True, "data": election_data_for_user(current_user()), "all_data": ELECTION_DATA if current_user()["role"] == "admin" else None, "settings": settings})
+    return jsonify({"ok": True, "data": ELECTION_DATA, "settings": settings})
 
 
 @app.get("/api/my-report")
@@ -945,7 +872,6 @@ def my_report():
         "null_ballots": report["null_ballots"],
         "section_electors": report["contested_ballots"],
         "contested_ballots": report["contested_ballots"],
-        "split_votes": _safe_split_votes(report["split_votes_json"] if "split_votes_json" in report.keys() else "[]"),
         "closed": bool(report["closed"]),
         "closed_at": report["closed_at"],
         "mayors": mayors,
@@ -967,7 +893,6 @@ def save_report():
     mayor_votes = data.get("mayors", {})
     list_votes = data.get("list_votes", {})
     preferences = data.get("preferences", {})
-    split_votes = _safe_split_votes(data.get("split_votes", []))
     if not section:
         return jsonify({"ok": False, "error": "Inserire la sezione"}), 400
     if user["role"] != "admin" and user["section"] and section != user["section"]:
@@ -987,10 +912,10 @@ def save_report():
         return jsonify({"ok": False, "error": "Il seggio risulta gia' chiuso. Non puoi piu' modificare o inviare dati."}), 403
     if existing:
         report_id = existing["id"]
-        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, split_votes_json=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, json.dumps(split_votes, ensure_ascii=False), now, report_id))
+        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, report_id))
         cur.execute("DELETE FROM votes WHERE report_id=?", (report_id,))
     else:
-        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, split_votes_json, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, json.dumps(split_votes, ensure_ascii=False), now, now))
+        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, now, now))
         report_id = cur.lastrowid
     for name in ELECTION_DATA["mayors"]:
         cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "sindaco", None, name, int(mayor_votes.get(name, 0) or 0)))
@@ -1031,7 +956,6 @@ def close_seat():
     mayor_votes = data.get("mayors", {})
     list_votes = data.get("list_votes", {})
     preferences = data.get("preferences", {})
-    split_votes = _safe_split_votes(data.get("split_votes", []))
     if not section:
         return jsonify({"ok": False, "error": "Inserire la sezione"}), 400
     if user["section"] and section != user["section"]:
@@ -1049,10 +973,10 @@ def close_seat():
         conn.close(); return jsonify({"ok": False, "error": "Il seggio è gia' chiuso."}), 403
     if existing:
         report_id = existing["id"]
-        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, split_votes_json=?, closed=1, closed_at=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, json.dumps(split_votes, ensure_ascii=False), now, now, report_id))
+        cur.execute("UPDATE reports SET voters=?, blank_ballots=?, null_ballots=?, contested_ballots=?, closed=1, closed_at=?, updated_at=? WHERE id=?", (voters, blank_ballots, null_ballots, section_electors, now, now, report_id))
         cur.execute("DELETE FROM votes WHERE report_id=?", (report_id,))
     else:
-        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, split_votes_json, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, json.dumps(split_votes, ensure_ascii=False), 1, now, now, now))
+        cur.execute("INSERT INTO reports(user_id, section, voters, blank_ballots, null_ballots, contested_ballots, closed, closed_at, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)", (user["id"], section, voters, blank_ballots, null_ballots, section_electors, 1, now, now, now))
         report_id = cur.lastrowid
     for name in ELECTION_DATA["mayors"]:
         cur.execute("INSERT INTO votes(report_id, vote_type, list_name, name, votes) VALUES(?,?,?,?,?)", (report_id, "sindaco", None, name, int(mayor_votes.get(name, 0) or 0)))
@@ -1112,7 +1036,7 @@ def dashboard():
     preferences = conn.execute("SELECT list_name, name, SUM(votes) AS total FROM votes WHERE vote_type='preferenza' GROUP BY list_name, name ORDER BY total DESC").fetchall()
     sections = conn.execute("""
         SELECT r.section, u.name AS representative, r.updated_at,
-          r.voters, r.blank_ballots, r.null_ballots, r.contested_ballots, r.split_votes_json, r.closed, r.closed_at,
+          r.voters, r.blank_ballots, r.null_ballots, r.contested_ballots, r.closed, r.closed_at,
           SUM(CASE WHEN v.vote_type='sindaco' THEN v.votes ELSE 0 END) AS total_mayors,
           SUM(CASE WHEN v.vote_type='lista' THEN v.votes ELSE 0 END) AS total_lists,
           SUM(CASE WHEN v.vote_type='preferenza' THEN v.votes ELSE 0 END) AS total_preferences
@@ -1125,237 +1049,7 @@ def dashboard():
     ballot_totals = conn.execute("SELECT COALESCE(SUM(voters),0) AS voters, COALESCE(SUM(blank_ballots),0) AS blank_ballots, COALESCE(SUM(null_ballots),0) AS null_ballots, COALESCE(SUM(contested_ballots),0) AS section_electors FROM reports").fetchone()
     election = compute_elected(conn)
     conn.close()
-    
-    section_dicts = []
-    split_total = 0
-    for row in sections:
-        item = dict(row)
-        sv = _safe_split_votes(item.get("split_votes_json", "[]"))
-        item["split_vote_count"] = sum(int(x.get("votes", 0) or 0) for x in sv if isinstance(x, dict))
-        item.pop("split_votes_json", None)
-        split_total += item["split_vote_count"]
-        section_dicts.append(item)
-    bt = dict(ballot_totals)
-    bt["split_vote_count"] = split_total
-    return jsonify({"ok": True, "mayors": [dict(row) for row in mayors], "lists": [dict(row) for row in lists], "preferences": [dict(row) for row in preferences], "sections": section_dicts, "ballot_totals": bt, "data": ELECTION_DATA, "election": election})
-
-
-
-def _intelligence_payload(conn):
-    settings = get_settings(conn)
-    # Totali generali
-    mayor_rows = conn.execute("SELECT name, SUM(votes) AS total FROM votes WHERE vote_type='sindaco' GROUP BY name ORDER BY total DESC").fetchall()
-    list_rows = conn.execute("SELECT list_name AS name, SUM(votes) AS total FROM votes WHERE vote_type='lista' GROUP BY list_name ORDER BY total DESC").fetchall()
-    pref_rows = conn.execute("SELECT list_name, name, SUM(votes) AS total FROM votes WHERE vote_type='preferenza' GROUP BY list_name, name ORDER BY total DESC").fetchall()
-    section_rows = conn.execute("""
-        SELECT r.id, r.section, r.voters, r.blank_ballots, r.null_ballots, r.contested_ballots, r.split_votes_json, r.closed, r.updated_at,
-               u.name AS representative
-        FROM reports r LEFT JOIN users u ON u.id=r.user_id
-        ORDER BY CAST(r.section AS INTEGER), r.section
-    """).fetchall()
-    vote_rows = conn.execute("""
-        SELECT r.section, v.vote_type, v.list_name, v.name, v.votes
-        FROM votes v JOIN reports r ON r.id=v.report_id
-    """).fetchall()
-
-    sections = {str(r["section"]): dict(r) for r in section_rows}
-    for sec, item in sections.items():
-        item["mayors"] = {}
-        item["lists"] = {}
-        item["preferences"] = {}
-        split = _safe_split_votes(item.get("split_votes_json", "[]"))
-        item["split_vote_count"] = sum(int(x.get("votes", 0) or 0) for x in split if isinstance(x, dict))
-        item["split_votes"] = split
-        item.pop("split_votes_json", None)
-
-    for v in vote_rows:
-        sec = str(v["section"])
-        if sec not in sections:
-            continue
-        if v["vote_type"] == "sindaco":
-            sections[sec]["mayors"][v["name"]] = int(v["votes"] or 0)
-        elif v["vote_type"] == "lista":
-            sections[sec]["lists"][v["list_name"]] = int(v["votes"] or 0)
-        elif v["vote_type"] == "preferenza":
-            sections[sec]["preferences"].setdefault(v["list_name"], {})[v["name"]] = int(v["votes"] or 0)
-
-    total_list_votes = sum(int(r["total"] or 0) for r in list_rows)
-    total_mayor_votes = sum(int(r["total"] or 0) for r in mayor_rows)
-    total_voters = settings.get("total_voters") or sum(int(r["voters"] or 0) for r in section_rows)
-    total_electors = settings.get("total_electors") or sum(int(r["contested_ballots"] or 0) for r in section_rows)
-    split_total = sum(x.get("split_vote_count",0) for x in sections.values())
-
-    # 1) Heatmap territoriale: intensità consenso per sezione/lista/coalizione/sindaco.
-    heatmap = []
-    for sec, item in sections.items():
-        voters = int(item.get("voters") or 0)
-        electors = int(item.get("contested_ballots") or 0)
-        list_total = sum(item["lists"].values())
-        mayor_total = sum(item["mayors"].values())
-        turnout = (voters / electors * 100) if electors else 0
-        top_list, top_list_votes = (None, 0)
-        if item["lists"]:
-            top_list, top_list_votes = max(item["lists"].items(), key=lambda kv: kv[1])
-        top_mayor, top_mayor_votes = (None, 0)
-        if item["mayors"]:
-            top_mayor, top_mayor_votes = max(item["mayors"].items(), key=lambda kv: kv[1])
-        coalition_votes = {}
-        for lname, votes in item["lists"].items():
-            coalition = ELECTION_DATA["lists"].get(lname, {}).get("coalition", "Non classificata")
-            coalition_votes[coalition] = coalition_votes.get(coalition, 0) + votes
-        top_coalition, top_coalition_votes = (None, 0)
-        if coalition_votes:
-            top_coalition, top_coalition_votes = max(coalition_votes.items(), key=lambda kv: kv[1])
-        heatmap.append({
-            "section": sec,
-            "representative": item.get("representative") or "",
-            "voters": voters,
-            "electors": electors,
-            "turnout_pct": round(turnout,2),
-            "valid_lists": list_total,
-            "valid_mayors": mayor_total,
-            "top_list": top_list,
-            "top_list_votes": top_list_votes,
-            "top_list_pct": round((top_list_votes/list_total*100),2) if list_total else 0,
-            "top_mayor": top_mayor,
-            "top_mayor_votes": top_mayor_votes,
-            "top_mayor_pct": round((top_mayor_votes/mayor_total*100),2) if mayor_total else 0,
-            "top_coalition": top_coalition,
-            "top_coalition_votes": top_coalition_votes,
-            "top_coalition_pct": round((top_coalition_votes/list_total*100),2) if list_total else 0,
-            "split_vote_count": item.get("split_vote_count",0),
-            "split_rate_pct": round((item.get("split_vote_count",0)/voters*100),2) if voters else 0,
-            "closed": bool(item.get("closed")),
-            "updated_at": item.get("updated_at")
-        })
-
-    # 2) Reti clientelari/body politico: grafo candidato -> sezione -> lista con alert concentrazione.
-    body_nodes = {}
-    body_edges = []
-    concentration_alerts = []
-    for sec, item in sections.items():
-        for list_name, prefs in item["preferences"].items():
-            for cand, votes in prefs.items():
-                votes = int(votes or 0)
-                if votes <= 0: continue
-                key_c = "cand::"+cand
-                key_s = "sec::"+sec
-                key_l = "list::"+list_name
-                body_nodes[key_c] = {"id": key_c, "label": cand, "type": "candidate", "weight": body_nodes.get(key_c,{}).get("weight",0)+votes}
-                body_nodes[key_s] = {"id": key_s, "label": "Sez. "+sec, "type": "section", "weight": body_nodes.get(key_s,{}).get("weight",0)+votes}
-                body_nodes[key_l] = {"id": key_l, "label": list_name, "type": "list", "weight": body_nodes.get(key_l,{}).get("weight",0)+votes}
-                body_edges.append({"source": key_c, "target": key_s, "votes": votes})
-                body_edges.append({"source": key_c, "target": key_l, "votes": votes})
-                sec_total_pref = sum(int(v or 0) for all_prefs in item["preferences"].values() for v in all_prefs.values())
-                rate = (votes/sec_total_pref*100) if sec_total_pref else 0
-                if votes >= 10 and rate >= 25:
-                    concentration_alerts.append({"candidate": cand, "list": list_name, "section": sec, "votes": votes, "section_pref_share_pct": round(rate,2), "level": "alta" if rate >= 40 else "media"})
-    top_edges = sorted(body_edges, key=lambda e:e["votes"], reverse=True)[:120]
-    top_node_ids = set()
-    for e in top_edges:
-        top_node_ids.add(e["source"]); top_node_ids.add(e["target"])
-    body_graph = {"nodes": [n for k,n in body_nodes.items() if k in top_node_ids], "edges": top_edges, "alerts": sorted(concentration_alerts, key=lambda x:(-x["section_pref_share_pct"], -x["votes"]))[:80]}
-
-    # 3) Predizione elettorale AI-like: proiezione deterministica su sezioni mancanti, scenario prudente.
-    closed_sections = [h for h in heatmap if h["closed"]]
-    loaded_sections = [h for h in heatmap if h["valid_lists"] or h["valid_mayors"]]
-    avg_voters = (sum(h["voters"] for h in loaded_sections)/len(loaded_sections)) if loaded_sections else 0
-    target_voters = total_voters or sum(h["voters"] for h in loaded_sections)
-    observed_voters = sum(h["voters"] for h in loaded_sections)
-    missing_voters = max(0, target_voters - observed_voters)
-    list_totals = {r["name"]: int(r["total"] or 0) for r in list_rows}
-    mayor_totals = {r["name"]: int(r["total"] or 0) for r in mayor_rows}
-    def project(totals, observed_total):
-        out=[]
-        for name, val in totals.items():
-            share = val/observed_total if observed_total else 0
-            projected = val + round(missing_voters * share)
-            out.append({"name": name, "current": val, "share_pct": round(share*100,2), "projected": projected})
-        return sorted(out, key=lambda x:x["projected"], reverse=True)
-    prediction = {
-        "method": "Proiezione proporzionale sulle sezioni caricate con correzione dei votanti mancanti; usare come scenario operativo, non come sondaggio.",
-        "loaded_sections": len(loaded_sections),
-        "closed_sections": len(closed_sections),
-        "observed_voters": observed_voters,
-        "target_voters": target_voters,
-        "missing_voters_estimate": missing_voters,
-        "average_voters_loaded_section": round(avg_voters,2),
-        "mayors": project(mayor_totals, total_mayor_votes),
-        "lists": project(list_totals, total_list_votes)
-    }
-
-    # 4) Peso politico reale: traino, efficienza, radicamento, dispersione preferenze.
-    pref_totals = {}
-    candidate_sections = {}
-    for sec, item in sections.items():
-        for list_name, prefs in item["preferences"].items():
-            for cand, votes in prefs.items():
-                votes=int(votes or 0)
-                if votes<=0: continue
-                key=(list_name,cand)
-                pref_totals[key]=pref_totals.get(key,0)+votes
-                candidate_sections.setdefault(key,{})[sec]=votes
-    political_weight=[]
-    for (list_name,cand), votes in pref_totals.items():
-        list_total = list_totals.get(list_name,0)
-        sections_map = candidate_sections.get((list_name,cand),{})
-        max_section = max(sections_map.values()) if sections_map else 0
-        spread = len([v for v in sections_map.values() if v>0])
-        concentration = (max_section/votes*100) if votes else 0
-        eff = (votes/list_total*100) if list_total else 0
-        body_index = min(100, round(eff*4 + spread*3 + (100-concentration)*0.25,2))
-        political_weight.append({
-            "candidate": cand, "list": list_name, "coalition": ELECTION_DATA["lists"].get(list_name,{}).get("coalition",""),
-            "preferences": votes, "list_total": list_total, "preference_on_list_pct": round(eff,2),
-            "sections_with_votes": spread, "max_section_votes": max_section, "concentration_pct": round(concentration,2),
-            "body_index": body_index,
-            "profile": "leader territoriale" if votes>=30 and concentration>=45 else ("diffuso" if spread>=5 and concentration<40 else "presidio locale")
-        })
-    political_weight.sort(key=lambda x:(-x["body_index"], -x["preferences"]))
-
-    # Social score: ranking comunicabile pubblicamente.
-    social_cards=[]
-    for i,x in enumerate(political_weight[:60], start=1):
-        score = min(100, round(x["body_index"]*0.65 + x["preference_on_list_pct"]*1.8 + x["sections_with_votes"]*1.2,2))
-        badges=[]
-        if x["profile"]=="leader territoriale": badges.append("Leader territoriale")
-        if x["sections_with_votes"]>=5: badges.append("Consenso diffuso")
-        if x["concentration_pct"]>=45: badges.append("Sezione forte")
-        if not badges: badges.append("Candidato emergente")
-        social_cards.append({**x, "rank": i, "political_score": score, "badges": badges, "share_text": f"{x['candidate']} · {x['list']} · Political Score {score}/100 · {', '.join(badges)}"})
-
-    return {
-        "ok": True,
-        "summary": {"total_electors": total_electors, "total_voters": total_voters, "observed_voters": observed_voters, "total_list_votes": total_list_votes, "total_mayor_votes": total_mayor_votes, "split_vote_count": split_total, "sections_loaded": len(loaded_sections), "sections_closed": len(closed_sections)},
-        "heatmap": heatmap,
-        "body_graph": body_graph,
-        "prediction": prediction,
-        "political_weight": political_weight,
-        "social_cards": social_cards,
-        "data": ELECTION_DATA
-    }
-
-@app.get("/api/intelligence")
-@admin_required
-def intelligence_api():
-    conn = db()
-    payload = _intelligence_payload(conn)
-    conn.close()
-    return jsonify(payload)
-
-@app.get("/api/public-dashboard")
-def public_dashboard_api():
-    conn = db()
-    payload = _intelligence_payload(conn)
-    conn.close()
-    # Endpoint pensato per dashboard condivisibili: niente utenti, telefoni o note operative interne.
-    return jsonify({
-        "ok": True,
-        "summary": payload["summary"],
-        "heatmap": payload["heatmap"],
-        "prediction": payload["prediction"],
-        "social_cards": payload["social_cards"][:30]
-    })
+    return jsonify({"ok": True, "mayors": [dict(row) for row in mayors], "lists": [dict(row) for row in lists], "preferences": [dict(row) for row in preferences], "sections": [dict(row) for row in sections], "ballot_totals": dict(ballot_totals), "data": ELECTION_DATA, "election": election})
 
 @app.post("/api/settings")
 @admin_required
@@ -1371,27 +1065,6 @@ def update_settings():
     settings = get_settings(conn)
     conn.close()
     return jsonify({"ok": True, "settings": settings})
-
-@app.get("/api/election-data")
-@admin_required
-def get_election_data_admin():
-    return jsonify({"ok": True, "data": ELECTION_DATA})
-
-@app.post("/api/election-data")
-@admin_required
-def save_election_data_admin():
-    global ELECTION_DATA
-    data = request.get_json(force=True).get("data")
-    if not isinstance(data, dict) or not isinstance(data.get("mayors"), list) or not isinstance(data.get("lists"), dict):
-        return jsonify({"ok": False, "error": "Formato non valido: servono mayors[] e lists{}"}), 400
-    for list_name, obj in data["lists"].items():
-        if not isinstance(obj, dict) or not obj.get("coalition") or not isinstance(obj.get("candidates"), list):
-            return jsonify({"ok": False, "error": f"Lista non valida: {list_name}"}), 400
-    ELECTION_DATA = data
-    conn = db()
-    conn.execute("INSERT OR REPLACE INTO settings(key, value) VALUES('election_data_json', ?)", (json.dumps(data, ensure_ascii=False),))
-    conn.commit(); conn.close()
-    return jsonify({"ok": True, "message": "Liste e candidati aggiornati"})
 
 @app.post("/api/reset-votes")
 @admin_required
@@ -1412,7 +1085,7 @@ def reset_votes():
 @admin_required
 def users():
     conn = db()
-    rows = conn.execute("SELECT id, name, phone, role, section, allowed_lists, qr_token, active FROM users ORDER BY id").fetchall()
+    rows = conn.execute("SELECT id, name, phone, role, section, qr_token, active FROM users ORDER BY id").fetchall()
     conn.close()
     return jsonify({"ok": True, "users": [dict(row) for row in rows]})
 
@@ -1425,12 +1098,11 @@ def create_user():
     pin = str(data.get("pin", "")).strip()
     section = str(data.get("section", "")).strip() or None
     role = str(data.get("role", "rappresentante")).strip()
-    allowed_lists = "|".join(data.get("allowed_lists", []) if isinstance(data.get("allowed_lists", []), list) else [x.strip() for x in str(data.get("allowed_lists", "")).split("|") if x.strip()])
     if not name or not phone or not pin:
         return jsonify({"ok": False, "error": "Nome, telefono/codice e PIN sono obbligatori"}), 400
     conn = db()
     try:
-        conn.execute("INSERT INTO users(name, phone, pin_hash, qr_token, role, section, allowed_lists, active, created_at) VALUES(?,?,?,?,?,?,?,1,?)", (name, phone, generate_password_hash(pin), secrets.token_urlsafe(24), role, section, allowed_lists, datetime.now().isoformat(timespec="seconds")))
+        conn.execute("INSERT INTO users(name, phone, pin_hash, qr_token, role, section, active, created_at) VALUES(?,?,?,?,?,?,1,?)", (name, phone, generate_password_hash(pin), secrets.token_urlsafe(24), role, section, datetime.now().isoformat(timespec="seconds")))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
@@ -1789,19 +1461,50 @@ def _import_votes(kind, by_section):
                     imported += 1
 
                 elif kind == "consiglieri":
+                    # Formato:
+                    # Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+                    # oppure:
+                    # Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
                     if len(row) < off + 5:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Numero Cons;Nome Cons;Voti validi")
+                        raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+
+                    numero_lista = row[off]
                     nome_lista = str(row[off + 1]).strip()
-                    list_name = _resolve_list(nome_lista, row[off])
+
+                    list_name = _resolve_list(nome_lista, numero_lista)
+
                     if not list_name:
                         raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
-                    nome_cons = str(row[off + 3]).strip()
-                    candidate = _resolve_candidate(list_name, nome_cons, row[off + 2])
+
+                    numero_candidato = row[off + 3]
+                    nome_candidato = str(row[off + 4]).strip()
+
+                    candidate = _resolve_candidate(list_name, nome_candidato, numero_candidato)
+
                     if not candidate:
-                        raise ValueError(f"Nome Cons non trovato in app.py per lista {list_name}: {nome_cons}")
-                    votes = _intv(row[off + 4])
+                        raise ValueError(f"Nome Candidato non trovato in app.py per lista {list_name}: {nome_candidato}")
+
+                    # Nessun campo voti nel CSV:
+                    # mantiene il voto esistente oppure inizializza a 0.
+                    existing_vote = cur.execute(
+                        """
+                        SELECT votes FROM votes
+                        WHERE report_id=?
+                          AND vote_type='preferenza'
+                          AND COALESCE(list_name,'')=COALESCE(?, '')
+                          AND name=?
+                        ORDER BY id DESC
+                        LIMIT 1
+                        """,
+                        (report_id, list_name, candidate)
+                    ).fetchone()
+
+                    votes = existing_vote["votes"] if existing_vote else 0
+
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
-                    list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes
+
+                    list_totals_from_preferences[(report_id, list_name)] =                         list_totals_from_preferences.get((report_id, list_name), 0) + votes
+
                     imported += 1
 
                 elif kind == "schede":
@@ -2129,7 +1832,6 @@ def update_user(user_id):
     section = str(data.get("section", "")).strip() or None
     role = str(data.get("role", "rappresentante")).strip()
     pin = str(data.get("pin", "")).strip()
-    allowed_lists = "|".join(data.get("allowed_lists", []) if isinstance(data.get("allowed_lists", []), list) else [x.strip() for x in str(data.get("allowed_lists", "")).split("|") if x.strip()])
 
     if not name or not phone:
         return jsonify({"ok": False, "error": "Nome e telefono/codice sono obbligatori"}), 400
@@ -2141,13 +1843,13 @@ def update_user(user_id):
     try:
         if pin:
             conn.execute(
-                "UPDATE users SET name=?, phone=?, section=?, role=?, allowed_lists=?, pin_hash=? WHERE id=?",
-                (name, phone, section, role, allowed_lists, generate_password_hash(pin), user_id)
+                "UPDATE users SET name=?, phone=?, section=?, role=?, pin_hash=? WHERE id=?",
+                (name, phone, section, role, generate_password_hash(pin), user_id)
             )
         else:
             conn.execute(
-                "UPDATE users SET name=?, phone=?, section=?, role=?, allowed_lists=? WHERE id=?",
-                (name, phone, section, role, allowed_lists, user_id)
+                "UPDATE users SET name=?, phone=?, section=?, role=? WHERE id=?",
+                (name, phone, section, role, user_id)
             )
         conn.commit()
     except sqlite3.IntegrityError:
