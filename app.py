@@ -1461,10 +1461,12 @@ def _import_votes(kind, by_section):
                     imported += 1
 
                 elif kind == "consiglieri":
-                    # Nuovo formato:
-                    # [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    # Formato:
+                    # Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    # oppure:
+                    # Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
                     if len(row) < off + 6:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
+                        raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
 
                     numero_lista = row[off]
                     nome_lista = str(row[off + 1]).strip()

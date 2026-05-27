@@ -464,3 +464,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - match flessibile nomi;
   - aggiornamento voti lista collegata;
   - aggiornamento grafici/statistiche.
+
+
+## Versione v59
+- Nell'import `consiglieri totali` rimossa la Sezione dal formato CSV principale.
+- Nuovo formato:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi`
+- Resta supportato anche il formato con Sezione negli import per sezione.
