@@ -454,20 +454,47 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - voti lista collegata;
   - grafici/statistiche.
 
+## Versione v59 - Political Intelligence Platform
 
-## Versione v58
-- Modificato formato import consiglieri.
-- Nuova intestazione CSV supportata:
-  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi`
-- Continuano a funzionare:
-  - update automatico voti;
-  - match flessibile nomi;
-  - aggiornamento voti lista collegata;
-  - aggiornamento grafici/statistiche.
+Questa versione aggiunge una vera area di intelligence politica e due nuove pagine operative:
 
+- `/admin/intelligence` - Political Intelligence Platform riservata all'amministratore.
+- `/admin/social` - strumenti social virali e Political Score.
+- `/public-dashboard` - dashboard pubblica condivisibile.
 
-## Versione v59
-- Nell'import `consiglieri totali` rimossa la Sezione dal formato CSV principale.
-- Nuovo formato:
-  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi`
-- Resta supportato anche il formato con Sezione negli import per sezione.
+### Moduli premium introdotti
+
+1. **Heatmap territoriale del consenso**
+   - lettura per sezione;
+   - lista prevalente;
+   - coalizione prevalente;
+   - affluenza;
+   - intensità del voto disgiunto;
+   - stato sezione aperta/chiusa.
+
+2. **Analisi reti clientelari / body politico**
+   - grafo candidato → sezione → lista;
+   - alert di concentrazione anomala delle preferenze;
+   - individuazione dei presidi territoriali;
+   - supporto alla lettura delle reti di consenso.
+
+3. **Sistema di predizione elettorale AI-like**
+   - proiezione dei risultati sulle sezioni/votanti mancanti;
+   - scenario sindaci;
+   - scenario liste;
+   - metodo trasparente indicato in pagina.
+
+4. **Analisi del peso politico reale**
+   - indice body;
+   - incidenza del candidato sulla lista;
+   - numero di sezioni in cui il candidato è presente;
+   - concentrazione territoriale;
+   - classificazione in leader territoriale, diffuso, presidio locale.
+
+5. **Funzionalità social virali**
+   - card candidati;
+   - badge automatici;
+   - Political Score;
+   - testi social pronti;
+   - link pubblico condivisibile.
+
