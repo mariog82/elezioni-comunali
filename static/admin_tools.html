@@ -10,6 +10,34 @@
 <header><h1>Pannello amministratore</h1></header>
 <main>
 
+<section class="card priority-import">
+  <h2>Importazione prioritaria consiglieri</h2>
+  <p class="small">
+    Import rapido delle preferenze dei consiglieri. Questo import aggiorna automaticamente:
+  </p>
+  <ul class="small">
+    <li>voti del consigliere;</li>
+    <li>voti della lista collegata;</li>
+    <li>grafici e statistiche.</li>
+  </ul>
+
+  <div class="card">
+    <h3>CSV consiglieri totali</h3>
+    <p class="small">
+      Formato obbligatorio:<br>
+      <b>Numero Lista;Nome Lista;Numero Cons;Nome Cons;Voti validi</b>
+    </p>
+
+    <input type="file" id="csv_priority_consiglieri" accept=".csv,text/csv">
+
+    <button class="primary"
+      onclick="importGenericCsv('csv_priority_consiglieri','/api/import/consiglieri')">
+      Importa consiglieri
+    </button>
+  </div>
+</section>
+
+
 <section class="card">
   <h2>Statistiche aggiornate automaticamente</h2>
   <p class="small">

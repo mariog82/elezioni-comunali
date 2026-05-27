@@ -13,3 +13,20 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
 .modal.hidden{display:none}
 .modalContent{background:white;border-radius:14px;padding:18px;max-width:520px;width:100%;box-shadow:0 10px 30px #0005}
 .modalContent h2{margin-top:0}
+
+
+.priority-import{
+  border:2px solid #1976d2;
+  background:#eef5ff;
+  margin-bottom:20px;
+}
+
+.priority-import h2{
+  color:#0d47a1;
+}
+
+.priority-import .primary{
+  background:#1976d2;
+  color:white;
+  font-weight:bold;
+}
