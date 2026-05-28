@@ -545,3 +545,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - I candidati sindaco vengono caricati esclusivamente tramite:
   `Importazione prioritaria sindaci`
 - `ELECTION_DATA["mayors"]` parte vuoto.
+
+
+## Versione v71
+- Svuotati da `app.py`:
+  - candidati sindaco;
+  - liste;
+  - candidati consiglieri.
+- Tutti i dati elettorali devono essere caricati tramite CSV.
