@@ -822,15 +822,28 @@ def _ensure_dynamic_list(list_name, coalition=""):
     return list_name
 
 
+
+def _is_numeric_candidate_name(value):
+    """
+    Evita di caricare come Nome Candidato valori composti solo da numeri.
+    """
+    text = str(value or "").strip()
+    if not text:
+        return True
+    return text.replace(".", "").replace(",", "").isdigit()
+
 def _ensure_dynamic_candidate(list_name, candidate_name):
     """
-    UPDATE-FIRST:
-    crea il candidato se manca, altrimenti mantiene quello esistente.
+    Crea dinamicamente un candidato nella lista se non esiste.
+    Non carica valori numerici come Nome Candidato.
     """
     list_name = str(list_name or "").strip()
     candidate_name = str(candidate_name or "").strip()
 
     if not list_name or not candidate_name:
+        return None
+
+    if _is_numeric_candidate_name(candidate_name):
         return None
 
     if list_name not in ELECTION_DATA["lists"]:
@@ -840,7 +853,6 @@ def _ensure_dynamic_candidate(list_name, candidate_name):
         }
 
     existing = _resolve_candidate(list_name, candidate_name, None)
-
     if existing:
         return existing
 
@@ -1090,7 +1102,7 @@ def _import_votes(kind, by_section):
                     candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
                     display_candidate_name = nome_candidato.strip()
                     if not candidate:
-                        raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
+                        raise ValueError(f"Nome Candidato non valido o numerico per lista {list_name}: {nome_candidato}")
 
                     if len(row) > off + 5:
                         votes = _intv(row[off + 5])

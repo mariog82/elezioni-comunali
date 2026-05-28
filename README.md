@@ -553,3 +553,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - liste;
   - candidati consiglieri.
 - Tutti i dati elettorali devono essere caricati tramite CSV.
+
+
+## Versione v72
+- Quando si caricano i candidati da CSV, accanto al nome della lista viene mostrata anche la coalizione.
+- Il campo `Nome Candidato` non viene caricato se contiene solo numeri.
+- Aggiornata la dicitura `Lista / Coalizione`.
