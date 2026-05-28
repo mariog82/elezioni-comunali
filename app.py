@@ -1064,7 +1064,7 @@ def _import_votes(kind, by_section):
 
                 elif kind == "sindaci":
                     if len(row) < off + 4:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind")
+                        raise ValueError("formato richiesto: [Sezione;]Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind")
                     nome_sindaco = str(row[off + 1]).strip()
                     mayor = _resolve_mayor(nome_sindaco, row[off])
                     if not mayor:
@@ -1145,6 +1145,71 @@ def _import_votes(kind, by_section):
         "skipped": skipped,
         "errors": errors,
         "message": f"Import completato. Righe assegnate {imported}, righe saltate {skipped}."
+    })
+
+
+@app.post("/api/import/sindaci-prioritari")
+@admin_required
+def import_sindaci_prioritari():
+    try:
+        rows = _read_csv_file()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
+
+    imported = 0
+    skipped = 0
+    errors = []
+    nuovi_sindaci = []
+    seen = set()
+
+    for idx, row in enumerate(rows, start=1):
+        try:
+            if len(row) < 2:
+                raise ValueError("formato richiesto: Numero Sindaco;Candidato Sindaco")
+
+            nome = str(row[1]).strip()
+            if not nome:
+                raise ValueError("Candidato Sindaco mancante")
+
+            key = _norm(nome)
+            if key not in seen:
+                nuovi_sindaci.append(nome)
+                seen.add(key)
+                imported += 1
+
+        except Exception as exc:
+            skipped += 1
+            if len(errors) < 50:
+                errors.append(f"Riga {idx}: {str(exc)}")
+
+    if not nuovi_sindaci:
+        return jsonify({"ok": False, "error": "Nessun candidato sindaco valido trovato"}), 400
+
+    ELECTION_DATA["mayors"] = nuovi_sindaci
+
+    conn = db()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM votes WHERE vote_type='sindaco'")
+        reports = cur.execute("SELECT id FROM reports").fetchall()
+        for report in reports:
+            for mayor in ELECTION_DATA["mayors"]:
+                _upsert_vote(cur, report["id"], "sindaco", mayor, 0, None)
+        conn.commit()
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore import sindaci prioritari: {str(exc)}"}), 500
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Importazione prioritaria sindaci completata. Sindaci caricati {imported}, righe saltate {skipped}."
     })
 
 @app.post("/api/import/liste")

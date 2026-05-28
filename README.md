@@ -524,3 +524,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - svuota `ELECTION_DATA["lists"]`;
   - reinserisce liste, coalizioni e candidati dal CSV.
 - Gli altri import continuano a lavorare in modalità update.
+
+
+## Versione v68
+- Aggiunta `Importazione prioritaria sindaci`.
+- Formato CSV: `Numero Sindaco;Candidato Sindaco`.
+- Aggiornate le diciture:
+  - `Numero Sind` -> `Numero Sindaco`;
+  - `Numero Cons` -> `Numero Candidato`;
+  - `Nome Cons` -> `Nome Candidato`.
