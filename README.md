@@ -538,3 +538,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 ## Versione v69
 - `Importazione prioritaria sindaci` e `Importazione prioritaria consiglieri` sono ora affiancate nello stesso layout a griglia.
 - Su schermi piccoli il layout torna automaticamente a una colonna.
+
+
+## Versione v70
+- Rimossi da `app.py` tutti i candidati sindaco hardcoded.
+- I candidati sindaco vengono caricati esclusivamente tramite:
+  `Importazione prioritaria sindaci`
+- `ELECTION_DATA["mayors"]` parte vuoto.

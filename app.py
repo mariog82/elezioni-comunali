@@ -17,11 +17,7 @@ app = Flask(__name__, static_folder=STATIC_DIR, static_url_path="")
 app.secret_key = os.environ.get("APP_SECRET_KEY", secrets.token_hex(32))
 
 ELECTION_DATA = {
-  "mayors": [
-    "NICOLA BARBERA",
-    "DAVID BONGIOVANNI",
-    "MELANGELA SCOLARO"
-  ],
+  "mayors": [],
   "lists": {}
 }
 
