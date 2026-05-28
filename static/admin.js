@@ -10,9 +10,7 @@ function listLabelWithCoalition(name){
     const obj = data[name] || {};
     const coalition = (obj.coalition || "").trim();
     return coalition ? `${name} - ${coalition}` : name;
-  }catch(e){
-    return name;
-  }
+  }catch(e){ return name; }
 }
 
 function candidateDisplayName(row){
