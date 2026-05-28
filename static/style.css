@@ -30,3 +30,26 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
   color:white;
   font-weight:bold;
 }
+
+
+.priority-import-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap:18px;
+  align-items:stretch;
+}
+
+.priority-import-grid > div > section{
+  height:100%;
+  margin:0;
+}
+
+.priority-import-grid-section{
+  margin-bottom:20px;
+}
+
+@media (max-width: 800px){
+  .priority-import-grid{
+    grid-template-columns: 1fr;
+  }
+}

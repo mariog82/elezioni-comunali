@@ -10,8 +10,11 @@
 <header><h1>Importazione</h1><div>Importazioni CSV</div></header>
 <main>
 
-
-<section class="card priority-import">
+<section class="card priority-import-grid-section">
+  <h2>Importazioni prioritarie</h2>
+  <div class="priority-import-grid">
+    <div>
+      <section class="card priority-import">
   <h2>Importazione prioritaria sindaci</h2>
   <p class="small"><b>ATTENZIONE: questo import cancella e ricarica da zero i candidati sindaco già presenti.</b></p>
   <div class="card">
@@ -26,8 +29,9 @@
     </button>
   </div>
 </section>
-
-<section class="card priority-import">
+    </div>
+    <div>
+      <section class="card priority-import">
   <h2>Importazione prioritaria consiglieri</h2>
   <p class="small"><b>ATTENZIONE: questo import cancella e ricarica da zero liste e candidati già presenti.</b></p>
   <p class="small">
@@ -54,6 +58,15 @@
     </button>
   </div>
 </section>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
 
 <section class="card topbar">
 <button class="secondary" onclick="location.href='/admin'">Pannello admin</button>
