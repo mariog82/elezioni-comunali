@@ -10,6 +10,23 @@
 <header><h1>Importazione</h1><div>Importazioni CSV</div></header>
 <main>
 
+
+<section class="card priority-import">
+  <h2>Importazione prioritaria sindaci</h2>
+  <p class="small"><b>ATTENZIONE: questo import cancella e ricarica da zero i candidati sindaco già presenti.</b></p>
+  <div class="card">
+    <h3>CSV candidati sindaco</h3>
+    <p class="small">
+      Formato obbligatorio:<br>
+      <b>Numero Sindaco;Candidato Sindaco</b>
+    </p>
+    <input type="file" id="csv_priority_sindaci" accept=".csv,text/csv">
+    <button class="primary" onclick="importGenericCsv('csv_priority_sindaci','/api/import/sindaci-prioritari')">
+      Importa sindaci
+    </button>
+  </div>
+</section>
+
 <section class="card priority-import">
   <h2>Importazione prioritaria consiglieri</h2>
   <p class="small"><b>ATTENZIONE: questo import cancella e ricarica da zero liste e candidati già presenti.</b></p>
@@ -56,7 +73,7 @@
   <div class="grid">
     <div class="card">
       <h3>Voti totali candidati sindaco</h3>
-      <p class="small">Formato: <b>Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
+      <p class="small">Formato: <b>Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
       <input type="file" id="csv_tot_sindaci" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_tot_sindaci','/api/import/sindaci')">Importa sindaci totali</button>
     </div>
@@ -109,7 +126,7 @@
   <div class="grid">
     <div class="card">
       <h3>Voti candidati sindaco per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Sind;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
+      <p class="small">Formato: <b>Sezione;Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
       <input type="file" id="csv_sez_sindaci" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_sindaci','/api/import/sindaci-sezioni')">Importa sindaci per sezione</button>
     </div>
