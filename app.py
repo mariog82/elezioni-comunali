@@ -1083,31 +1083,75 @@ def _import_votes(kind, by_section):
                     imported += 1
 
                 elif kind == "consiglieri":
-                    # Formato:
-                    # [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
-                    # Colonna Voti validi opzionale come ultima colonna.
-                    if len(row) < off + 5:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+                    # Formati supportati:
+                    # Totale:
+                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    # Per sezione:
+                    #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    # Per compatibilità accetta anche:
+                    #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
-                    numero_lista = row[off]
-                    nome_lista = str(row[off + 1]).strip()
-                    coalizione = str(row[off + 2]).strip()
-                    numero_candidato = row[off + 3]
-                    nome_candidato = str(row[off + 4]).strip()
+                    if by_section:
+                        if len(row) < 6:
+                            raise ValueError("formato richiesto: Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
+
+                        numero_lista = row[1]
+                        nome_lista = str(row[2]).strip()
+
+                        # Se sono presenti 7 colonne, la colonna 3 è Coalizione.
+                        # Se sono presenti 6 colonne, la colonna 3 è Numero Candidato.
+                        if len(row) >= 7:
+                            coalizione = str(row[3]).strip()
+                            numero_candidato = row[4]
+                            nome_candidato = str(row[5]).strip()
+                            votes = _intv(row[6])
+                        else:
+                            coalizione = ""
+                            numero_candidato = row[3]
+                            nome_candidato = str(row[4]).strip()
+                            votes = _intv(row[5])
+
+                    else:
+                        if len(row) < 5:
+                            raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+
+                        numero_lista = row[0]
+                        nome_lista = str(row[1]).strip()
+                        coalizione = str(row[2]).strip()
+                        numero_candidato = row[3]
+                        nome_candidato = str(row[4]).strip()
+
+                        if len(row) >= 6:
+                            votes = _intv(row[5])
+                        else:
+                            existing_vote = cur.execute(
+                                """
+                                SELECT votes FROM votes
+                                WHERE report_id=?
+                                  AND vote_type='preferenza'
+                                  AND COALESCE(list_name,'')=COALESCE(?, '')
+                                  AND name=?
+                                ORDER BY id DESC
+                                LIMIT 1
+                                """,
+                                (report_id, nome_lista, nome_candidato)
+                            ).fetchone()
+                            votes = existing_vote["votes"] if existing_vote else 0
+
+                    if not nome_candidato:
+                        raise ValueError("Nome Candidato mancante")
+
+                    if _is_numeric_candidate_name(nome_candidato):
+                        raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}")
 
                     list_name = _ensure_dynamic_list(nome_lista, coalizione)
                     if not list_name:
                         raise ValueError(f"Nome Lista non valido: {nome_lista}")
 
                     candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
-                    display_candidate_name = nome_candidato.strip()
                     if not candidate:
-                        raise ValueError(f"Nome Candidato non valido o numerico per lista {list_name}: {nome_candidato}")
-
-                    if len(row) > off + 5:
-                        votes = _intv(row[off + 5])
-                    else:
-                        votes = 0
+                        raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
 
                     _upsert_vote(cur, report_id, "preferenza", candidate, votes, list_name)
                     list_totals_from_preferences[(report_id, list_name)] = list_totals_from_preferences.get((report_id, list_name), 0) + votes

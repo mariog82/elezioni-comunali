@@ -559,3 +559,13 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Quando si caricano i candidati da CSV, accanto al nome della lista viene mostrata anche la coalizione.
 - Il campo `Nome Candidato` non viene caricato se contiene solo numeri.
 - Aggiornata la dicitura `Lista / Coalizione`.
+
+
+## Versione v73
+- Corretto import `Preferenze consiglieri per sezione`.
+- Il campo `Nome Candidato` viene letto correttamente:
+  `Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi`
+- Supportato anche il vecchio formato senza Coalizione:
+  `Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Il candidato viene creato/aggiornato nella lista corretta.
+- Bloccato il caricamento di `Nome Candidato` numerico.
