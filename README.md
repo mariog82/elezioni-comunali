@@ -623,3 +623,16 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Formato CSV obbligatorio:
   `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
 - La colonna `Coalizione` è ora obbligatoria per il caricamento anagrafico dei consiglieri.
+
+
+## Versione v81
+- Dopo l'import candidati, la lista viene mostrata con la coalizione accanto.
+- I voti importati vengono aggregati per chiave nel file corrente e salvati come UPDATE.
+- Il nuovo valore sostituisce il precedente: non viene sommato ai dati già presenti.
+- Le preferenze candidate aggiornano il voto lista con il totale aggregato del CSV caricato.
+
+
+## Versione v82
+- Nei `Grafici di dettaglio per seggio` le liste sono selezionabili da combo box.
+- Aggiunte combo per voti lista per seggio e preferenze candidati.
+- Aggiunto endpoint `/api/details`.

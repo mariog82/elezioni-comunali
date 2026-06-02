@@ -820,10 +820,16 @@ def _list_label_with_coalition(list_name):
         return f"{list_name} - {coalition}"
     return list_name
 
+
+def _list_display_name(list_name):
+    obj = ELECTION_DATA.get("lists", {}).get(list_name, {})
+    coalition = str(obj.get("coalition", "") or "").strip()
+    return f"{list_name} - {coalition}" if coalition else list_name
+
 def _ensure_dynamic_list(list_name, coalition=""):
     """
-    UPDATE-FIRST:
-    crea la lista se manca, altrimenti aggiorna coalizione e mantiene la lista esistente.
+    Crea/aggiorna la lista caricata da CSV.
+    La coalizione viene sempre memorizzata e resa disponibile alla dashboard.
     """
     list_name = str(list_name or "").strip()
     coalition = str(coalition or "").strip()
@@ -836,6 +842,8 @@ def _ensure_dynamic_list(list_name, coalition=""):
     if existing:
         if coalition:
             ELECTION_DATA["lists"][existing]["coalition"] = coalition
+        elif "coalition" not in ELECTION_DATA["lists"][existing]:
+            ELECTION_DATA["lists"][existing]["coalition"] = ""
         return existing
 
     ELECTION_DATA["lists"][list_name] = {
@@ -844,16 +852,6 @@ def _ensure_dynamic_list(list_name, coalition=""):
     }
     return list_name
 
-
-
-def _is_numeric_candidate_name(value):
-    """
-    Evita di caricare come Nome Candidato valori composti solo da numeri.
-    """
-    text = str(value or "").strip()
-    if not text:
-        return True
-    return text.replace(".", "").replace(",", "").isdigit()
 
 def _ensure_dynamic_candidate(list_name, candidate_name):
     """
@@ -921,10 +919,12 @@ def _ensure_report(cur, section, user_id):
 
 def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     """
-    UPDATE-FIRST per voti CSV:
-    chiave logica = report_id + vote_type + list_name + name.
-    Aggiorna sempre il record esistente e inserisce solo se manca.
-    Se trova duplicati storici, mantiene il primo e cancella gli altri.
+    Import CSV in modalita' AGGREGA/UPDATE:
+    - la chiave è report_id + vote_type + list_name + name;
+    - se la chiave esiste, il valore viene sostituito;
+    - se la chiave non esiste, viene creato;
+    - eventuali duplicati storici vengono rimossi.
+    Non somma mai il nuovo valore al precedente.
     """
     votes = int(votes or 0)
     name = str(name or "").strip()
@@ -1832,6 +1832,45 @@ def export_csv():
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=report_comunali_barcellona.csv"},
     )
+
+
+@app.get("/api/details")
+@admin_required
+def api_details():
+    conn = db()
+    cur = conn.cursor()
+    reports = cur.execute("SELECT * FROM reports ORDER BY section").fetchall()
+    sections = []
+    for rep in reports:
+        votes = cur.execute(
+            "SELECT vote_type, list_name, name, votes FROM votes WHERE report_id=?",
+            (rep["id"],)
+        ).fetchall()
+        lists = []
+        preferences = []
+        mayors = []
+        for v in votes:
+            item = {
+                "name": v["name"],
+                "list_name": v["list_name"],
+                "votes": v["votes"],
+                "total": v["votes"]
+            }
+            if v["vote_type"] == "lista":
+                lists.append(item)
+            elif v["vote_type"] == "preferenza":
+                preferences.append(item)
+            elif v["vote_type"] == "sindaco":
+                mayors.append(item)
+        sections.append({
+            "section": rep["section"],
+            "lists": lists,
+            "preferences": preferences,
+            "mayors": mayors
+        })
+    conn.close()
+    return jsonify({"ok": True, "sections": sections})
+
 
 if __name__ == "__main__":
     init_db()
