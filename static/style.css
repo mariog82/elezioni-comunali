@@ -79,3 +79,37 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
   background:#fafafa;
   margin:12px 0;
 }
+
+/* v88 - Tab grafici dettaglio con colori distinti */
+.detail-chart-tabs .tab-lista{
+  background:#e3f2fd;
+  border-color:#64b5f6;
+  color:#0d47a1;
+}
+.detail-chart-tabs .tab-lista.active{
+  background:#1976d2;
+  border-color:#1976d2;
+  color:#ffffff;
+}
+.detail-chart-tabs .tab-candidato{
+  background:#fff3e0;
+  border-color:#ffb74d;
+  color:#e65100;
+}
+.detail-chart-tabs .tab-candidato.active{
+  background:#f57c00;
+  border-color:#f57c00;
+  color:#ffffff;
+}
+#tabListaSeggio{
+  background:#f4f9ff;
+  border:1px solid #bbdefb;
+  border-radius:10px;
+  padding:12px;
+}
+#tabCandidatoSeggio{
+  background:#fffaf2;
+  border:1px solid #ffe0b2;
+  border-radius:10px;
+  padding:12px;
+}

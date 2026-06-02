@@ -114,8 +114,8 @@
 <section class="card">
 <h2>Grafici di dettaglio per seggio</h2>
 <div class="detail-chart-tabs">
-  <button type="button" class="tab-btn active" onclick="showDetailChartTab('tabListaSeggio')">Voti lista per seggio</button>
-  <button type="button" class="tab-btn" onclick="showDetailChartTab('tabCandidatoSeggio')">Preferenze candidato consigliere per seggio</button>
+  <button type="button" class="tab-btn tab-lista active" onclick="showDetailChartTab(\'tabListaSeggio\')">Voti lista per seggio</button>
+  <button type="button" class="tab-btn tab-candidato" onclick="showDetailChartTab(\'tabCandidatoSeggio\')">Preferenze candidato consigliere per seggio</button>
 </div>
 
 <div id="tabListaSeggio" class="detail-chart-tab active">
@@ -128,23 +128,9 @@
 </div>
 
 <div id="tabCandidatoSeggio" class="detail-chart-tab">
-  <div class="card">
-    <h3>Preferenze candidato consigliere per seggio</h3>
-    <label for="selectListaCandidatoSeggio"><b>Seleziona lista</b></label>
-    <select id="selectListaCandidatoSeggio" onchange="onListaCandidatoSeggioChange()"></select>
-    <label for="selectCandidatoListaSeggio"><b>Seleziona candidato</b></label>
-    <select id="selectCandidatoListaSeggio" onchange="renderSelectedCandidateSeggioChart()"></select>
-    <canvas id="candidateBySectionChart"></canvas>
-  </div>
-</div>
-
-<p class="small">Dettaglio per PARTITO DEMOCRATICO, MOVIMENTO 5STELLE e CITTA' APERTA - CONTROCORRENTE.</p>
-<div class="tabs">
-<button class="tab active" id="tabChartsLists" onclick="showChartTab('lists')">Liste per seggio</button>
-<button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Candidati per seggio</button>
-</div>
-<div id="chartTabLists" class="chartTab"></div>
-<div id="chartTabPrefs" class="chartTab hidden"></div>
+  
+<div id="chartTabLists" class="tabs" style="display:none"></div>
+<div id="chartTabPrefs" class="tabs" style="display:none"></div>
 </section>
 
 <section class="card"><h2>Tabelle candidato-preferenze</h2>

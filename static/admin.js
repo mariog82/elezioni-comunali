@@ -14,7 +14,7 @@ function safeCandidatesForList(listName){
 let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
 let currentPrefTableList=null;
-const DETAIL_LISTS=["PARTITO DEMOCRATICO","MOVIMENTO 5STELLE","CITTA' APERTA - CONTROCORRENTE"];
+const DETAIL_LISTS=["","",""];
 
 function listLabelWithCoalition(name){
   try{
