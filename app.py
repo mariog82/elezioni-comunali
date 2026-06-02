@@ -1171,7 +1171,7 @@ def _import_votes(kind, by_section):
 
                     if by_section:
                         if len(row) < 6:
-                            raise ValueError("formato richiesto: Sezione;Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato;Voti validi")
+                            raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[1]
                         nome_lista = str(row[2]).strip()
@@ -1775,7 +1775,7 @@ def import_consiglieri_anagrafica_totali():
     """
     Importazione prioritaria consiglieri.
     Formato CSV obbligatorio:
-      Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+      Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato
     """
     try:
         rows = _read_csv_file()
@@ -1799,7 +1799,7 @@ def import_consiglieri_anagrafica_totali():
         for idx, row in enumerate(rows, start=1):
             try:
                 if len(row) < 5:
-                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato")
 
                 numero_lista = str(row[0]).strip()
                 nome_lista = str(row[1]).strip()
