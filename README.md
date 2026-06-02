@@ -713,3 +713,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Formato CSV confermato:
   `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
 - Se `Numero Candidato` non è numerico, la riga viene scartata con errore esplicito.
+
+
+## Versione v93
+- Corretto definitivamente import `Preferenze totali consiglieri`.
+- Formato obbligatorio:
+  `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Lettura CSV robusta con separatore `;` e fallback `,`.
+- `Numero Candidato` viene ripulito da spazi, virgolette e caratteri invisibili prima del controllo numerico.
+- Se il numero non contiene cifre, la riga viene scartata con errore chiaro.

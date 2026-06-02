@@ -999,13 +999,14 @@ def _intv(value, default=0):
 def _read_csv_file(max_rows=10000):
     """
     Lettura CSV standardizzata per tutti gli import.
-    Separatore obbligatorio: ;
+    Separatore principale: ;
+    Se il file non contiene ; nella prima riga, usa , come fallback.
+    Salta automaticamente l'eventuale intestazione.
     """
     if "file" not in request.files:
         raise ValueError("File CSV mancante")
 
     uploaded = request.files["file"]
-
     raw = uploaded.read()
 
     if not raw:
@@ -1015,14 +1016,15 @@ def _read_csv_file(max_rows=10000):
         raise ValueError("File troppo grande (max 5MB)")
 
     text = raw.decode("utf-8-sig", errors="ignore")
+    first_line = text.splitlines()[0] if text.splitlines() else ""
 
-    reader = csv.reader(io.StringIO(text), delimiter=";")
+    delimiter = ";" if ";" in first_line else ","
+
+    reader = csv.reader(io.StringIO(text), delimiter=delimiter)
 
     rows = []
-
     for row in reader:
-        cleaned = [str(x).strip() for x in row]
-
+        cleaned = [str(x).strip().strip('"').strip("'") for x in row]
         if any(cleaned):
             rows.append(cleaned)
 
@@ -1032,28 +1034,35 @@ def _read_csv_file(max_rows=10000):
     if len(rows) > max_rows:
         raise ValueError(f"CSV troppo grande. Massimo {max_rows} righe")
 
-    # Rimozione automatica intestazione
-    first_line = ";".join(rows[0]).lower()
-
+    header = ";".join(rows[0]).lower().replace(" ", "")
     header_keywords = [
         "sezione",
-        "numero liste",
-        "nome lista",
-        "voti validi",
-        "numero sind",
-        "candidato sindaco",
-        "numero cons",
-        "numero candidato",
-        "nome cons",
-        "nome candidato",
-        "schede nulle",
-        "schede bianche"
+        "numerolista",
+        "numeroliste",
+        "nomelista",
+        "coalizione",
+        "numerocandidato",
+        "nomecandidato",
+        "votivalidi",
+        "numerosindaco",
+        "candidatosindaco",
+        "schedenulle",
+        "schedebianche"
     ]
 
-    if any(k in first_line for k in header_keywords):
+    if any(k in header for k in header_keywords):
         rows = rows[1:]
 
     return rows
+
+
+
+def _clean_numeric_text(value):
+    """
+    Estrae solo le cifre da un campo numerico CSV.
+    Utile contro spazi, virgolette, caratteri invisibili o formattazioni sporche.
+    """
+    return re.sub(r"\D", "", str(value or "").strip())
 
 
 def _import_votes(kind, by_section):
@@ -1199,17 +1208,25 @@ def _import_votes(kind, by_section):
                             votes = _intv(row[5])
 
                     else:
+                        # Preferenze totali consiglieri
+                        # Formato obbligatorio:
+                        # Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
                         if len(row) < 5:
                             raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
 
-                        numero_lista = row[0]
-                        #if not numero_lista.isdigit():
-                            #raise ValueError(f"Numero Lista non numerico: {numero_lista}")
+                        numero_lista = _clean_numeric_text(row[0])
                         nome_lista = str(row[1]).strip()
                         coalizione = ""
-                        numero_candidato = row[2]
-                        #if not numero_candidato.isdigit():
-                            #raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
+
+                        numero_candidato_originale = str(row[2]).strip()
+                        numero_candidato = _clean_numeric_text(numero_candidato_originale)
+
+                        if not numero_lista:
+                            raise ValueError(f"Numero Liste non numerico: {row[0]}")
+
+                        if not numero_candidato:
+                            raise ValueError(f"Numero Candidato non numerico: {numero_candidato_originale}")
+
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
 
