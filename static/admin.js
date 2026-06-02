@@ -64,6 +64,7 @@ async function loadDashboard(){
     if(hasEl("chartTabLists") || hasEl("chartTabPrefs")){
       try{ await renderDetailCharts(); }catch(e){ console.warn("Grafici dettaglio non disponibili:", e); }
       await renderDetailChartsWithComboFallback();
+      await renderDetailChartsComboBox();
     }
     if(hasEl("users")) await loadUsers();
 
@@ -687,5 +688,169 @@ async function renderDetailChartsWithComboFallback(){
     renderSelectedConsiglieriSeggioChart();
   }catch(e){
     console.warn("Grafici dettaglio combo non disponibili:", e);
+  }
+}
+
+
+let detailComboCache = null;
+let listBySectionComboChart = null;
+let candidateBySectionComboChart = null;
+
+function _comboListLabel(name){
+  try{
+    if(typeof listLabelWithCoalition === "function") return listLabelWithCoalition(name);
+    const obj = detailComboCache && detailComboCache.data && detailComboCache.data.lists ? detailComboCache.data.lists[name] : null;
+    const coalition = obj && obj.coalition ? String(obj.coalition).trim() : "";
+    return coalition ? `${name} - ${coalition}` : name;
+  }catch(e){ return name; }
+}
+
+function _getAllListsFromDetails(){
+  const set = new Set();
+  if(!detailComboCache) return [];
+  (detailComboCache.sections || []).forEach(sec=>{
+    (sec.lists || []).forEach(x=>{ if(x.name) set.add(x.name); });
+    (sec.preferences || []).forEach(x=>{ if(x.list_name) set.add(x.list_name); });
+  });
+  if(detailComboCache.data && detailComboCache.data.lists){
+    Object.keys(detailComboCache.data.lists).forEach(x=>set.add(x));
+  }
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+}
+
+function _fillCombo(id, rows, labelFn){
+  const sel = document.getElementById(id);
+  if(!sel) return;
+  const old = sel.value;
+  sel.innerHTML = "";
+  rows.forEach(row=>{
+    const opt = document.createElement("option");
+    opt.value = row.value;
+    opt.textContent = labelFn ? labelFn(row) : row.label;
+    sel.appendChild(opt);
+  });
+  if(old && rows.some(r=>r.value===old)) sel.value = old;
+}
+
+function onListaSeggioChange(){
+  renderSelectedListaSeggioChart();
+  fillCandidateComboForSelectedList();
+  renderSelectedCandidateSeggioChart();
+}
+
+function renderSelectedListaSeggioChart(){
+  const sel = document.getElementById("selectListaSeggio");
+  const canvas = document.getElementById("listBySectionChart");
+  if(!detailComboCache || !sel || !canvas) return;
+
+  const listName = sel.value;
+  const labels = [];
+  const values = [];
+
+  (detailComboCache.sections || []).forEach(sec=>{
+    const found = (sec.lists || []).find(x=>x.name === listName);
+    labels.push(sec.section);
+    values.push(found ? Number(found.votes || found.total || 0) : 0);
+  });
+
+  if(listBySectionComboChart) listBySectionComboChart.destroy();
+  listBySectionComboChart = new Chart(canvas,{
+    type:"bar",
+    data:{
+      labels,
+      datasets:[{
+        label:_comboListLabel(listName),
+        data:values
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:true}},
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+}
+
+function fillCandidateComboForSelectedList(){
+  const listSel = document.getElementById("selectListaSeggio");
+  const candSel = document.getElementById("selectCandidatoListaSeggio");
+  if(!detailComboCache || !listSel || !candSel) return;
+
+  const listName = listSel.value;
+  const set = new Set();
+
+  (detailComboCache.sections || []).forEach(sec=>{
+    (sec.preferences || []).forEach(x=>{
+      if(x.list_name === listName && x.name) set.add(x.name);
+    });
+  });
+
+  const dataCandidates = detailComboCache.data && detailComboCache.data.lists && detailComboCache.data.lists[listName] && Array.isArray(detailComboCache.data.lists[listName].candidates)
+    ? detailComboCache.data.lists[listName].candidates
+    : [];
+  dataCandidates.forEach(x=>set.add(x));
+
+  const candidates = Array.from(set).sort((a,b)=>a.localeCompare(b));
+  const rows = candidates.map(x=>({value:x,label:x}));
+  _fillCombo("selectCandidatoListaSeggio", rows);
+}
+
+function renderSelectedCandidateSeggioChart(){
+  const listSel = document.getElementById("selectListaSeggio");
+  const candSel = document.getElementById("selectCandidatoListaSeggio");
+  const canvas = document.getElementById("candidateBySectionChart");
+  if(!detailComboCache || !listSel || !candSel || !canvas) return;
+
+  const listName = listSel.value;
+  const candidateName = candSel.value;
+
+  if(!candidateName){
+    if(candidateBySectionComboChart) candidateBySectionComboChart.destroy();
+    return;
+  }
+
+  const labels = [];
+  const values = [];
+
+  (detailComboCache.sections || []).forEach(sec=>{
+    const found = (sec.preferences || []).find(x=>x.list_name === listName && x.name === candidateName);
+    labels.push(sec.section);
+    values.push(found ? Number(found.votes || found.total || 0) : 0);
+  });
+
+  if(candidateBySectionComboChart) candidateBySectionComboChart.destroy();
+  candidateBySectionComboChart = new Chart(canvas,{
+    type:"bar",
+    data:{
+      labels,
+      datasets:[{
+        label:`${candidateName} - ${_comboListLabel(listName)}`,
+        data:values
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:true}},
+      scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}, y:{beginAtZero:true}}
+    }
+  });
+}
+
+async function renderDetailChartsComboBox(){
+  if(!document.getElementById("selectListaSeggio")) return;
+
+  try{
+    const d = await api("/api/details");
+    detailComboCache = d;
+
+    const lists = _getAllListsFromDetails().map(x=>({value:x,label:_comboListLabel(x)}));
+    _fillCombo("selectListaSeggio", lists, row=>row.label);
+
+    renderSelectedListaSeggioChart();
+    fillCandidateComboForSelectedList();
+    renderSelectedCandidateSeggioChart();
+
+  }catch(e){
+    console.warn("Errore combo grafici dettaglio:", e);
   }
 }
