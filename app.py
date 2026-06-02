@@ -1107,10 +1107,9 @@ def _import_votes(kind, by_section):
 
                 elif kind == "consiglieri":
                     # Formati supportati:
-                    # Totale:
-                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
-                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    # Per sezione:
+                    # Preferenze totali consiglieri:
+                    #   Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    # Preferenze consiglieri per sezione:
                     #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
                     #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
@@ -1145,14 +1144,14 @@ def _import_votes(kind, by_section):
 
                     else:
                         if len(row) < 5:
-                            raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+                            raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[0]
                         nome_lista = str(row[1]).strip()
-                        coalizione = str(row[2]).strip()
-                        numero_candidato = row[3]
-                        nome_candidato = str(row[4]).strip()
-                        votes = _intv(row[5]) if len(row) >= 6 else 0
+                        coalizione = ""
+                        numero_candidato = row[2]
+                        nome_candidato = str(row[3]).strip()
+                        votes = _intv(row[4])
 
                     if not nome_candidato:
                         raise ValueError("Nome Candidato mancante")

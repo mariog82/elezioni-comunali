@@ -590,3 +590,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - I grafici dei candidati sindaco vengono mostrati sempre, anche se non sono presenti candidati/lista.
 - Le tabelle e i grafici delle liste diventano opzionali e non bloccano più la dashboard.
 - Aggiunta gestione sicura di liste/candidati mancanti nei grafici.
+
+
+## Versione v77
+- Modificato import `Preferenze totali consiglieri`.
+- Nuovo formato CSV obbligatorio:
+  `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Rimossa la colonna `Coalizione` dall'import delle preferenze totali.
+- L'import per sezione mantiene il supporto ai formati con/senza `Coalizione`.
