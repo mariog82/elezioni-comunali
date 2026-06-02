@@ -675,3 +675,17 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Le funzioni dei grafici di dettaglio vengono chiamate solo se esistono.
 - Se non ci sono liste o candidati, i grafici di dettaglio non vengono mostrati.
 - Aggiunto messaggio informativo al posto dei grafici quando mancano dati.
+
+
+## Versione v88
+- Eliminati i dettagli specifici per:
+  - PARTITO DEMOCRATICO;
+  - MOVIMENTO 5STELLE;
+  - CITTA' APERTA - CONTROCORRENTE.
+- Rimosse le vecchie TAB:
+  - Liste per seggio;
+  - Candidati per seggio.
+- Mantenute e differenziate graficamente le TAB:
+  - Voti lista per seggio;
+  - Preferenze candidato consigliere per seggio.
+- Le due TAB hanno colori di sfondo diversi.
