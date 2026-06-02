@@ -1851,6 +1851,13 @@ def import_consiglieri_anagrafica_totali():
     })
 
 
+
+@app.route("/api/import/consiglieri-anagrafica-anagrafica", methods=["POST"])
+@admin_required
+def import_consiglieri_anagrafica_alias():
+    return import_consiglieri_anagrafica_totali()
+
+
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)

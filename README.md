@@ -698,3 +698,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Verificato endpoint frontend per `csv_priority_consiglieri`.
 - Mantenuto formato CSV:
   `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
+
+
+## Versione v91
+- Corretto endpoint duplicato:
+  `/api/import/consiglieri-anagrafica-anagrafica`
+  -> `/api/import/consiglieri-anagrafica`
+- Aggiunta route alias POST per compatibilità con cache browser/Render.
+- Il pulsante `Importazione prioritaria consiglieri` punta all'endpoint corretto.
