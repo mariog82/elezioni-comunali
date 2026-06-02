@@ -47,13 +47,13 @@
     <h3>CSV consiglieri totali</h3>
     <p class="small">
       Formato obbligatorio:<br>
-      <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br><span class='small'>Il Nome Candidato non può essere numerico.</span>
+      <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato</b><br><span class='small'>Il Nome Candidato non può essere numerico.</span>
     </p>
 
     <input type="file" id="csv_priority_consiglieri" accept=".csv,text/csv">
 
     <button class="primary"
-      onclick="importGenericCsv('csv_priority_consiglieri','/api/import/consiglieri')">
+      onclick="importGenericCsv('csv_priority_consiglieri','/api/import/consiglieri-anagrafica')">
       Importa consiglieri
     </button>
   </div>
