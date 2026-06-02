@@ -63,8 +63,14 @@ async function loadDashboard(){
     if(hasEl("electedBox")) renderElected(d);
     if(hasEl("chartTabLists") || hasEl("chartTabPrefs")){
       try{ await renderDetailCharts(); }catch(e){ console.warn("Grafici dettaglio non disponibili:", e); }
-      await renderDetailChartsComboBox();
-      await renderDetailChartsWithComboFallback();
+      if(typeof renderDetailChartsComboBox === "function"){
+        try{ await renderDetailChartsComboBox(); }
+        catch(e){ console.warn("Grafici dettaglio combo non disponibili:", e); }
+      }
+      if(typeof renderDetailChartsWithComboFallback === "function"){
+        try{ await renderDetailChartsWithComboFallback(); }
+        catch(e){ console.warn("Grafici dettaglio fallback non disponibili:", e); }
+      }
     }
     if(hasEl("users")) await loadUsers();
 
@@ -668,6 +674,10 @@ function onListaCandidatoSeggioChange(){
 }
 
 function renderSelectedListaSeggioChart(){
+  const selCheck=document.getElementById("selectListaSeggio");
+  const canvasCheck=document.getElementById("listBySectionChart");
+  if(!detailComboCache || !selCheck || !canvasCheck || !selCheck.value){ return; }
+
   const sel=document.getElementById("selectListaSeggio");
   const canvas=document.getElementById("listBySectionChart");
   if(!detailComboCache || !sel || !canvas) return;
@@ -703,6 +713,11 @@ function fillCandidateComboForSelectedList(){
 }
 
 function renderSelectedCandidateSeggioChart(){
+  const listSelCheck=document.getElementById("selectListaCandidatoSeggio");
+  const candSelCheck=document.getElementById("selectCandidatoListaSeggio");
+  const canvasCheck=document.getElementById("candidateBySectionChart");
+  if(!detailComboCache || !listSelCheck || !candSelCheck || !canvasCheck || !candSelCheck.value){ return; }
+
   const listSel=document.getElementById("selectListaCandidatoSeggio");
   const candSel=document.getElementById("selectCandidatoListaSeggio");
   const canvas=document.getElementById("candidateBySectionChart");
@@ -729,15 +744,90 @@ function renderSelectedCandidateSeggioChart(){
 }
 
 async function renderDetailChartsComboBox(){
-  if(!document.getElementById("selectListaSeggio") && !document.getElementById("selectListaCandidatoSeggio")) return;
+  if(
+    !document.getElementById("selectListaSeggio") &&
+    !document.getElementById("selectListaCandidatoSeggio")
+  ){
+    return;
+  }
+
   try{
-    const d=await api("/api/details");
-    detailComboCache=d;
-    const lists=_getAllListsFromDetails().map(x=>({value:x,label:_comboListLabel(x)}));
-    _fillSelect("selectListaSeggio",lists);
-    _fillSelect("selectListaCandidatoSeggio",lists);
-    renderSelectedListaSeggioChart();
-    fillCandidateComboForSelectedList();
-    renderSelectedCandidateSeggioChart();
-  }catch(e){ console.warn("Errore combo grafici dettaglio:",e); }
+    const d = await api("/api/details");
+
+    if(!d || !Array.isArray(d.sections)){
+      hideDetailCharts();
+      return;
+    }
+
+    detailComboCache = d;
+
+    const lists = typeof _getAllListsFromDetails === "function"
+      ? _getAllListsFromDetails()
+      : [];
+
+    if(!lists || lists.length === 0){
+      hideDetailCharts();
+      return;
+    }
+
+    showDetailCharts();
+
+    const rows = lists.map(x=>({
+      value:x,
+      label: typeof _comboListLabel === "function" ? _comboListLabel(x) : x
+    }));
+
+    if(typeof _fillSelect === "function"){
+      _fillSelect("selectListaSeggio", rows);
+      _fillSelect("selectListaCandidatoSeggio", rows);
+    }
+
+    if(typeof renderSelectedListaSeggioChart === "function"){
+      renderSelectedListaSeggioChart();
+    }
+
+    if(typeof fillCandidateComboForSelectedList === "function"){
+      fillCandidateComboForSelectedList();
+    }
+
+    const candSel = document.getElementById("selectCandidatoListaSeggio");
+    if(candSel && candSel.value && typeof renderSelectedCandidateSeggioChart === "function"){
+      renderSelectedCandidateSeggioChart();
+    }
+
+  }catch(e){
+    console.warn("Errore combo grafici dettaglio:", e);
+    hideDetailCharts();
+  }
+}
+
+function hideDetailCharts(){
+  const tabContainer = document.querySelector(".detail-chart-tabs");
+  if(tabContainer) tabContainer.style.display = "none";
+
+  document.querySelectorAll(".detail-chart-tab").forEach(el=>{
+    el.style.display = "none";
+  });
+
+  const msgId = "noDetailChartsMsg";
+  if(!document.getElementById(msgId)){
+    const target = document.querySelector(".detail-chart-tabs")?.parentElement || document.querySelector("main") || document.body;
+    const p = document.createElement("p");
+    p.id = msgId;
+    p.className = "small";
+    p.textContent = "Nessuna lista o candidato caricato: i grafici di dettaglio per seggio non sono disponibili.";
+    target.appendChild(p);
+  }
+}
+
+function showDetailCharts(){
+  const msg = document.getElementById("noDetailChartsMsg");
+  if(msg) msg.remove();
+
+  const tabContainer = document.querySelector(".detail-chart-tabs");
+  if(tabContainer) tabContainer.style.display = "";
+
+  document.querySelectorAll(".detail-chart-tab").forEach(el=>{
+    el.style.display = "";
+  });
 }

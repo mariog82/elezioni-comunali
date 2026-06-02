@@ -71,3 +71,11 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
 #selectListaSeggio,#selectListaCandidatoSeggio,#selectCandidatoListaSeggio{
   width:100%;max-width:620px;padding:10px;border-radius:8px;border:1px solid #bbb;margin:8px 0 16px 0;
 }
+
+#noDetailChartsMsg{
+  padding:12px;
+  border:1px dashed #aaa;
+  border-radius:8px;
+  background:#fafafa;
+  margin:12px 0;
+}
