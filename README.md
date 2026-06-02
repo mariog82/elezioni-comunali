@@ -668,3 +668,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Grafici di dettaglio separati in due tab:
   - Voti lista per seggio;
   - Preferenze candidato consigliere per seggio.
+
+
+## Versione v87
+- Corretto errore `renderDetailChartsWithComboFallback`.
+- Le funzioni dei grafici di dettaglio vengono chiamate solo se esistono.
+- Se non ci sono liste o candidati, i grafici di dettaglio non vengono mostrati.
+- Aggiunto messaggio informativo al posto dei grafici quando mancano dati.
