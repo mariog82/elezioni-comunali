@@ -636,3 +636,16 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Nei `Grafici di dettaglio per seggio` le liste sono selezionabili da combo box.
 - Aggiunte combo per voti lista per seggio e preferenze candidati.
 - Aggiunto endpoint `/api/details`.
+
+
+## Versione v83
+- Corretta `Importazione prioritaria consiglieri`.
+- Formato CSV obbligatorio:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
+- Validazioni:
+  - `Numero Lista` numerico;
+  - `Nome Lista` stringa;
+  - `Coalizione` stringa;
+  - `Numero Candidato` numerico;
+  - `Nome Candidato` stringa.
+- L'import ricarica da zero liste/candidati e inizializza i voti a 0.

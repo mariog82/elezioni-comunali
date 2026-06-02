@@ -826,6 +826,17 @@ def _list_display_name(list_name):
     coalition = str(obj.get("coalition", "") or "").strip()
     return f"{list_name} - {coalition}" if coalition else list_name
 
+
+def _is_positive_int_text(value):
+    text = str(value or "").strip()
+    return text.isdigit() and int(text) >= 0
+
+def _is_valid_text_field(value):
+    text = str(value or "").strip()
+    if not text:
+        return False
+    return not text.replace(".", "").replace(",", "").isdigit()
+
 def _ensure_dynamic_list(list_name, coalition=""):
     """
     Crea/aggiorna la lista caricata da CSV.
@@ -1285,11 +1296,16 @@ def import_sindaci_prioritari():
 @admin_required
 def import_consiglieri_anagrafica_totali():
     """
-    Import CSV consiglieri totali/anagrafica.
-    Formato obbligatorio:
+    Importazione prioritaria consiglieri.
+    Formato CSV obbligatorio:
       Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
 
-    Non importa voti; crea/aggiorna solo liste, coalizioni e candidati.
+    Regole:
+      - Numero Lista: numerico
+      - Nome Lista: stringa non numerica
+      - Coalizione: stringa non numerica
+      - Numero Candidato: numerico
+      - Nome Candidato: stringa non numerica
     """
     try:
         rows = _read_csv_file()
@@ -1306,30 +1322,37 @@ def import_consiglieri_anagrafica_totali():
         conn = db()
         cur = conn.cursor()
 
-        # Questo import è anagrafico: ricarica liste/candidati da file.
+        # Import prioritaria: ricarica da zero anagrafica liste/candidati.
         cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
         ELECTION_DATA["lists"].clear()
+
+        reports = cur.execute("SELECT id FROM reports").fetchall()
 
         for idx, row in enumerate(rows, start=1):
             try:
                 if len(row) < 5:
                     raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
 
-                numero_lista = row[0]
+                numero_lista = str(row[0]).strip()
                 nome_lista = str(row[1]).strip()
                 coalizione = str(row[2]).strip()
-                numero_candidato = row[3]
+                numero_candidato = str(row[3]).strip()
                 nome_candidato = str(row[4]).strip()
 
-                if not nome_lista:
-                    raise ValueError("Nome Lista mancante")
-                if not nome_candidato:
-                    raise ValueError("Nome Candidato mancante")
-                if _is_numeric_candidate_name(nome_candidato):
-                    raise ValueError(
-                        f"Nome Candidato numerico/non valido: {nome_candidato}. "
-                        "Formato atteso: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato"
-                    )
+                if not _is_positive_int_text(numero_lista):
+                    raise ValueError(f"Numero Lista non numerico: {numero_lista}")
+
+                if not _is_valid_text_field(nome_lista):
+                    raise ValueError(f"Nome Lista mancante o numerico/non valido: {nome_lista}")
+
+                if not _is_valid_text_field(coalizione):
+                    raise ValueError(f"Coalizione mancante o numerica/non valida: {coalizione}")
+
+                if not _is_positive_int_text(numero_candidato):
+                    raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
+
+                if not _is_valid_text_field(nome_candidato):
+                    raise ValueError(f"Nome Candidato mancante o numerico/non valido: {nome_candidato}")
 
                 list_name = _ensure_dynamic_list(nome_lista, coalizione)
                 candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
@@ -1338,7 +1361,6 @@ def import_consiglieri_anagrafica_totali():
                     raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
 
                 # Inizializza su tutti i report esistenti con voto 0, senza duplicare.
-                reports = cur.execute("SELECT id FROM reports").fetchall()
                 for report in reports:
                     _upsert_vote(cur, report["id"], "lista", list_name, 0, list_name)
                     _upsert_vote(cur, report["id"], "preferenza", candidate, 0, list_name)
@@ -1347,7 +1369,7 @@ def import_consiglieri_anagrafica_totali():
 
             except Exception as exc:
                 skipped += 1
-                if len(errors) < 50:
+                if len(errors) < 80:
                     errors.append(f"Riga {idx}: {str(exc)}")
 
         conn.commit()
@@ -1359,14 +1381,14 @@ def import_consiglieri_anagrafica_totali():
             conn.close()
         except Exception:
             pass
-        return jsonify({"ok": False, "error": f"Errore import consiglieri totali: {str(exc)}"}), 500
+        return jsonify({"ok": False, "error": f"Errore importazione prioritaria consiglieri: {str(exc)}"}), 500
 
     return jsonify({
         "ok": True,
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Import consiglieri totali completato. Candidati caricati {imported}, righe saltate {skipped}."
+        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
     })
 
 
