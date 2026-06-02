@@ -63,6 +63,7 @@ async function loadDashboard(){
     if(hasEl("electedBox")) renderElected(d);
     if(hasEl("chartTabLists") || hasEl("chartTabPrefs")){
       try{ await renderDetailCharts(); }catch(e){ console.warn("Grafici dettaglio non disponibili:", e); }
+      await renderDetailChartsWithComboFallback();
     }
     if(hasEl("users")) await loadUsers();
 
@@ -603,4 +604,88 @@ async function importGenericCsv(inputId, endpoint){
     if(data.errors && data.errors.length){ msg += "\n\nPrime righe saltate:\n" + data.errors.join("\n"); }
     alert(msg); input.value=""; await loadDashboard();
   }catch(e){ alert(e.message); }
+}
+
+
+let detailChartsDataCache = null;
+
+function _detailListNames(detailData){
+  const set = new Set();
+  (detailData.sections || []).forEach(sec=>{
+    (sec.lists || []).forEach(x=>{ if(x.name) set.add(x.name); });
+    (sec.preferences || []).forEach(x=>{ if(x.list_name) set.add(x.list_name); });
+  });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b));
+}
+
+function _fillSelect(id, names){
+  const sel = document.getElementById(id);
+  if(!sel) return;
+  const current = sel.value;
+  sel.innerHTML = "";
+  names.forEach(name=>{
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = typeof listLabelWithCoalition === "function" ? listLabelWithCoalition(name) : name;
+    sel.appendChild(opt);
+  });
+  if(current && names.includes(current)) sel.value = current;
+}
+
+function renderSelectedListaSeggioChart(){
+  if(!detailChartsDataCache) return;
+  const sel = document.getElementById("selectListaSeggio");
+  const canvas = document.getElementById("listBySectionChart");
+  if(!sel || !canvas) return;
+  const listName = sel.value;
+  const labels = [];
+  const values = [];
+  (detailChartsDataCache.sections || []).forEach(sec=>{
+    const found = (sec.lists || []).find(x=>x.name === listName);
+    labels.push(sec.section);
+    values.push(found ? (found.votes || found.total || 0) : 0);
+  });
+  if(window.selectedListaSeggioChart) window.selectedListaSeggioChart.destroy();
+  window.selectedListaSeggioChart = new Chart(canvas,{
+    type:"bar",
+    data:{labels, datasets:[{label: typeof listLabelWithCoalition==="function" ? listLabelWithCoalition(listName) : listName, data:values}]},
+    options:{responsive:true, scales:{y:{beginAtZero:true}}}
+  });
+}
+
+function renderSelectedConsiglieriSeggioChart(){
+  if(!detailChartsDataCache) return;
+  const sel = document.getElementById("selectConsiglieriListaSeggio");
+  const canvas = document.getElementById("prefBySectionChart");
+  if(!sel || !canvas) return;
+  const listName = sel.value;
+  const totals = {};
+  (detailChartsDataCache.sections || []).forEach(sec=>{
+    (sec.preferences || []).filter(x=>x.list_name === listName).forEach(x=>{
+      const name = x.name || "Candidato";
+      totals[name] = (totals[name] || 0) + (x.votes || x.total || 0);
+    });
+  });
+  const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  if(window.selectedConsiglieriSeggioChart) window.selectedConsiglieriSeggioChart.destroy();
+  window.selectedConsiglieriSeggioChart = new Chart(canvas,{
+    type:"bar",
+    data:{labels: entries.map(x=>x[0]), datasets:[{label: typeof listLabelWithCoalition==="function" ? listLabelWithCoalition(listName) : listName, data: entries.map(x=>x[1])}]},
+    options:{responsive:true, scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}, y:{beginAtZero:true}}}
+  });
+}
+
+async function renderDetailChartsWithComboFallback(){
+  if(!document.getElementById("selectListaSeggio") && !document.getElementById("selectConsiglieriListaSeggio")) return;
+  try{
+    const d = await api("/api/details");
+    detailChartsDataCache = d;
+    const names = _detailListNames(d);
+    _fillSelect("selectListaSeggio", names);
+    _fillSelect("selectConsiglieriListaSeggio", names);
+    renderSelectedListaSeggioChart();
+    renderSelectedConsiglieriSeggioChart();
+  }catch(e){
+    console.warn("Grafici dettaglio combo non disponibili:", e);
+  }
 }

@@ -53,3 +53,12 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
     grid-template-columns: 1fr;
   }
 }
+
+#selectListaSeggio, #selectConsiglieriListaSeggio{
+  width:100%;
+  max-width:560px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #bbb;
+  margin:8px 0 16px 0;
+}
