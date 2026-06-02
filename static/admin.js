@@ -1,3 +1,7 @@
+function hasListData(d){
+  return !!(d && Array.isArray(d.lists) && d.lists.length);
+}
+
 function safeCandidatesForList(listName){
   try{
     const data = lastData && lastData.data && lastData.data.lists ? lastData.data.lists : {};
@@ -42,11 +46,24 @@ async function loadDashboard(){
 
     if(hasEl("totalElectors")) prepareSettings(d);
     if(hasEl("ballotSummary")) renderBallotSummary(d);
-    if(hasEl("mayorPieChart") || hasEl("listPieChart") || hasEl("listBarChart")) drawMainCharts(d);
+
+    // I grafici dei candidati sindaco sono prioritari:
+    // devono essere visualizzati anche se mancano liste/candidati.
+    try{
+      if(hasEl("mayorPieChart") || hasEl("listPieChart") || hasEl("listBarChart")) drawMainCharts(d);
+    }catch(chartErr){
+      console.warn("Errore grafici principali:", chartErr);
+      try{ drawMayorChartOnly(d); }catch(e){ console.warn("Errore grafico sindaci:", e); }
+    }
+
     if(hasEl("sections")) renderSections(d);
-    if(hasEl("prefTableTabs") && hasEl("prefTables")) renderPrefTableTabs(d);
+    if(hasEl("prefTableTabs") && hasEl("prefTables")){
+      try{ renderPrefTableTabs(d); }catch(e){ console.warn("Preferenze non disponibili:", e); }
+    }
     if(hasEl("electedBox")) renderElected(d);
-    if(hasEl("chartTabLists") || hasEl("chartTabPrefs")) await renderDetailCharts();
+    if(hasEl("chartTabLists") || hasEl("chartTabPrefs")){
+      try{ await renderDetailCharts(); }catch(e){ console.warn("Grafici dettaglio non disponibili:", e); }
+    }
     if(hasEl("users")) await loadUsers();
 
   }catch(e){
@@ -135,38 +152,103 @@ function listSeatsFor(d, listName){
   return d.election && d.election.list_seats ? (d.election.list_seats[listName] || 0) : 0;
 }
 
+
+function drawMayorChartOnly(d){
+  if(!hasEl("mayorPieChart")) return;
+  destroyChart(mayorPieChart);
+
+  const mayorLabels = (d.mayors || []).map(x=>x.name);
+  const mayorValues = (d.mayors || []).map(x=>x.total || 0);
+
+  mayorPieChart = new Chart(document.getElementById("mayorPieChart"),{
+    type:"pie",
+    data:{
+      labels:mayorLabels,
+      datasets:[{
+        data:mayorValues,
+        backgroundColor:typeof colorPalette==="function" ? colorPalette(mayorLabels.length) : undefined
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+  });
+}
+
 function drawMainCharts(d){
+  d = d || {};
+  d.mayors = Array.isArray(d.mayors) ? d.mayors : [];
+  d.lists = Array.isArray(d.lists) ? d.lists : [];
+
   if(!hasEl("mayorPieChart") && !hasEl("listPieChart") && !hasEl("listBarChart")) return;
+
   destroyChart(mayorPieChart); destroyChart(listPieChart); destroyChart(listBarChart);
 
-  const mayorLabels=d.mayors.map(x=>listLabelWithCoalition(x.name));
-  const mayorValues=d.mayors.map(x=>x.total||0);
+  const mayorLabels = d.mayors.map(x=>x.name);
+  const mayorValues = d.mayors.map(x=>x.total || 0);
+
   if(hasEl("mayorPieChart")){
-    mayorPieChart=new Chart(document.getElementById("mayorPieChart"),{
+    mayorPieChart = new Chart(document.getElementById("mayorPieChart"),{
       type:"pie",
-      data:{labels:mayorLabels,datasets:[{data:mayorValues,backgroundColor:typeof colorPalette==="function"?colorPalette(mayorLabels.length):undefined}]},
+      data:{
+        labels:mayorLabels,
+        datasets:[{
+          data:mayorValues,
+          backgroundColor:typeof colorPalette==="function" ? colorPalette(mayorLabels.length) : undefined
+        }]
+      },
       options:{responsive:true,plugins:{legend:{position:"bottom"}}}
     });
   }
 
-  const listLabels=d.lists.map(x=>listLabelWithCoalition(x.name));
-  const listValues=d.lists.map(x=>x.total||0);
+  // Liste: opzionali. Se non sono presenti, non bloccare mai il grafico sindaci.
+  const listLabels = d.lists.map(x=> typeof listLabelWithCoalition==="function" ? listLabelWithCoalition(x.name) : x.name);
+  const listValues = d.lists.map(x=>x.total || 0);
+
   if(hasEl("listPieChart")){
-    listPieChart=new Chart(document.getElementById("listPieChart"),{
-      type:"pie",
-      data:{labels:listLabels,datasets:[{data:listValues,backgroundColor:typeof colorPalette==="function"?colorPalette(listLabels.length):undefined}]},
-      options:{responsive:true,plugins:{legend:{position:"bottom"}}}
-    });
+    if(listLabels.length){
+      listPieChart = new Chart(document.getElementById("listPieChart"),{
+        type:"pie",
+        data:{
+          labels:listLabels,
+          datasets:[{
+            data:listValues,
+            backgroundColor:typeof colorPalette==="function" ? colorPalette(listLabels.length) : undefined
+          }]
+        },
+        options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+      });
+    }else{
+      const c=document.getElementById("listPieChart");
+      if(c && c.parentElement){
+        const msg=c.parentElement.querySelector(".no-list-data-msg") || document.createElement("p");
+        msg.className="small no-list-data-msg";
+        msg.textContent="Nessuna lista/candidato caricato: i grafici dei sindaci restano disponibili.";
+        if(!msg.parentElement) c.parentElement.appendChild(msg);
+      }
+    }
   }
 
   if(hasEl("listBarChart")){
-    listBarChart=new Chart(document.getElementById("listBarChart"),{
-      type:"bar",
-      data:{labels:listLabels,datasets:[{data:listValues,label:"Voti lista",backgroundColor:typeof colorPalette==="function"?colorPalette(listLabels.length):undefined}]},
-      options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}},y:{beginAtZero:true}}}
-    });
+    if(listLabels.length){
+      listBarChart = new Chart(document.getElementById("listBarChart"),{
+        type:"bar",
+        data:{
+          labels:listLabels,
+          datasets:[{
+            data:listValues,
+            label:"Voti lista",
+            backgroundColor:typeof colorPalette==="function" ? colorPalette(listLabels.length) : undefined
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{legend:{display:false}},
+          scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}},y:{beginAtZero:true}}
+        }
+      });
+    }
   }
 }
+
 function renderSections(d){
   const tb=document.getElementById("sections");
   if(!tb) return;
@@ -200,6 +282,7 @@ function renderSections(d){
 function availableDetailLists(d){ return DETAIL_LISTS.filter(l=>d.data.lists[l]); }
 
 function renderPrefTableTabs(d){
+  if(!hasListData(d)) return;
   const tabs=document.getElementById("prefTableTabs");
   const box=document.getElementById("prefTables");
   if(!tabs || !box) return;
