@@ -63,11 +63,11 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f4f4;color:#222}header{
   margin:8px 0 16px 0;
 }
 
-#selectListaSeggio, #selectCandidatoListaSeggio{
-  width:100%;
-  max-width:620px;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #bbb;
-  margin:8px 0 16px 0;
+.detail-chart-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+.detail-chart-tabs .tab-btn{padding:10px 14px;border:1px solid #bbb;border-radius:8px;background:#f5f5f5;cursor:pointer;}
+.detail-chart-tabs .tab-btn.active{background:#1976d2;color:white;border-color:#1976d2;}
+.detail-chart-tab{display:none;}
+.detail-chart-tab.active{display:block;}
+#selectListaSeggio,#selectListaCandidatoSeggio,#selectCandidatoListaSeggio{
+  width:100%;max-width:620px;padding:10px;border-radius:8px;border:1px solid #bbb;margin:8px 0 16px 0;
 }

@@ -36,19 +36,29 @@
 </section>
 <section class="card">
 <h2>Grafici di dettaglio per seggio</h2>
-<div class="card">
-  <h3>Voti lista per seggio</h3>
-  <label for="selectListaSeggio"><b>Seleziona lista</b></label>
-  <select id="selectListaSeggio" onchange="onListaSeggioChange()"></select>
-  <canvas id="listBySectionChart"></canvas>
+<div class="detail-chart-tabs">
+  <button type="button" class="tab-btn active" onclick="showDetailChartTab('tabListaSeggio')">Voti lista per seggio</button>
+  <button type="button" class="tab-btn" onclick="showDetailChartTab('tabCandidatoSeggio')">Preferenze candidato consigliere per seggio</button>
 </div>
 
-<div class="card">
-  <h3>Preferenze candidato consigliere per seggio</h3>
-  <p class="small">Opzionale: dopo aver scelto una lista, seleziona un candidato consigliere della lista.</p>
-  <label for="selectCandidatoListaSeggio"><b>Seleziona candidato</b></label>
-  <select id="selectCandidatoListaSeggio" onchange="renderSelectedCandidateSeggioChart()"></select>
-  <canvas id="candidateBySectionChart"></canvas>
+<div id="tabListaSeggio" class="detail-chart-tab active">
+  <div class="card">
+    <h3>Voti lista per seggio</h3>
+    <label for="selectListaSeggio"><b>Seleziona lista</b></label>
+    <select id="selectListaSeggio" onchange="onListaSeggioChange()"></select>
+    <canvas id="listBySectionChart"></canvas>
+  </div>
+</div>
+
+<div id="tabCandidatoSeggio" class="detail-chart-tab">
+  <div class="card">
+    <h3>Preferenze candidato consigliere per seggio</h3>
+    <label for="selectListaCandidatoSeggio"><b>Seleziona lista</b></label>
+    <select id="selectListaCandidatoSeggio" onchange="onListaCandidatoSeggioChange()"></select>
+    <label for="selectCandidatoListaSeggio"><b>Seleziona candidato</b></label>
+    <select id="selectCandidatoListaSeggio" onchange="renderSelectedCandidateSeggioChart()"></select>
+    <canvas id="candidateBySectionChart"></canvas>
+  </div>
 </div>
 
 <p class="small">Dettaglio per PARTITO DEMOCRATICO, MOVIMENTO 5STELLE e CITTA' APERTA - CONTROCORRENTE.</p>
@@ -56,8 +66,8 @@
 <button class="tab active" id="tabChartsLists" onclick="showChartTab('lists')">Liste per seggio</button>
 <button class="tab" id="tabChartsPrefs" onclick="showChartTab('prefs')">Candidati per seggio</button>
 </div>
-<div id="chartTabLists" class="tabs" style="display:none"></div>
-<div id="chartTabPrefs" class="tabs" style="display:none"></div>
+<div id="chartTabLists" class="chartTab"></div>
+<div id="chartTabPrefs" class="chartTab hidden"></div>
 </section>
 <section class="card"><h2>Tabelle candidato-preferenze</h2>
 <p class="small">Ogni tab mostra tutti i candidati della lista, anche con zero preferenze.</p>

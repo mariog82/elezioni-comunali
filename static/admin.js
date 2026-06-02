@@ -63,8 +63,8 @@ async function loadDashboard(){
     if(hasEl("electedBox")) renderElected(d);
     if(hasEl("chartTabLists") || hasEl("chartTabPrefs")){
       try{ await renderDetailCharts(); }catch(e){ console.warn("Grafici dettaglio non disponibili:", e); }
-      await renderDetailChartsWithComboFallback();
       await renderDetailChartsComboBox();
+      await renderDetailChartsWithComboFallback();
     }
     if(hasEl("users")) await loadUsers();
 
@@ -608,93 +608,21 @@ async function importGenericCsv(inputId, endpoint){
 }
 
 
-let detailChartsDataCache = null;
-
-function _detailListNames(detailData){
-  const set = new Set();
-  (detailData.sections || []).forEach(sec=>{
-    (sec.lists || []).forEach(x=>{ if(x.name) set.add(x.name); });
-    (sec.preferences || []).forEach(x=>{ if(x.list_name) set.add(x.list_name); });
-  });
-  return Array.from(set).sort((a,b)=>a.localeCompare(b));
-}
-
-function _fillSelect(id, names){
-  const sel = document.getElementById(id);
-  if(!sel) return;
-  const current = sel.value;
-  sel.innerHTML = "";
-  names.forEach(name=>{
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = typeof listLabelWithCoalition === "function" ? listLabelWithCoalition(name) : name;
-    sel.appendChild(opt);
-  });
-  if(current && names.includes(current)) sel.value = current;
-}
-
-function renderSelectedListaSeggioChart(){
-  if(!detailChartsDataCache) return;
-  const sel = document.getElementById("selectListaSeggio");
-  const canvas = document.getElementById("listBySectionChart");
-  if(!sel || !canvas) return;
-  const listName = sel.value;
-  const labels = [];
-  const values = [];
-  (detailChartsDataCache.sections || []).forEach(sec=>{
-    const found = (sec.lists || []).find(x=>x.name === listName);
-    labels.push(sec.section);
-    values.push(found ? (found.votes || found.total || 0) : 0);
-  });
-  if(window.selectedListaSeggioChart) window.selectedListaSeggioChart.destroy();
-  window.selectedListaSeggioChart = new Chart(canvas,{
-    type:"bar",
-    data:{labels, datasets:[{label: typeof listLabelWithCoalition==="function" ? listLabelWithCoalition(listName) : listName, data:values}]},
-    options:{responsive:true, scales:{y:{beginAtZero:true}}}
-  });
-}
-
-function renderSelectedConsiglieriSeggioChart(){
-  if(!detailChartsDataCache) return;
-  const sel = document.getElementById("selectConsiglieriListaSeggio");
-  const canvas = document.getElementById("prefBySectionChart");
-  if(!sel || !canvas) return;
-  const listName = sel.value;
-  const totals = {};
-  (detailChartsDataCache.sections || []).forEach(sec=>{
-    (sec.preferences || []).filter(x=>x.list_name === listName).forEach(x=>{
-      const name = x.name || "Candidato";
-      totals[name] = (totals[name] || 0) + (x.votes || x.total || 0);
-    });
-  });
-  const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-  if(window.selectedConsiglieriSeggioChart) window.selectedConsiglieriSeggioChart.destroy();
-  window.selectedConsiglieriSeggioChart = new Chart(canvas,{
-    type:"bar",
-    data:{labels: entries.map(x=>x[0]), datasets:[{label: typeof listLabelWithCoalition==="function" ? listLabelWithCoalition(listName) : listName, data: entries.map(x=>x[1])}]},
-    options:{responsive:true, scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}, y:{beginAtZero:true}}}
-  });
-}
-
-async function renderDetailChartsWithComboFallback(){
-  if(!document.getElementById("selectListaSeggio") && !document.getElementById("selectConsiglieriListaSeggio")) return;
-  try{
-    const d = await api("/api/details");
-    detailChartsDataCache = d;
-    const names = _detailListNames(d);
-    _fillSelect("selectListaSeggio", names);
-    _fillSelect("selectConsiglieriListaSeggio", names);
-    renderSelectedListaSeggioChart();
-    renderSelectedConsiglieriSeggioChart();
-  }catch(e){
-    console.warn("Grafici dettaglio combo non disponibili:", e);
-  }
-}
-
-
 let detailComboCache = null;
 let listBySectionComboChart = null;
 let candidateBySectionComboChart = null;
+
+function showDetailChartTab(id){
+  document.querySelectorAll(".detail-chart-tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".detail-chart-tabs .tab-btn").forEach(x=>x.classList.remove("active"));
+  const el=document.getElementById(id);
+  if(el) el.classList.add("active");
+  const buttons=document.querySelectorAll(".detail-chart-tabs .tab-btn");
+  if(id==="tabListaSeggio" && buttons[0]) buttons[0].classList.add("active");
+  if(id==="tabCandidatoSeggio" && buttons[1]) buttons[1].classList.add("active");
+  if(id==="tabListaSeggio") renderSelectedListaSeggioChart();
+  if(id==="tabCandidatoSeggio") renderSelectedCandidateSeggioChart();
+}
 
 function _comboListLabel(name){
   try{
@@ -718,139 +646,98 @@ function _getAllListsFromDetails(){
   return Array.from(set).sort((a,b)=>a.localeCompare(b));
 }
 
-function _fillCombo(id, rows, labelFn){
-  const sel = document.getElementById(id);
+function _fillSelect(id, rows){
+  const sel=document.getElementById(id);
   if(!sel) return;
-  const old = sel.value;
-  sel.innerHTML = "";
+  const old=sel.value;
+  sel.innerHTML="";
   rows.forEach(row=>{
-    const opt = document.createElement("option");
-    opt.value = row.value;
-    opt.textContent = labelFn ? labelFn(row) : row.label;
+    const opt=document.createElement("option");
+    opt.value=row.value;
+    opt.textContent=row.label;
     sel.appendChild(opt);
   });
-  if(old && rows.some(r=>r.value===old)) sel.value = old;
+  if(old && rows.some(r=>r.value===old)) sel.value=old;
 }
 
-function onListaSeggioChange(){
-  renderSelectedListaSeggioChart();
+function onListaSeggioChange(){ renderSelectedListaSeggioChart(); }
+
+function onListaCandidatoSeggioChange(){
   fillCandidateComboForSelectedList();
   renderSelectedCandidateSeggioChart();
 }
 
 function renderSelectedListaSeggioChart(){
-  const sel = document.getElementById("selectListaSeggio");
-  const canvas = document.getElementById("listBySectionChart");
+  const sel=document.getElementById("selectListaSeggio");
+  const canvas=document.getElementById("listBySectionChart");
   if(!detailComboCache || !sel || !canvas) return;
-
-  const listName = sel.value;
-  const labels = [];
-  const values = [];
-
+  const listName=sel.value;
+  const labels=[];
+  const values=[];
   (detailComboCache.sections || []).forEach(sec=>{
-    const found = (sec.lists || []).find(x=>x.name === listName);
+    const found=(sec.lists || []).find(x=>x.name===listName);
     labels.push(sec.section);
     values.push(found ? Number(found.votes || found.total || 0) : 0);
   });
-
   if(listBySectionComboChart) listBySectionComboChart.destroy();
-  listBySectionComboChart = new Chart(canvas,{
+  listBySectionComboChart=new Chart(canvas,{
     type:"bar",
-    data:{
-      labels,
-      datasets:[{
-        label:_comboListLabel(listName),
-        data:values
-      }]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{display:true}},
-      scales:{y:{beginAtZero:true}}
-    }
+    data:{labels,datasets:[{label:_comboListLabel(listName),data:values}]},
+    options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true}}}
   });
 }
 
 function fillCandidateComboForSelectedList(){
-  const listSel = document.getElementById("selectListaSeggio");
-  const candSel = document.getElementById("selectCandidatoListaSeggio");
+  const listSel=document.getElementById("selectListaCandidatoSeggio");
+  const candSel=document.getElementById("selectCandidatoListaSeggio");
   if(!detailComboCache || !listSel || !candSel) return;
-
-  const listName = listSel.value;
-  const set = new Set();
-
+  const listName=listSel.value;
+  const set=new Set();
   (detailComboCache.sections || []).forEach(sec=>{
     (sec.preferences || []).forEach(x=>{
-      if(x.list_name === listName && x.name) set.add(x.name);
+      if(x.list_name===listName && x.name) set.add(x.name);
     });
   });
-
-  const dataCandidates = detailComboCache.data && detailComboCache.data.lists && detailComboCache.data.lists[listName] && Array.isArray(detailComboCache.data.lists[listName].candidates)
-    ? detailComboCache.data.lists[listName].candidates
-    : [];
-  dataCandidates.forEach(x=>set.add(x));
-
-  const candidates = Array.from(set).sort((a,b)=>a.localeCompare(b));
-  const rows = candidates.map(x=>({value:x,label:x}));
-  _fillCombo("selectCandidatoListaSeggio", rows);
+  const candidates=Array.from(set).sort((a,b)=>a.localeCompare(b));
+  _fillSelect("selectCandidatoListaSeggio", candidates.map(x=>({value:x,label:x})));
 }
 
 function renderSelectedCandidateSeggioChart(){
-  const listSel = document.getElementById("selectListaSeggio");
-  const candSel = document.getElementById("selectCandidatoListaSeggio");
-  const canvas = document.getElementById("candidateBySectionChart");
+  const listSel=document.getElementById("selectListaCandidatoSeggio");
+  const candSel=document.getElementById("selectCandidatoListaSeggio");
+  const canvas=document.getElementById("candidateBySectionChart");
   if(!detailComboCache || !listSel || !candSel || !canvas) return;
-
-  const listName = listSel.value;
-  const candidateName = candSel.value;
-
+  const listName=listSel.value;
+  const candidateName=candSel.value;
   if(!candidateName){
     if(candidateBySectionComboChart) candidateBySectionComboChart.destroy();
     return;
   }
-
-  const labels = [];
-  const values = [];
-
+  const labels=[];
+  const values=[];
   (detailComboCache.sections || []).forEach(sec=>{
-    const found = (sec.preferences || []).find(x=>x.list_name === listName && x.name === candidateName);
+    const found=(sec.preferences || []).find(x=>x.list_name===listName && x.name===candidateName);
     labels.push(sec.section);
     values.push(found ? Number(found.votes || found.total || 0) : 0);
   });
-
   if(candidateBySectionComboChart) candidateBySectionComboChart.destroy();
-  candidateBySectionComboChart = new Chart(canvas,{
+  candidateBySectionComboChart=new Chart(canvas,{
     type:"bar",
-    data:{
-      labels,
-      datasets:[{
-        label:`${candidateName} - ${_comboListLabel(listName)}`,
-        data:values
-      }]
-    },
-    options:{
-      responsive:true,
-      plugins:{legend:{display:true}},
-      scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}}, y:{beginAtZero:true}}
-    }
+    data:{labels,datasets:[{label:`${candidateName} - ${_comboListLabel(listName)}`,data:values}]},
+    options:{responsive:true,plugins:{legend:{display:true}},scales:{x:{ticks:{autoSkip:false,maxRotation:70,minRotation:30}},y:{beginAtZero:true}}}
   });
 }
 
 async function renderDetailChartsComboBox(){
-  if(!document.getElementById("selectListaSeggio")) return;
-
+  if(!document.getElementById("selectListaSeggio") && !document.getElementById("selectListaCandidatoSeggio")) return;
   try{
-    const d = await api("/api/details");
-    detailComboCache = d;
-
-    const lists = _getAllListsFromDetails().map(x=>({value:x,label:_comboListLabel(x)}));
-    _fillCombo("selectListaSeggio", lists, row=>row.label);
-
+    const d=await api("/api/details");
+    detailComboCache=d;
+    const lists=_getAllListsFromDetails().map(x=>({value:x,label:_comboListLabel(x)}));
+    _fillSelect("selectListaSeggio",lists);
+    _fillSelect("selectListaCandidatoSeggio",lists);
     renderSelectedListaSeggioChart();
     fillCandidateComboForSelectedList();
     renderSelectedCandidateSeggioChart();
-
-  }catch(e){
-    console.warn("Errore combo grafici dettaglio:", e);
-  }
+  }catch(e){ console.warn("Errore combo grafici dettaglio:",e); }
 }
