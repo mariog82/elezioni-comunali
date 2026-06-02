@@ -649,3 +649,13 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - `Numero Candidato` numerico;
   - `Nome Candidato` stringa.
 - L'import ricarica da zero liste/candidati e inizializza i voti a 0.
+
+
+## Versione v84
+- Corretto definitivamente errore `name '_is_numeric_candidate_name' is not defined`.
+- Validazioni centralizzate:
+  - `_is_positive_int_text()`
+  - `_is_valid_text_field()`
+  - `_is_numeric_candidate_name()` mantenuta come compatibilità.
+- Importazione prioritaria consiglieri confermata con formato:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`

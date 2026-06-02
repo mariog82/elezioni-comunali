@@ -827,6 +827,8 @@ def _list_display_name(list_name):
     return f"{list_name} - {coalition}" if coalition else list_name
 
 
+
+
 def _is_positive_int_text(value):
     text = str(value or "").strip()
     return text.isdigit() and int(text) >= 0
@@ -836,6 +838,13 @@ def _is_valid_text_field(value):
     if not text:
         return False
     return not text.replace(".", "").replace(",", "").isdigit()
+
+def _is_numeric_candidate_name(value):
+    """
+    Compatibilità con versioni precedenti.
+    True se il valore è vuoto oppure composto solo da numeri.
+    """
+    return not _is_valid_text_field(value)
 
 def _ensure_dynamic_list(list_name, coalition=""):
     """
@@ -867,15 +876,12 @@ def _ensure_dynamic_list(list_name, coalition=""):
 def _ensure_dynamic_candidate(list_name, candidate_name):
     """
     Crea dinamicamente un candidato nella lista se non esiste.
-    Non carica valori numerici come Nome Candidato.
+    Il Nome Candidato deve essere una stringa non numerica.
     """
     list_name = str(list_name or "").strip()
     candidate_name = str(candidate_name or "").strip()
 
-    if not list_name or not candidate_name:
-        return None
-
-    if _is_numeric_candidate_name(candidate_name):
+    if not list_name or not _is_valid_text_field(candidate_name):
         return None
 
     if list_name not in ELECTION_DATA["lists"]:
@@ -1139,7 +1145,7 @@ def _import_votes(kind, by_section):
                             nome_candidato_try = str(row[5]).strip()
                             votes_try = _intv(row[6])
 
-                            if _is_numeric_candidate_name(nome_candidato_try):
+                            if not _is_valid_text_field(nome_candidato_try):
                                 coalizione = ""
                                 numero_candidato = row[3]
                                 nome_candidato = str(row[4]).strip()
@@ -1169,7 +1175,7 @@ def _import_votes(kind, by_section):
                     if not nome_candidato:
                         raise ValueError("Nome Candidato mancante")
 
-                    if _is_numeric_candidate_name(nome_candidato):
+                    if not _is_valid_text_field(nome_candidato):
                         raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}. Verifica l'ordine colonne del CSV.")
 
                     list_name = _ensure_dynamic_list(nome_lista, coalizione)
