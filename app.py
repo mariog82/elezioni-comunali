@@ -1771,3 +1771,16 @@ def api_details():
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+
+
+@app.route("/api/import/sindaci-prioritari", methods=["POST"])
+@admin_required
+def import_sindaci_prioritari():
+    rows=_read_csv_file()
+    ELECTION_DATA["mayors"]=[]
+    imported=0
+    for row in rows:
+        if len(row)>=2 and str(row[1]).strip():
+            ELECTION_DATA["mayors"].append(str(row[1]).strip())
+            imported+=1
+    return jsonify({"ok":True,"imported":imported})
