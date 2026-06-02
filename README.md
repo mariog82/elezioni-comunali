@@ -661,8 +661,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
 
 
-## Versione v85
-- Nei Grafici di dettaglio per seggio:
-  - combo box per scegliere la lista e vedere i voti lista per seggio;
-  - combo box opzionale per scegliere un candidato della lista selezionata;
-  - grafico delle preferenze del candidato consigliere per seggio.
+## Versione v86
+- Prima degli import `Voti totali liste` e `Voti liste per sezione` vengono azzerati i voti lista interessati.
+- Prima degli import `Preferenze totali consiglieri` e `Preferenze consiglieri per sezione` vengono azzerate le preferenze interessate.
+- Import preferenze: i voti lista vengono ricalcolati dalle preferenze importate.
+- Grafici di dettaglio separati in due tab:
+  - Voti lista per seggio;
+  - Preferenze candidato consigliere per seggio.

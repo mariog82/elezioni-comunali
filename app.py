@@ -1073,17 +1073,38 @@ def _import_votes(kind, by_section):
     imported = 0
     skipped = 0
     errors = []
-    # Per import preferenze totali/per sezione: accumula i voti dei consiglieri per lista
-    # per aggiornare anche i voti della lista collegata.
     list_totals_from_preferences = {}
 
     try:
-        # reset_all_candidates_import_done_v67
-        # Solo per l'import CSV dei candidati totali (/api/import/consiglieri):
-        # elimina liste/candidati/voti lista/preferenze esistenti e ricarica da zero.
-        if kind == "consiglieri" and not by_section:
-            cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
-            ELECTION_DATA["lists"].clear()
+        # AZZERAMENTO RICHIESTO PRIMA DELL'IMPORT
+        # - Voti lista: azzera i voti lista interessati.
+        # - Preferenze: azzera preferenze e voti lista interessati; i voti lista saranno ricalcolati dalle preferenze importate.
+        if kind in ("liste", "consiglieri"):
+            target_sections = set()
+            if by_section:
+                for r in rows:
+                    if r and str(r[0]).strip():
+                        target_sections.add(str(r[0]).strip())
+            else:
+                target_sections.add("TOTALE")
+
+            vote_type_to_reset = "lista" if kind == "liste" else "preferenza"
+
+            for section in target_sections:
+                rep = cur.execute(
+                    "SELECT id FROM reports WHERE section=? ORDER BY id ASC LIMIT 1",
+                    (section,)
+                ).fetchone()
+                if rep:
+                    cur.execute(
+                        "DELETE FROM votes WHERE report_id=? AND vote_type=?",
+                        (rep["id"], vote_type_to_reset)
+                    )
+                    if kind == "consiglieri":
+                        cur.execute(
+                            "DELETE FROM votes WHERE report_id=? AND vote_type='lista'",
+                            (rep["id"],)
+                        )
 
         for idx, row in enumerate(rows, start=1):
             try:
@@ -1093,6 +1114,7 @@ def _import_votes(kind, by_section):
 
                 section = "TOTALE"
                 off = 0
+
                 if by_section:
                     if len(row) < 1 or not str(row[0]).strip():
                         raise ValueError("sezione mancante")
@@ -1102,35 +1124,50 @@ def _import_votes(kind, by_section):
                 report_id = _ensure_report(cur, section, admin_user["id"])
 
                 if kind == "liste":
+                    # [Sezione;]Numero Lista;Nome Lista;Voti validi
                     if len(row) < off + 3:
-                        raise ValueError("formato richiesto: [Sezione;]Numero Liste;Nome Lista;Voti validi")
+                        raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;Voti validi")
+
+                    numero_lista = row[off]
                     nome_lista = str(row[off + 1]).strip()
+                    votes = _intv(row[off + 2])
+
                     list_name = _ensure_dynamic_list(nome_lista, "")
                     if not list_name:
-                        raise ValueError(f"Nome Lista non trovato in app.py: {nome_lista}")
-                    votes = _intv(row[off + 2])
+                        raise ValueError(f"Nome Lista non valido: {nome_lista}")
+
                     _upsert_vote(cur, report_id, "lista", list_name, votes, list_name)
                     imported += 1
 
                 elif kind == "sindaci":
+                    # [Sezione;]Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind
                     if len(row) < off + 4:
                         raise ValueError("formato richiesto: [Sezione;]Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind")
+
+                    numero_sindaco = row[off]
                     nome_sindaco = str(row[off + 1]).strip()
-                    mayor = _resolve_mayor(nome_sindaco, row[off])
+                    mayor = _resolve_mayor(nome_sindaco, numero_sindaco)
+
                     if not mayor:
-                        raise ValueError(f"Candidato Sindaco non trovato in app.py: {nome_sindaco}")
+                        # Se non presente nell'anagrafica sindaci, lo aggiunge dinamicamente
+                        mayor = nome_sindaco
+                        if mayor and mayor not in ELECTION_DATA["mayors"]:
+                            ELECTION_DATA["mayors"].append(mayor)
+
+                    if not mayor:
+                        raise ValueError(f"Candidato Sindaco non valido: {nome_sindaco}")
+
                     votes = _intv(row[off + 2])
                     only = _intv(row[off + 3])
                     _upsert_vote(cur, report_id, "sindaco", mayor, votes + only, None)
                     imported += 1
 
                 elif kind == "consiglieri":
-                    # Formati supportati:
-                    # Preferenze totali consiglieri:
-                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    # Preferenze consiglieri per sezione:
+                    # Preferenze totali:
+                    #   Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    # Preferenze per sezione:
                     #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
                     if by_section:
                         if len(row) < 6:
@@ -1163,7 +1200,7 @@ def _import_votes(kind, by_section):
 
                     else:
                         if len(row) < 5:
-                            raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
+                            raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[0]
                         nome_lista = str(row[1]).strip()
@@ -1172,11 +1209,8 @@ def _import_votes(kind, by_section):
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
 
-                    if not nome_candidato:
-                        raise ValueError("Nome Candidato mancante")
-
                     if not _is_valid_text_field(nome_candidato):
-                        raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}. Verifica l'ordine colonne del CSV.")
+                        raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}")
 
                     list_name = _ensure_dynamic_list(nome_lista, coalizione)
                     if not list_name:
@@ -1191,8 +1225,10 @@ def _import_votes(kind, by_section):
                     imported += 1
 
                 elif kind == "schede":
+                    # [Sezione;]Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.
                     if len(row) < off + 4:
                         raise ValueError("formato richiesto: [Sezione;]Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.")
+
                     voti_nulli = _intv(row[off])
                     schede_nulle = _intv(row[off + 1])
                     schede_bianche = _intv(row[off + 2])
@@ -1206,12 +1242,10 @@ def _import_votes(kind, by_section):
 
             except Exception as exc:
                 skipped += 1
-                if len(errors) < 50:
+                if len(errors) < 80:
                     errors.append(f"Riga {idx}: {str(exc)}")
 
-        # Se il file importato contiene preferenze consiglieri, aggiorna anche i voti
-        # delle liste collegate. In questo modo i grafici liste/statistiche si aggiornano
-        # automaticamente anche caricando solo il CSV delle preferenze.
+        # Le preferenze importate ricalcolano i voti lista per i report/lista interessati.
         if kind == "consiglieri":
             for (report_id, list_name), total_votes in list_totals_from_preferences.items():
                 _upsert_vote(cur, report_id, "lista", list_name, total_votes, list_name)
@@ -1229,174 +1263,8 @@ def _import_votes(kind, by_section):
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Import completato. Righe assegnate {imported}, righe saltate {skipped}."
+        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
     })
-
-
-@app.post("/api/import/sindaci-prioritari")
-@admin_required
-def import_sindaci_prioritari():
-    try:
-        rows = _read_csv_file()
-    except ValueError as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 400
-    except Exception as exc:
-        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
-
-    imported = 0
-    skipped = 0
-    errors = []
-    nuovi_sindaci = []
-    seen = set()
-
-    for idx, row in enumerate(rows, start=1):
-        try:
-            if len(row) < 2:
-                raise ValueError("formato richiesto: Numero Sindaco;Candidato Sindaco")
-
-            nome = str(row[1]).strip()
-            if not nome:
-                raise ValueError("Candidato Sindaco mancante")
-
-            key = _norm(nome)
-            if key not in seen:
-                nuovi_sindaci.append(nome)
-                seen.add(key)
-                imported += 1
-
-        except Exception as exc:
-            skipped += 1
-            if len(errors) < 50:
-                errors.append(f"Riga {idx}: {str(exc)}")
-
-    if not nuovi_sindaci:
-        return jsonify({"ok": False, "error": "Nessun candidato sindaco valido trovato"}), 400
-
-    ELECTION_DATA["mayors"] = nuovi_sindaci
-
-    conn = db()
-    cur = conn.cursor()
-    try:
-        cur.execute("DELETE FROM votes WHERE vote_type='sindaco'")
-        reports = cur.execute("SELECT id FROM reports").fetchall()
-        for report in reports:
-            for mayor in ELECTION_DATA["mayors"]:
-                _upsert_vote(cur, report["id"], "sindaco", mayor, 0, None)
-        conn.commit()
-    except Exception as exc:
-        conn.rollback()
-        conn.close()
-        return jsonify({"ok": False, "error": f"Errore import sindaci prioritari: {str(exc)}"}), 500
-
-    conn.close()
-    return jsonify({
-        "ok": True,
-        "imported": imported,
-        "skipped": skipped,
-        "errors": errors,
-        "message": f"Importazione prioritaria sindaci completata. Sindaci caricati {imported}, righe saltate {skipped}."
-    })
-
-
-@app.post("/api/import/consiglieri-anagrafica")
-@admin_required
-def import_consiglieri_anagrafica_totali():
-    """
-    Importazione prioritaria consiglieri.
-    Formato CSV obbligatorio:
-      Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
-
-    Regole:
-      - Numero Lista: numerico
-      - Nome Lista: stringa non numerica
-      - Coalizione: stringa non numerica
-      - Numero Candidato: numerico
-      - Nome Candidato: stringa non numerica
-    """
-    try:
-        rows = _read_csv_file()
-    except ValueError as exc:
-        return jsonify({"ok": False, "error": str(exc)}), 400
-    except Exception as exc:
-        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
-
-    imported = 0
-    skipped = 0
-    errors = []
-
-    try:
-        conn = db()
-        cur = conn.cursor()
-
-        # Import prioritaria: ricarica da zero anagrafica liste/candidati.
-        cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
-        ELECTION_DATA["lists"].clear()
-
-        reports = cur.execute("SELECT id FROM reports").fetchall()
-
-        for idx, row in enumerate(rows, start=1):
-            try:
-                if len(row) < 5:
-                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
-
-                numero_lista = str(row[0]).strip()
-                nome_lista = str(row[1]).strip()
-                coalizione = str(row[2]).strip()
-                numero_candidato = str(row[3]).strip()
-                nome_candidato = str(row[4]).strip()
-
-                if not _is_positive_int_text(numero_lista):
-                    raise ValueError(f"Numero Lista non numerico: {numero_lista}")
-
-                if not _is_valid_text_field(nome_lista):
-                    raise ValueError(f"Nome Lista mancante o numerico/non valido: {nome_lista}")
-
-                if not _is_valid_text_field(coalizione):
-                    raise ValueError(f"Coalizione mancante o numerica/non valida: {coalizione}")
-
-                if not _is_positive_int_text(numero_candidato):
-                    raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
-
-                if not _is_valid_text_field(nome_candidato):
-                    raise ValueError(f"Nome Candidato mancante o numerico/non valido: {nome_candidato}")
-
-                list_name = _ensure_dynamic_list(nome_lista, coalizione)
-                candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
-
-                if not candidate:
-                    raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
-
-                # Inizializza su tutti i report esistenti con voto 0, senza duplicare.
-                for report in reports:
-                    _upsert_vote(cur, report["id"], "lista", list_name, 0, list_name)
-                    _upsert_vote(cur, report["id"], "preferenza", candidate, 0, list_name)
-
-                imported += 1
-
-            except Exception as exc:
-                skipped += 1
-                if len(errors) < 80:
-                    errors.append(f"Riga {idx}: {str(exc)}")
-
-        conn.commit()
-        conn.close()
-
-    except Exception as exc:
-        try:
-            conn.rollback()
-            conn.close()
-        except Exception:
-            pass
-        return jsonify({"ok": False, "error": f"Errore importazione prioritaria consiglieri: {str(exc)}"}), 500
-
-    return jsonify({
-        "ok": True,
-        "imported": imported,
-        "skipped": skipped,
-        "errors": errors,
-        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
-    })
-
 
 @app.post("/api/import/liste")
 @admin_required
@@ -1862,8 +1730,6 @@ def export_csv():
     )
 
 
-
-
 @app.get("/api/details")
 @admin_required
 def api_details():
@@ -1871,17 +1737,14 @@ def api_details():
     cur = conn.cursor()
     reports = cur.execute("SELECT * FROM reports ORDER BY section").fetchall()
     sections = []
-
     for rep in reports:
         votes = cur.execute(
             "SELECT vote_type, list_name, name, votes FROM votes WHERE report_id=?",
             (rep["id"],)
         ).fetchall()
-
         lists = []
         preferences = []
         mayors = []
-
         for v in votes:
             item = {
                 "name": v["name"],
@@ -1889,28 +1752,20 @@ def api_details():
                 "votes": v["votes"],
                 "total": v["votes"]
             }
-
             if v["vote_type"] == "lista":
                 lists.append(item)
             elif v["vote_type"] == "preferenza":
                 preferences.append(item)
             elif v["vote_type"] == "sindaco":
                 mayors.append(item)
-
         sections.append({
             "section": rep["section"],
             "lists": lists,
             "preferences": preferences,
             "mayors": mayors
         })
-
     conn.close()
-
-    return jsonify({
-        "ok": True,
-        "data": ELECTION_DATA,
-        "sections": sections
-    })
+    return jsonify({"ok": True, "sections": sections})
 
 
 if __name__ == "__main__":
