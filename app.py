@@ -1768,6 +1768,89 @@ def api_details():
     return jsonify({"ok": True, "sections": sections})
 
 
+
+@app.route("/api/import/consiglieri-anagrafica", methods=["POST"])
+@admin_required
+def import_consiglieri_anagrafica_totali():
+    """
+    Importazione prioritaria consiglieri.
+    Formato CSV obbligatorio:
+      Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+    """
+    try:
+        rows = _read_csv_file()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
+
+    imported = 0
+    skipped = 0
+    errors = []
+
+    conn = db()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
+        ELECTION_DATA["lists"].clear()
+        reports = cur.execute("SELECT id FROM reports").fetchall()
+
+        for idx, row in enumerate(rows, start=1):
+            try:
+                if len(row) < 5:
+                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
+
+                numero_lista = str(row[0]).strip()
+                nome_lista = str(row[1]).strip()
+                coalizione = str(row[2]).strip()
+                numero_candidato = str(row[3]).strip()
+                nome_candidato = str(row[4]).strip()
+
+                if not numero_lista.isdigit():
+                    raise ValueError(f"Numero Lista non numerico: {numero_lista}")
+                if not numero_candidato.isdigit():
+                    raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
+                if not nome_lista or nome_lista.replace(".", "").replace(",", "").isdigit():
+                    raise ValueError(f"Nome Lista non valido: {nome_lista}")
+                if not coalizione or coalizione.replace(".", "").replace(",", "").isdigit():
+                    raise ValueError(f"Coalizione non valida: {coalizione}")
+                if not nome_candidato or nome_candidato.replace(".", "").replace(",", "").isdigit():
+                    raise ValueError(f"Nome Candidato non valido: {nome_candidato}")
+
+                list_name = _ensure_dynamic_list(nome_lista, coalizione)
+                candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
+                if not candidate:
+                    raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
+
+                for report in reports:
+                    _upsert_vote(cur, report["id"], "lista", list_name, 0, list_name)
+                    _upsert_vote(cur, report["id"], "preferenza", candidate, 0, list_name)
+
+                imported += 1
+
+            except Exception as exc:
+                skipped += 1
+                if len(errors) < 80:
+                    errors.append(f"Riga {idx}: {str(exc)}")
+
+        conn.commit()
+
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore importazione prioritaria consiglieri: {str(exc)}"}), 500
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
+    })
+
+
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)

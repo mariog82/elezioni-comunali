@@ -689,3 +689,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - Voti lista per seggio;
   - Preferenze candidato consigliere per seggio.
 - Le due TAB hanno colori di sfondo diversi.
+
+
+## Versione v90
+- Corretto errore 405 su `POST /api/import/consiglieri-anagrafica`.
+- La route ora accetta esplicitamente POST:
+  `@app.route("/api/import/consiglieri-anagrafica", methods=["POST"])`
+- Verificato endpoint frontend per `csv_priority_consiglieri`.
+- Mantenuto formato CSV:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
