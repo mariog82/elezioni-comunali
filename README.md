@@ -576,3 +576,11 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Corretto import `Preferenze consiglieri per sezione`.
 - `Nome Candidato` viene letto correttamente anche con CSV senza colonna Coalizione.
 - Se il nome candidato risulta numerico, viene tentato il fallback al formato senza Coalizione.
+
+
+## Versione v75
+- Import voti di lista totali e per sezione in modalità UPDATE.
+- Import preferenze singoli candidati totali e per sezione in modalità UPDATE.
+- Inserimento solo se il record non esiste.
+- Deduplica automatica di report e voti duplicati storici.
+- Le preferenze dei candidati aggiornano anche i voti della lista collegata.

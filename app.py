@@ -180,6 +180,29 @@ def init_db():
     """)
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_update_csv_v65 ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
 
+
+    # UPDATE CSV: un solo report per sezione/TOTALE.
+    cur.execute("""
+        DELETE FROM reports
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM reports
+            GROUP BY section
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_update_v75 ON reports(section)")
+
+    # UPDATE CSV: un solo voto per report/tipo/lista/nome.
+    cur.execute("""
+        DELETE FROM votes
+        WHERE id NOT IN (
+            SELECT MIN(id)
+            FROM votes
+            GROUP BY report_id, vote_type, COALESCE(list_name,''), name
+        )
+    """)
+    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_votes_update_v75 ON votes(report_id, vote_type, COALESCE(list_name,''), name)")
+
     conn.commit()
     conn.close()
 
@@ -861,9 +884,9 @@ def _ensure_dynamic_candidate(list_name, candidate_name):
 
 def _ensure_report(cur, section, user_id):
     """
-    UPDATE-FIRST:
-    per ogni sezione/TOTALE mantiene un solo report.
-    Se il report esiste lo aggiorna, se non esiste lo crea.
+    UPDATE-FIRST per sezione/TOTALE:
+    se il report esiste, viene aggiornato e riutilizzato;
+    se non esiste, viene creato.
     """
     now = datetime.now().isoformat(timespec="seconds")
     section = str(section or "").strip() or "TOTALE"
@@ -898,12 +921,14 @@ def _ensure_report(cur, section, user_id):
 
 def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     """
-    UPDATE-FIRST:
-    aggiorna il voto esistente per report/tipo/lista/nome.
-    Inserisce solo se il record non esiste.
-    Se trova duplicati storici, mantiene il primo record e cancella gli altri.
+    UPDATE-FIRST per voti CSV:
+    chiave logica = report_id + vote_type + list_name + name.
+    Aggiorna sempre il record esistente e inserisce solo se manca.
+    Se trova duplicati storici, mantiene il primo e cancella gli altri.
     """
     votes = int(votes or 0)
+    name = str(name or "").strip()
+    list_name = str(list_name).strip() if list_name is not None else None
 
     rows = cur.execute(
         """
@@ -920,10 +945,8 @@ def _upsert_vote(cur, report_id, vote_type, name, votes, list_name=None):
     if rows:
         keep_id = rows[0]["id"]
         cur.execute("UPDATE votes SET votes=? WHERE id=?", (votes, keep_id))
-
         for dup in rows[1:]:
             cur.execute("DELETE FROM votes WHERE id=?", (dup["id"],))
-
         return keep_id
 
     cur.execute(
