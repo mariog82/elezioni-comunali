@@ -1110,8 +1110,8 @@ def _import_votes(kind, by_section):
                     # Preferenze totali consiglieri:
                     #   Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
                     # Preferenze consiglieri per sezione:
-                    #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
                     if by_section:
                         if len(row) < 6:
@@ -1276,6 +1276,90 @@ def import_sindaci_prioritari():
         "skipped": skipped,
         "errors": errors,
         "message": f"Importazione prioritaria sindaci completata. Sindaci caricati {imported}, righe saltate {skipped}."
+    })
+
+
+@app.post("/api/import/consiglieri-anagrafica")
+@admin_required
+def import_consiglieri_anagrafica_totali():
+    """
+    Import CSV consiglieri totali/anagrafica.
+    Formato:
+      Numero Liste;Nome Lista;Numero Candidato;Nome Candidato
+    Non importa voti; crea/aggiorna solo liste e candidati.
+    """
+    try:
+        rows = _read_csv_file()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
+
+    imported = 0
+    skipped = 0
+    errors = []
+
+    try:
+        conn = db()
+        cur = conn.cursor()
+
+        # Questo import è anagrafico: ricarica liste/candidati da file.
+        cur.execute("DELETE FROM votes WHERE vote_type IN ('lista','preferenza')")
+        ELECTION_DATA["lists"].clear()
+
+        for idx, row in enumerate(rows, start=1):
+            try:
+                if len(row) < 4:
+                    raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato")
+
+                numero_lista = row[0]
+                nome_lista = str(row[1]).strip()
+                numero_candidato = row[2]
+                nome_candidato = str(row[3]).strip()
+
+                if not nome_lista:
+                    raise ValueError("Nome Lista mancante")
+                if not nome_candidato:
+                    raise ValueError("Nome Candidato mancante")
+                if _is_numeric_candidate_name(nome_candidato):
+                    raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}")
+
+                list_name = _ensure_dynamic_list(nome_lista, "")
+                candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
+
+                if not candidate:
+                    raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
+
+                # Inizializza su tutti i report esistenti con voto 0, senza duplicare.
+                reports = cur.execute("SELECT id FROM reports").fetchall()
+                for report in reports:
+                    _upsert_vote(cur, report["id"], "lista", list_name, 0, list_name)
+                    _upsert_vote(cur, report["id"], "preferenza", candidate, 0, list_name)
+
+                imported += 1
+
+            except Exception as exc:
+                skipped += 1
+                if len(errors) < 50:
+                    errors.append(f"Riga {idx}: {str(exc)}")
+
+        conn.commit()
+        conn.close()
+
+    except Exception as exc:
+        try:
+            conn.rollback()
+            conn.close()
+        except Exception:
+            pass
+        return jsonify({"ok": False, "error": f"Errore import consiglieri totali: {str(exc)}"}), 500
+
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Import consiglieri totali completato. Candidati caricati {imported}, righe saltate {skipped}."
     })
 
 @app.post("/api/import/liste")

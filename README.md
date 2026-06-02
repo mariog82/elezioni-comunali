@@ -598,3 +598,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
 - Rimossa la colonna `Coalizione` dall'import delle preferenze totali.
 - L'import per sezione mantiene il supporto ai formati con/senza `Coalizione`.
+
+
+## Versione v78
+- Separati i due import:
+  - `Consiglieri totali/anagrafica`: `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato`
+  - `Preferenze totali consiglieri`: `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Aggiunto endpoint `/api/import/consiglieri-anagrafica`.
+- L'import anagrafico ricarica liste/candidati senza voti.
+- L'import preferenze aggiorna i voti.
