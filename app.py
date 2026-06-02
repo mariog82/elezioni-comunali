@@ -1203,13 +1203,13 @@ def _import_votes(kind, by_section):
                             raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[0]
-                        if not numero_lista.isdigit():
-                            raise ValueError(f"Numero Candidato non numerico: {numero_lista}")
+                        #if not numero_lista.isdigit():
+                            #raise ValueError(f"Numero Lista non numerico: {numero_lista}")
                         nome_lista = str(row[1]).strip()
                         coalizione = ""
                         numero_candidato = row[2]
-                        if not numero_candidato.isdigit():
-                            raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
+                        #if not numero_candidato.isdigit():
+                            #raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
 
