@@ -706,3 +706,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   -> `/api/import/consiglieri-anagrafica`
 - Aggiunta route alias POST per compatibilità con cache browser/Render.
 - Il pulsante `Importazione prioritaria consiglieri` punta all'endpoint corretto.
+
+
+## Versione v92
+- Nell'import `Preferenze totali consiglieri` il campo `Numero Candidato` deve essere numerico.
+- Formato CSV confermato:
+  `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Se `Numero Candidato` non è numerico, la riga viene scartata con errore esplicito.

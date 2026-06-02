@@ -1167,11 +1167,11 @@ def _import_votes(kind, by_section):
                     #   Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
                     # Preferenze per sezione:
                     #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
                     if by_section:
                         if len(row) < 6:
-                            raise ValueError("formato richiesto: [Sezione;]Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato;Voti validi")
+                            raise ValueError("formato richiesto: Sezione;Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[1]
                         nome_lista = str(row[2]).strip()
@@ -1205,7 +1205,9 @@ def _import_votes(kind, by_section):
                         numero_lista = row[0]
                         nome_lista = str(row[1]).strip()
                         coalizione = ""
-                        numero_candidato = row[2]
+                        numero_candidato = str(row[2]).strip()
+                        if not numero_candidato.isdigit():
+                            raise ValueError(f"Numero Candidato non numerico: {numero_candidato}")
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
 
@@ -1775,7 +1777,7 @@ def import_consiglieri_anagrafica_totali():
     """
     Importazione prioritaria consiglieri.
     Formato CSV obbligatorio:
-      Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato
+      Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
     """
     try:
         rows = _read_csv_file()
@@ -1799,7 +1801,7 @@ def import_consiglieri_anagrafica_totali():
         for idx, row in enumerate(rows, start=1):
             try:
                 if len(row) < 5:
-                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato")
+                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
 
                 numero_lista = str(row[0]).strip()
                 nome_lista = str(row[1]).strip()
