@@ -584,3 +584,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Inserimento solo se il record non esiste.
 - Deduplica automatica di report e voti duplicati storici.
 - Le preferenze dei candidati aggiornano anche i voti della lista collegata.
+
+
+## Versione v76
+- I grafici dei candidati sindaco vengono mostrati sempre, anche se non sono presenti candidati/lista.
+- Le tabelle e i grafici delle liste diventano opzionali e non bloccano più la dashboard.
+- Aggiunta gestione sicura di liste/candidati mancanti nei grafici.
