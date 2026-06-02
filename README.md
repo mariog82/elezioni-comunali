@@ -659,3 +659,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   - `_is_numeric_candidate_name()` mantenuta come compatibilità.
 - Importazione prioritaria consiglieri confermata con formato:
   `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
+
+
+## Versione v85
+- Nei Grafici di dettaglio per seggio:
+  - combo box per scegliere la lista e vedere i voti lista per seggio;
+  - combo box opzionale per scegliere un candidato della lista selezionata;
+  - grafico delle preferenze del candidato consigliere per seggio.

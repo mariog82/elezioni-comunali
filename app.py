@@ -1862,6 +1862,8 @@ def export_csv():
     )
 
 
+
+
 @app.get("/api/details")
 @admin_required
 def api_details():
@@ -1869,14 +1871,17 @@ def api_details():
     cur = conn.cursor()
     reports = cur.execute("SELECT * FROM reports ORDER BY section").fetchall()
     sections = []
+
     for rep in reports:
         votes = cur.execute(
             "SELECT vote_type, list_name, name, votes FROM votes WHERE report_id=?",
             (rep["id"],)
         ).fetchall()
+
         lists = []
         preferences = []
         mayors = []
+
         for v in votes:
             item = {
                 "name": v["name"],
@@ -1884,20 +1889,28 @@ def api_details():
                 "votes": v["votes"],
                 "total": v["votes"]
             }
+
             if v["vote_type"] == "lista":
                 lists.append(item)
             elif v["vote_type"] == "preferenza":
                 preferences.append(item)
             elif v["vote_type"] == "sindaco":
                 mayors.append(item)
+
         sections.append({
             "section": rep["section"],
             "lists": lists,
             "preferences": preferences,
             "mayors": mayors
         })
+
     conn.close()
-    return jsonify({"ok": True, "sections": sections})
+
+    return jsonify({
+        "ok": True,
+        "data": ELECTION_DATA,
+        "sections": sections
+    })
 
 
 if __name__ == "__main__":
