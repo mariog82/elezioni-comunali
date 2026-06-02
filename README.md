@@ -607,3 +607,19 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Aggiunto endpoint `/api/import/consiglieri-anagrafica`.
 - L'import anagrafico ricarica liste/candidati senza voti.
 - L'import preferenze aggiorna i voti.
+
+
+## Versione v79
+- Corretto errore nell'import `consiglieri totali/anagrafica`: `Nome Candidato numerico/non valido`.
+- Formato principale:
+  `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato`
+- Formato tollerato:
+  `Numero Liste;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
+- Se la colonna letta come `Nome Candidato` è numerica, il sistema usa automaticamente la colonna successiva come nome.
+
+
+## Versione v80
+- Modificato import `consiglieri totali/anagrafica`.
+- Formato CSV obbligatorio:
+  `Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato`
+- La colonna `Coalizione` è ora obbligatoria per il caricamento anagrafico dei consiglieri.

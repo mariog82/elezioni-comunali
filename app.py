@@ -1026,7 +1026,9 @@ def _read_csv_file(max_rows=10000):
         "numero sind",
         "candidato sindaco",
         "numero cons",
+        "numero candidato",
         "nome cons",
+        "nome candidato",
         "schede nulle",
         "schede bianche"
     ]
@@ -1108,10 +1110,10 @@ def _import_votes(kind, by_section):
                 elif kind == "consiglieri":
                     # Formati supportati:
                     # Preferenze totali consiglieri:
-                    #   Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
                     # Preferenze consiglieri per sezione:
-                    #   Sezione;Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
-                    #   Sezione;Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
+                    #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
 
                     if by_section:
                         if len(row) < 6:
@@ -1144,7 +1146,7 @@ def _import_votes(kind, by_section):
 
                     else:
                         if len(row) < 5:
-                            raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
+                            raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[0]
                         nome_lista = str(row[1]).strip()
@@ -1284,9 +1286,10 @@ def import_sindaci_prioritari():
 def import_consiglieri_anagrafica_totali():
     """
     Import CSV consiglieri totali/anagrafica.
-    Formato:
-      Numero Liste;Nome Lista;Numero Candidato;Nome Candidato
-    Non importa voti; crea/aggiorna solo liste e candidati.
+    Formato obbligatorio:
+      Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato
+
+    Non importa voti; crea/aggiorna solo liste, coalizioni e candidati.
     """
     try:
         rows = _read_csv_file()
@@ -1309,22 +1312,26 @@ def import_consiglieri_anagrafica_totali():
 
         for idx, row in enumerate(rows, start=1):
             try:
-                if len(row) < 4:
-                    raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato")
+                if len(row) < 5:
+                    raise ValueError("formato richiesto: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato")
 
                 numero_lista = row[0]
                 nome_lista = str(row[1]).strip()
-                numero_candidato = row[2]
-                nome_candidato = str(row[3]).strip()
+                coalizione = str(row[2]).strip()
+                numero_candidato = row[3]
+                nome_candidato = str(row[4]).strip()
 
                 if not nome_lista:
                     raise ValueError("Nome Lista mancante")
                 if not nome_candidato:
                     raise ValueError("Nome Candidato mancante")
                 if _is_numeric_candidate_name(nome_candidato):
-                    raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}")
+                    raise ValueError(
+                        f"Nome Candidato numerico/non valido: {nome_candidato}. "
+                        "Formato atteso: Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato"
+                    )
 
-                list_name = _ensure_dynamic_list(nome_lista, "")
+                list_name = _ensure_dynamic_list(nome_lista, coalizione)
                 candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
 
                 if not candidate:
@@ -1361,6 +1368,7 @@ def import_consiglieri_anagrafica_totali():
         "errors": errors,
         "message": f"Import consiglieri totali completato. Candidati caricati {imported}, righe saltate {skipped}."
     })
+
 
 @app.post("/api/import/liste")
 @admin_required
