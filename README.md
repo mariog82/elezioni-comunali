@@ -569,3 +569,10 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
   `Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
 - Il candidato viene creato/aggiornato nella lista corretta.
 - Bloccato il caricamento di `Nome Candidato` numerico.
+
+
+## Versione v74
+- Corretto errore JS `Cannot read properties of undefined (reading 'candidates')`.
+- Corretto import `Preferenze consiglieri per sezione`.
+- `Nome Candidato` viene letto correttamente anche con CSV senza colonna Coalizione.
+- Se il nome candidato risulta numerico, viene tentato il fallback al formato senza Coalizione.

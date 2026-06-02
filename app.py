@@ -1089,23 +1089,31 @@ def _import_votes(kind, by_section):
                     #   Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
                     # Per sezione:
                     #   Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi
-                    # Per compatibilità accetta anche:
                     #   Sezione;Numero Lista;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
 
                     if by_section:
                         if len(row) < 6:
-                            raise ValueError("formato richiesto: Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi")
+                            raise ValueError("formato richiesto: Sezione;Numero Lista;Nome Lista;[Coalizione;]Numero Candidato;Nome Candidato;Voti validi")
 
                         numero_lista = row[1]
                         nome_lista = str(row[2]).strip()
 
-                        # Se sono presenti 7 colonne, la colonna 3 è Coalizione.
-                        # Se sono presenti 6 colonne, la colonna 3 è Numero Candidato.
                         if len(row) >= 7:
-                            coalizione = str(row[3]).strip()
-                            numero_candidato = row[4]
-                            nome_candidato = str(row[5]).strip()
-                            votes = _intv(row[6])
+                            coalizione_try = str(row[3]).strip()
+                            numero_candidato_try = row[4]
+                            nome_candidato_try = str(row[5]).strip()
+                            votes_try = _intv(row[6])
+
+                            if _is_numeric_candidate_name(nome_candidato_try):
+                                coalizione = ""
+                                numero_candidato = row[3]
+                                nome_candidato = str(row[4]).strip()
+                                votes = _intv(row[5])
+                            else:
+                                coalizione = coalizione_try
+                                numero_candidato = numero_candidato_try
+                                nome_candidato = nome_candidato_try
+                                votes = votes_try
                         else:
                             coalizione = ""
                             numero_candidato = row[3]
@@ -1121,29 +1129,13 @@ def _import_votes(kind, by_section):
                         coalizione = str(row[2]).strip()
                         numero_candidato = row[3]
                         nome_candidato = str(row[4]).strip()
-
-                        if len(row) >= 6:
-                            votes = _intv(row[5])
-                        else:
-                            existing_vote = cur.execute(
-                                """
-                                SELECT votes FROM votes
-                                WHERE report_id=?
-                                  AND vote_type='preferenza'
-                                  AND COALESCE(list_name,'')=COALESCE(?, '')
-                                  AND name=?
-                                ORDER BY id DESC
-                                LIMIT 1
-                                """,
-                                (report_id, nome_lista, nome_candidato)
-                            ).fetchone()
-                            votes = existing_vote["votes"] if existing_vote else 0
+                        votes = _intv(row[5]) if len(row) >= 6 else 0
 
                     if not nome_candidato:
                         raise ValueError("Nome Candidato mancante")
 
                     if _is_numeric_candidate_name(nome_candidato):
-                        raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}")
+                        raise ValueError(f"Nome Candidato numerico/non valido: {nome_candidato}. Verifica l'ordine colonne del CSV.")
 
                     list_name = _ensure_dynamic_list(nome_lista, coalizione)
                     if not list_name:
