@@ -1,3 +1,11 @@
+function safeCandidatesForList(listName){
+  try{
+    const data = lastData && lastData.data && lastData.data.lists ? lastData.data.lists : {};
+    const obj = data[listName] || {};
+    return Array.isArray(obj.candidates) ? obj.candidates : [];
+  }catch(e){ return []; }
+}
+
 let user=null, DATA=null, currentList=null, mayorVotes={}, listVotes={}, prefs={};
 
 async function api(url, options={}){

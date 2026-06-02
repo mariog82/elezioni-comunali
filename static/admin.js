@@ -1,3 +1,11 @@
+function safeCandidatesForList(listName){
+  try{
+    const data = lastData && lastData.data && lastData.data.lists ? lastData.data.lists : {};
+    const obj = data[listName] || {};
+    return Array.isArray(obj.candidates) ? obj.candidates : [];
+  }catch(e){ return []; }
+}
+
 
 let mayorPieChart=null,listPieChart=null,listBarChart=null,lastData=null;
 let detailCharts=[];
