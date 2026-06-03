@@ -1216,17 +1216,16 @@ def _import_votes(kind, by_section):
 
                         numero_lista = _clean_numeric_text(row[0])
                         nome_lista = str(row[1]).strip()
-                        #coalizione = ""
+                        coalizione = ""
 
-                        #numero_candidato_originale = str(row[2]).strip()
-                        numero_candidato_originale = _clean_numeric_text(row[2])
+                        numero_candidato_originale = str(row[2]).strip()
                         numero_candidato = _clean_numeric_text(numero_candidato_originale)
 
                         if not numero_lista:
                             raise ValueError(f"Numero Liste non numerico: {row[0]}")
 
                         if not numero_candidato:
-                            raise ValueError(f"Numero Candidato non numerico: {numero_lista} {nome_lista} {numero_candidato_originale} {numero_candidato}")
+                            raise ValueError(f"Numero Candidato non numerico: {numero_candidato_originale}")
 
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
@@ -1308,10 +1307,101 @@ def import_sindaci_totali():
 def import_sindaci_sezioni():
     return _import_votes("sindaci", True)
 
-@app.post("/api/import/consiglieri")
+
+@app.route("/api/import/consiglieri", methods=["POST"])
 @admin_required
-def import_consiglieri_totali():
-    return _import_votes("consiglieri", False)
+def import_preferenze_totali_consiglieri():
+    """
+    Import dedicato Preferenze totali consiglieri.
+    Formato CSV obbligatorio:
+      Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi
+    """
+    try:
+        rows = _read_csv_file()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"Errore lettura CSV: {str(exc)}"}), 400
+
+    admin_user = current_user()
+    if not admin_user:
+        return jsonify({"ok": False, "error": "Utente amministratore non riconosciuto"}), 401
+
+    conn = db()
+    cur = conn.cursor()
+    imported = 0
+    skipped = 0
+    errors = []
+    list_totals = {}
+
+    try:
+        report_id = _ensure_report(cur, "TOTALE", admin_user["id"])
+
+        cur.execute(
+            "DELETE FROM votes WHERE report_id=? AND vote_type IN ('preferenza','lista')",
+            (report_id,)
+        )
+
+        for idx, row in enumerate(rows, start=1):
+            try:
+                if not row or not any(str(x).strip() for x in row):
+                    skipped += 1
+                    continue
+
+                if len(row) < 5:
+                    raise ValueError("formato richiesto: Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi")
+
+                numero_lista_raw = str(row[0]).strip()
+                nome_lista = str(row[1]).strip()
+                numero_candidato_raw = str(row[2]).strip()
+                nome_candidato = str(row[3]).strip()
+                voti_validi = _intv(row[4])
+
+                numero_lista = _clean_numeric_text(numero_lista_raw)
+                numero_candidato = _clean_numeric_text(numero_candidato_raw)
+
+                if not numero_lista:
+                    raise ValueError(f"Numero Liste non numerico: {numero_lista_raw}")
+                if not nome_lista:
+                    raise ValueError("Nome Lista mancante")
+                if not numero_candidato:
+                    raise ValueError(f"Numero Candidato non numerico: {numero_candidato_raw}")
+                if not nome_candidato or _is_numeric_candidate_name(nome_candidato):
+                    raise ValueError(f"Nome Candidato mancante o numerico/non valido: {nome_candidato}")
+
+                list_name = _ensure_dynamic_list(nome_lista, "")
+                candidate = _ensure_dynamic_candidate(list_name, nome_candidato)
+
+                if not candidate:
+                    raise ValueError(f"Nome Candidato non valido per lista {list_name}: {nome_candidato}")
+
+                _upsert_vote(cur, report_id, "preferenza", candidate, voti_validi, list_name)
+                list_totals[list_name] = list_totals.get(list_name, 0) + voti_validi
+                imported += 1
+
+            except Exception as exc:
+                skipped += 1
+                if len(errors) < 80:
+                    errors.append(f"Riga {idx}: {str(exc)}")
+
+        for list_name, total_votes in list_totals.items():
+            _upsert_vote(cur, report_id, "lista", list_name, total_votes, list_name)
+
+        conn.commit()
+
+    except Exception as exc:
+        conn.rollback()
+        conn.close()
+        return jsonify({"ok": False, "error": f"Errore import Preferenze totali consiglieri: {str(exc)}"}), 500
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Import Preferenze totali consiglieri completato. Righe importate {imported}, righe saltate {skipped}."
+    })
 
 @app.post("/api/import/consiglieri-sezioni")
 @admin_required
@@ -1869,7 +1959,7 @@ def import_consiglieri_anagrafica_totali():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
+        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
     })
 
 

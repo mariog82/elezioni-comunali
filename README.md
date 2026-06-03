@@ -722,3 +722,9 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Lettura CSV robusta con separatore `;` e fallback `,`.
 - `Numero Candidato` viene ripulito da spazi, virgolette e caratteri invisibili prima del controllo numerico.
 - Se il numero non contiene cifre, la riga viene scartata con errore chiaro.
+
+## Versione v94
+- Creata funzione apposita `import_preferenze_totali_consiglieri()` in `app.py`.
+- Endpoint dedicato: `POST /api/import/consiglieri`.
+- Formato CSV: `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`.
+- L'import azzera le preferenze totali precedenti e ricalcola i voti lista totali.
