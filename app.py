@@ -1218,7 +1218,7 @@ def _import_votes(kind, by_section):
                         nome_lista = str(row[1]).strip()
                         coalizione = ""
 
-                        numero_candidato_originale = str(row[2]).strip()
+                        #numero_candidato_originale = str(row[2]).strip()
                         numero_candidato = _clean_numeric_text(numero_candidato_originale)
 
                         if not numero_lista:
@@ -1868,7 +1868,7 @@ def import_consiglieri_anagrafica_totali():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
+        "message": f"Importa completato. Righe importate {imported}, righe saltate {skipped}."
     })
 
 
