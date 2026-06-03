@@ -150,24 +150,7 @@
       <p class="small">Formato: <b>Sezione;Numero Liste;Nome Lista;Voti validi</b></p>
       <input type="file" id="csv_sez_liste" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_liste','/api/import/liste-sezioni')">Importa liste per sezione</button>
-    </div>
-
-    <div class="card">
-      <h3>Preferenze consiglieri per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi</b></p>
-      <input type="file" id="csv_sez_consiglieri" accept=".csv,text/csv">
-      <button onclick="importGenericCsv('csv_sez_consiglieri','/api/import/consiglieri-sezioni')">Importa consiglieri totali per sezione</button>
-    </div>
-  </div>
-</section>
-
-
-
-<section class="card importCsvBox">
-  <h2>Importa rappresentanti / utenti da CSV</h2>
-  <p class="small">
-    Carica un file CSV separato da punto e virgola con questo formato:<br>
-    <b>nome;telefono/codice;sezione;ruolo;pin</b>
+    </div>Formato:<b>nome;telefono/codice;sezione;ruolo;pin</b>
   </p>
   <input type="file" id="csvUsersFile" accept=".csv,text/csv">
   <div class="actions">
