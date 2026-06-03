@@ -728,3 +728,12 @@ APP_SECRET_KEY=<chiave_lunga_casuale>
 - Endpoint dedicato: `POST /api/import/consiglieri`.
 - Formato CSV: `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`.
 - L'import azzera le preferenze totali precedenti e ricalcola i voti lista totali.
+
+
+## Versione v95
+- `Importa consiglieri totali` ora chiama `POST /api/import/consiglieri`.
+- L'import `/api/import/consiglieri` importa i voti totali dei consiglieri con formato:
+  `Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi`
+- Rimossi i messaggi richiesti dalle sezioni CSV.
+- Messaggio di completamento sostituito con:
+  `Import completato. Righe importate {imported}, righe saltate {skipped}.`

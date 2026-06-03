@@ -1400,7 +1400,7 @@ def import_preferenze_totali_consiglieri():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Import Preferenze totali consiglieri completato. Righe importate {imported}, righe saltate {skipped}."
+        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
     })
 
 @app.post("/api/import/consiglieri-sezioni")
@@ -1959,7 +1959,7 @@ def import_consiglieri_anagrafica_totali():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Importazione prioritaria consiglieri completata. Righe importate {imported}, righe saltate {skipped}."
+        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
     })
 
 
