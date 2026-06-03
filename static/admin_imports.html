@@ -48,14 +48,14 @@
     <h3>CSV consiglieri totali</h3>
     <p class="small">
       Formato obbligatorio:<br>
-      <b>Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato</b><br><span class='small'>Numero Lista e Numero Candidato devono essere numerici; Nome Lista, Coalizione e Nome Candidato devono essere stringhe. Formato obbligatorio con colonna Coalizione.</span>
+      <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br>
     </p>
 
     <input type="file" id="csv_priority_consiglieri" accept=".csv,text/csv">
 
     <button class="primary"
-      onclick="importGenericCsv('csv_priority_consiglieri','/api/import/consiglieri-anagrafica')">
-      Importa consiglieri
+      onclick="importGenericCsv('csv_priority_consiglieri','/api/import/consiglieri')">
+      Importa consiglieri totali
     </button>
   </div>
 </section>
@@ -101,9 +101,9 @@
 
     <div class="card">
       <h3>Preferenze totali consiglieri</h3>
-      <p class="small">Formato: <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br><span class='small'>Numero Candidato deve essere numerico. Separatore obbligatorio ;</span></p>
+      <p class="small">Formato: <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br></p>
       <input type="file" id="csv_tot_consiglieri" accept=".csv,text/csv">
-      <button onclick="importGenericCsv('csv_tot_consiglieri','/api/import/consiglieri-anagrafica')">Importa consiglieri totali</button>
+      <button onclick="importGenericCsv('csv_tot_consiglieri','/api/import/consiglieri-anagrafica')">Importa consiglieri totali totali</button>
     </div>
   </div>
 </section>
@@ -154,9 +154,9 @@
 
     <div class="card">
       <h3>Preferenze consiglieri per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi<br><span class='small'>Se il file non contiene Coalizione, è accettato anche: Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi</span></b></p>
+      <p class="small">Formato: <b>Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi<br><span class='small'>Se il file non contiene Coalizione, è accettato anche: Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi</span></b></p>
       <input type="file" id="csv_sez_consiglieri" accept=".csv,text/csv">
-      <button onclick="importGenericCsv('csv_sez_consiglieri','/api/import/consiglieri-sezioni')">Importa consiglieri per sezione</button>
+      <button onclick="importGenericCsv('csv_sez_consiglieri','/api/import/consiglieri-sezioni')">Importa consiglieri totali per sezione</button>
     </div>
   </div>
 </section>
