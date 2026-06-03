@@ -1219,6 +1219,7 @@ def _import_votes(kind, by_section):
                         coalizione = ""
 
                         #numero_candidato_originale = str(row[2]).strip()
+                        numero_candidato_originale = _clean_numeric_text(row[2])
                         numero_candidato = _clean_numeric_text(numero_candidato_originale)
 
                         if not numero_lista:
