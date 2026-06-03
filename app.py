@@ -1985,4 +1985,10 @@ def import_sindaci_prioritari():
         if len(row)>=2 and str(row[1]).strip():
             ELECTION_DATA["mayors"].append(str(row[1]).strip())
             imported+=1
-    return jsonify({"ok":True,"imported":imported})
+    return jsonify({
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors,
+        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
+    })
