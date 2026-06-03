@@ -87,21 +87,21 @@
   <div class="grid">
     <div class="card">
       <h3>Voti totali candidati sindaco</h3>
-      <p class="small">Formato: <b>Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
+      <p class="small">Formato obbligatorio: <b>Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
       <input type="file" id="csv_tot_sindaci" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_tot_sindaci','/api/import/sindaci')">Importa sindaci totali</button>
     </div>
 
     <div class="card">
       <h3>Voti totali liste</h3>
-      <p class="small">Formato: <b>Numero Liste;Nome Lista;Voti validi</b></p>
+      <p class="small">Formato obbligatorio: <b>Numero Liste;Nome Lista;Voti validi</b></p>
       <input type="file" id="csv_tot_liste" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_tot_liste','/api/import/liste')">Importa liste totali</button>
     </div>
 
     <div class="card">
       <h3>Preferenze totali consiglieri</h3>
-      <p class="small">Formato: <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br></p>
+      <p class="small">Formato obbligatorio: <b>Numero Liste;Nome Lista;Numero Candidato;Nome Candidato;Voti validi</b><br></p>
       <input type="file" id="csv_tot_consiglieri" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_tot_consiglieri','/api/import/consiglieri')">Importa consiglieri totali totali</button>
     </div>
@@ -117,14 +117,14 @@
   <div class="grid">
     <div class="card">
       <h3>Schede totali</h3>
-      <p class="small">Formato: <b>Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
+      <p class="small">Formato obbligatorio: <b>Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
       <input type="file" id="csv_tot_schede" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_tot_schede','/api/import/schede')">Importa schede totali</button>
     </div>
 
     <div class="card">
       <h3>Schede per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
+      <p class="small">Formato obbligatorio: <b>Sezione;Voti nulli;Schede nulle;Schede bianche;V.cont.NoAss.</b></p>
       <input type="file" id="csv_sez_schede" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_schede','/api/import/schede-sezioni')">Importa schede per sezione</button>
     </div>
@@ -140,21 +140,21 @@
   <div class="grid">
     <div class="card">
       <h3>Voti candidati sindaco per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
+      <p class="small">Formato obbligatorio: <b>Sezione;Numero Sindaco;Candidato Sindaco;Voti validi;Voti solo Sind</b></p>
       <input type="file" id="csv_sez_sindaci" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_sindaci','/api/import/sindaci-sezioni')">Importa sindaci per sezione</button>
     </div>
 
     <div class="card">
       <h3>Voti liste per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Liste;Nome Lista;Voti validi</b></p>
+      <p class="small">Formato obbligatorio: <b>Sezione;Numero Liste;Nome Lista;Voti validi</b></p>
       <input type="file" id="csv_sez_liste" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_liste','/api/import/liste-sezioni')">Importa liste per sezione</button>
     </div>
 
     <div class="card">
       <h3>Preferenze consiglieri per sezione</h3>
-      <p class="small">Formato: <b>Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi<br><span class='small'>Se il file non contiene Coalizione, è accettato anche: Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi</span></b></p>
+      <p class="small">Formato obbligatorio: <b>Sezione;Numero Lista;Nome Lista;Coalizione;Numero Candidato;Nome Candidato;Voti validi;Voti validi</b></p>
       <input type="file" id="csv_sez_consiglieri" accept=".csv,text/csv">
       <button onclick="importGenericCsv('csv_sez_consiglieri','/api/import/consiglieri-sezioni')">Importa consiglieri totali per sezione</button>
     </div>
