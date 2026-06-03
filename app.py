@@ -1216,7 +1216,7 @@ def _import_votes(kind, by_section):
 
                         numero_lista = _clean_numeric_text(row[0])
                         nome_lista = str(row[1]).strip()
-                        coalizione = ""
+                        #coalizione = ""
 
                         #numero_candidato_originale = str(row[2]).strip()
                         numero_candidato_originale = _clean_numeric_text(row[2])
@@ -1226,7 +1226,7 @@ def _import_votes(kind, by_section):
                             raise ValueError(f"Numero Liste non numerico: {row[0]}")
 
                         if not numero_candidato:
-                            raise ValueError(f"Numero Candidato non numerico: {numero_candidato_originale}")
+                            raise ValueError(f"Numero Candidato non numerico: {numero_lista} {nome_lista} {numero_candidato_originale} {numero_candidato}")
 
                         nome_candidato = str(row[3]).strip()
                         votes = _intv(row[4])
@@ -1869,7 +1869,7 @@ def import_consiglieri_anagrafica_totali():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
-        "message": f"Importa completato. Righe importate {imported}, righe saltate {skipped}."
+        "message": f"Import completato. Righe importate {imported}, righe saltate {skipped}."
     })
 
 
